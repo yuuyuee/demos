@@ -1,2 +1,2 @@
 # cc-tests
-CC demo
+C++ demo
