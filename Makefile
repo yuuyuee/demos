@@ -1,25 +1,25 @@
 TOPDIR	= $(CURDIR)
-target	= $(subst .cpp,,$(notdir $(wildcard *.cpp)))
+target	= $(subst .cc,,$(notdir $(wildcard *.cc)))
 
-CPPFLAGS = -std=c++11 -Wall -Werror -g
-LDFLAGS  = -std=c++11 -Wall -Werror
+CC      = g++
+CFLAGS  += -std=c++11 -Wall -Werror -g -c
 
 define make-target
 $1: $1.o
-	g++ $(LDFLAGS) -o $$@ $$<
+	$(CC) $(LDFLAGS) -o $$@ $$<
 
 $1-clean:
-	rm $1 $1.o
+	rm -f $1 $1.o
 
 .PHYONE: $1
 endef
 
-%.o: %.cpp
-	g++ $(CPPFLAGS) -c -o $@ $^
+%.o: %.cc
+	$(CC) $(CFLAGS) -o $@ $^
 
 $(foreach t, $(target), $(eval $(call make-target,$(t))))
 
 clean: $(foreach t, $(target), $(t)-clean);
 all: $(foreach t, $(target), $(t));
-.PHYONE: all clean
+.PHYONE: all clean $(foreach t, $(target), $(t)-clean $(t))
 
