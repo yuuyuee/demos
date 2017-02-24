@@ -1,6 +1,5 @@
 TOPDIR	= $(CURDIR)
 target	= $(subst .cc,,$(notdir $(wildcard *.cc)))
-SUBDIR  = $(shell find $(TOPDIR) -maxdepth 1 -and -type d -not -name ".git")
 
 CC      = g++
 CFLAGS  += -std=c++11 -Wall -Werror -g -c

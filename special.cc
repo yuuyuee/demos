@@ -3,7 +3,7 @@
 
 using namespace std;
 
-template<typename Tp, bool = 0>
+template<typename Tp, bool = std::is_same<Tp, void>::value>
 class Type {
 public:
     void descriptor() {
