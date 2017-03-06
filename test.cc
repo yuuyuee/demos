@@ -38,5 +38,36 @@ int main(void) {
         std::cout << "defined nullptr "<< std::endl;
 #endif
 
+    int value = 100;
+    std::cout << "value: " << reinterpret_cast<int &&>(value) << std::endl;
+
+#ifdef _LP64
+    std::cout << "platform 64" << std::endl;
+#endif
+
+    std::cout << "__cplusplus = " << __cplusplus << std::endl;
+#ifdef __linux__
+    std::cout << "defined __linux__" << std::endl;
+#endif
+#ifdef __unix__
+    std::cout << "defined __unix__" << std::endl;
+#endif
+#ifdef __GNUG__
+    std::cout << "defined __GNUG__: " << __GNUG__ << std::endl;
+#endif
+#ifdef __GNUC__
+    std::cout << "defined __GNUC__: " << __GNUC__ << std::endl;
+#endif
+#ifdef __GNUC_MINOR__
+    std::cout << "defined __GNUC_MINOR__: " << __GNUC_MINOR__ << std::endl;
+#endif
+#ifdef __STDC__
+    std::cout << "defined __STDC__: " << __STDC__ << std::endl;
+#endif
+#ifdef __VERSION__
+    std::cout << "defined __VERSION__: " << __VERSION__ << std::endl;
+#endif
+
+
     return 0;
 }
