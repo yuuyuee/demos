@@ -26,6 +26,23 @@ public:
     }
 };
 
+class test {
+public:
+    test() {
+        std::cout << "constructor" << std::endl;
+    }
+    ~test() {
+        std::cout << "constructor" << std::endl;
+    }
+    inline void print() const {
+        std::cout << "print function" << std::endl;
+    }
+};
+
+void dump(const test &t) {
+    t.print();
+}
+
 int main(void) {
     derived d;
 
@@ -68,6 +85,7 @@ int main(void) {
     std::cout << "defined __VERSION__: " << __VERSION__ << std::endl;
 #endif
 
-
+    dump(test());
+    std::cout << "dump end" << std::endl;
     return 0;
 }
