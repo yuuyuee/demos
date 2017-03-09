@@ -1,4 +1,5 @@
 #include <iostream>
+#include <unistd.h>
 #include <boost/chrono.hpp>
 
 namespace chrono = ::boost::chrono;
@@ -20,8 +21,15 @@ int main(void) {
               << std::endl;
 
     //time_point
-    chrono::time_point<chrono::system_clock> stm = chrono::system_clock::now();
-    std::cout << "system point now: " << stm.time_since_epoch().count() << std::endl;
+    chrono::time_point<chrono::system_clock> start = chrono::system_clock::now();
+    sleep(2);
+    chrono::time_point<chrono::system_clock> stop = chrono::system_clock::now();
+    chrono::time_point<chrono::system_clock> off = stop - start.time_since_epoch();
+    //chrono::nanoseconds off = stop - start;
 
+    std::cout << "start point now: " << start.time_since_epoch().count() << std::endl;
+    std::cout << "stop point now: " << stop.time_since_epoch().count() << std::endl;
+    std::cout << "offset point now: " << off.time_since_epoch().count() << std::endl;
+    //std::cout << "offset point now: " << chrono::duration_cast<chrono::seconds>(off).count() << std::endl;
     return 0;
 }
