@@ -1,19 +1,23 @@
-#include <vector>
-#include <algorithm>
 #include <iostream>
 
 template <typename T>
 class print {
 public:
-    void operator()(const T &elem) {
-        std::cout << elem << ' ';
+    operator T() const {
+        std::cout << "Type call" << std::endl;
+        return reinterpret_cast<T>(0);
+    }
+    T operator()() const {
+        std::cout << "Value call" << std::endl;
+        return reinterpret_cast<T>(0);
     }
 };
 
 int main(void) {
-    int ia[] = {0, 1, 2, 3, 4, 5};
-    std::vector<int> iv(ia, ia + 6);
+    print<int> pi;
 
-    for_each(iv.begin(), iv.end(), print<int>());
+    print<int>();
+    pi();
+
     return 0;
 }

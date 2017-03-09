@@ -6,7 +6,7 @@ subdir  := $(filter-out $(unexpect),$(subdir))
 
 CC      = g++
 CFLAGS  += -std=c++11 -Wall -Werror -g -c
-LDFLAGS += -lboost_system -lboost_filesystem
+LDFLAGS +=
 
 define make-target
 $1: $1.o
