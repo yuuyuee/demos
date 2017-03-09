@@ -19,7 +19,9 @@ int main(void) {
               << min.count()
               << std::endl;
 
-    //time_pointer
+    //time_point
+    chrono::time_point<chrono::system_clock> stm = chrono::system_clock::now();
+    std::cout << "system point now: " << stm.time_since_epoch().count() << std::endl;
 
     return 0;
 }
