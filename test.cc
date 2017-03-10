@@ -1,4 +1,5 @@
 #include <iostream>
+#include <utility>
 
 class base {
 public:
@@ -87,5 +88,11 @@ int main(void) {
 
     dump(test());
     std::cout << "dump end" << std::endl;
+
+    std::string a("hello world");
+    std::string b = std::move(a);
+
+    std::cout << a << " " << b << std::endl;
+
     return 0;
 }
