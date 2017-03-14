@@ -40,6 +40,19 @@ public:
     }
 };
 
+template<typename T>
+class Value {
+public:
+    Value(T v): v_(v) {}
+    T GetV() const {return v_;}
+
+private:
+    T v_;
+};
+
+template<typename T>
+using Value = Value<T>;
+
 void dump(const test &t) {
     t.print();
 }
@@ -94,5 +107,6 @@ int main(void) {
 
     std::cout << a << " " << b << std::endl;
 
+    std::cout << Value<int>(100).GetV() << std::endl;
     return 0;
 }

@@ -2,13 +2,10 @@ Boost Libraries Listed by Category
 ==================================
 
 - Algorithms
-    1. Algorithm(form STL)
-- Broken compiler workarounds
+    1. Algorithm(form STL\*)
 - Concurrent Programming
     1. Asio
-    2. Atomic(C++11 style)
-    3. Context
-    4. Coroutine 2
+    2. Atomic(C++11 style\*)
     5. Interprocess(\*)
         **Important**
         Shared memory, memory mapped files, process-shared mutexes,
@@ -20,19 +17,17 @@ Boost Libraries Listed by Category
     7. Thread(\*)
         **Important**
         Protable C++ multi-threading. C++11, C++14
-- Containers
-- Correctness and testing
-    1. Static Assert
-- Data structure
 - Domain Specific
-    1. Chrono
+    1. Chrono(\*)
         C++11
         Useful time utilities
-    2. CRC
-    3. Date Time
-        A set of data-time libraries based on generic programming concepts
+    2. CRC(\*)
+    3. Date Time(\*)
+        A set of data-time libraries based on generic programming 
+        concepts
     4. Uuid
 - Function objects and higher-order programming
+    1. Lambda
 - Generic Programming
     1. Concept Check(See. Correctness and testing)
     2. Enable_if
@@ -42,9 +37,7 @@ Boost Libraries Listed by Category
         Type Traits introspection library
     6. Type Traits
         Template for fundamental properties of types
-- Image processing
 - Input/Output
-    1. Asio(See. Concurrent Programming)
     2. Endian
     3. IO streams
 - Inter-language support
@@ -59,23 +52,13 @@ Boost Libraries Listed by Category
 - Memory
     1. Align
     2. Pool
-- Parsing
-- Patterns and Idioms
 - Preprocessor Metaprogramming
     1. Preprocessor
     2. VMD
-- Broken compiler workarounds
 - Programming Interfaces
-- State Machines
 - String and text processing
-    1. Regex
-- System
-    1. Filesystem
+    1. Regex(\*)
         Done
-    2. System
-        Nothing
-    3. Thread
-        
 - Template Metaprogramming
     1. Function Type
     2. MPL
@@ -86,18 +69,29 @@ Boost Libraries Listed by Category
         enable_if       - done
         disable_if      - done
         is_same         - done
-    2. Log
-        Not done
-    3. Predef
-        Dedfine a set of compiler, architecture. operating system version
-        Not done
-    4. Program Options
-        Not done
-    5. Trow Exception
-        Done
-    6. Timer
-        Not done
-    7. TR1
-        Not done
-    8. Utility
-        Not done
+
+STD C++11 Libraries
+===================
+- STD C++
+    1. valarray
+    2. any(\\)
+    3. chrono
+    4. algorithm
+    5. atomic
+    6. optional
+    7. bitset
+    8. filesystem
+    9. chrono
+    10. codecvt
+    11. condition_variable
+    12. mutex
+    13. random
+    14. ratio
+    15. regex
+    16. scoped_allocator
+    17. shared_mutex
+    18. streambuf
+    19. system_error
+    20. thread
+    21. tuple
+    22. type_traits
