@@ -1,32 +1,69 @@
 #include <iostream>
 //#include <type_traits>
-
-template<typename Tp, Tp v>
+namespace type_traits {
+template<typename T, T v>
 struct integral_constant {
-public:
-    static constexpr Tp              value = v;
-    typedef Tp                       value_type;
-    typedef integral_constant<Tp, v> type;
-    constexpr operator value_type() const {
+    static const T value = v;
+    typedef T value_type;
+    typedef integral_constant<T, v> type;
+    operator value_type() const {
         return value;
     }
 };
 
-template<typename Tp, Tp v>
-constexpr Tp integral_constant<Tp, v>::value;
+template<typename T, T v>
+const T integral_constant<T, v>::value;
 
-typedef integral_constant<bool, true> true_type;
-typedef integral_constant<bool, false> false_type;
-template<bool v>
-using __bool_constant = integral_constant<bool, v>;
+typedef integral_constant<bool, true> true_value;
+typedef integral_constant<bool, false> false_value;
 
+// Meta programmming helper types
+template<bool Cond, typename Iftrue, typename Iffalse>
+struct Conditional { typedef Iftrue type; };
 
+template<typename Iftrue, typename Iffalse>
+struct Conditional<false, Iftrue, Iffalse> { typedef Iffalse type; };
+
+template<typename Tp>
+struct Not: public integral_constant<bool, !Tp::value> {};
+
+template<typename Tp>
+struct remove_const { typedef Tp type; };
+
+template<typename Tp>
+struct remove_const<const Tp> { typedef Tp type; };
+
+template<typename Tp>
+struct remove_volatile { typedef Tp type; };
+
+template<typename Tp>
+struct remove_volatile<volatile Tp> { typedef Tp type; };
+
+template<typename Tp>
+struct remove_cv {
+    typedef typename remove_const<typename remove_volatile<Tp>::type>::type type;
+};
+
+template<typename Tp>
+struct remove_reference { typedef Tp type; };
+
+template<typename Tp>
+struct remove_reference<Tp&> { typedef Tp type; };
+
+// is_void
+template<typename Tp> struct is_void_helper: public false_value {};
+template<> struct is_void_helper<void>: public true_value {};
+template<typename Tp> struct is_void: public is_void_helper<typename remove_cv<Tp>::type> {};
+
+// is_same
+template<typename Tp0, typename Tp1> struct is_same_helper: public false_value {};
+template<typename Tp> struct is_same_helper<Tp, Tp>: public true_value {};
+template<typename Tp0, typename Tp1> struct is_same: public is_same_helper<typename remove_cv<Tp0>::type, typename remove_cv<Tp1>::type> {};
+
+}
 
 int main(void) {
-
-    std::cout << std::is_void<void>::value << std::endl;
-    std::cout << std::is_same<void, int>::value << std::endl;
-    std::cout << std::is_same<void, void>::value << std::endl;
-
+    std::cout << type_traits::is_same<int, int>::value << std::endl;
+    std::cout << type_traits::is_same<int, double>::value << std::endl;
     return 0;
-}
+};
