@@ -1,33 +1,35 @@
 #include <iostream>
 
 namespace test {
+    class test {
+    public:
+        test();
+        ~test();
+    };
+
 namespace {
     enum {
         BLUE = 0,
         RED  = 1,
     };
 
-    class test {
-    public:
-        test();
-        ~test();
-    };
+    void print(void) {
+        std::cout << "hello world" << std::endl;
+    }
 }
 }
 
-test::test::test() {
-    std::cout << "test constrctor" << std::endl;
-}
-test::test::~test() {
-    std::cout << "test destrctor" << std::endl;
-}
+test::test::test() {}
+test::test::~test() {}
 
-using namespace test;
+using test::test;
+using test::print;
 
 int main(void) {
-    int v = ::RED;
+    int v = test::RED;
     test::test t;
     std::cout << v << std::endl;
+    print();
 
     return 0;
 }
