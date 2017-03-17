@@ -98,6 +98,10 @@ int main(void) {
 #ifdef __VERSION__
     std::cout << "defined __VERSION__: " << __VERSION__ << std::endl;
 #endif
+#ifdef __USE_GNU
+    std::cout << "defined __USE_GNU: " << __USE_GNU << std::endl;
+#endif
+
 
     dump(test());
     std::cout << "dump end" << std::endl;
