@@ -3,6 +3,7 @@
 #include <functional>
 #include <memory>
 #include <cassert>
+#include <iterator>
 
 #include <ctime>
 #include <cstdlib>
@@ -15,6 +16,7 @@ int Random() {
     }
     return random() % 23;
 }
+
 
 template<typename Key, typename Value, typename KeyofValue,
     typename Compare, typename Alloc = std::allocator<Value>>
@@ -29,7 +31,15 @@ struct identity: public std::unary_function<Tp, Tp> {
 
 template<typename Tp>
 void dump(const Tp& v) {
+    // typedef _Rb_tree_iterator<value_type> iterator;
+    typedef typename Tp::iterator iterator;
+    // typedef _Rb_tree_const_iterator<value_type> const_iterator;
     typedef typename Tp::const_iterator const_iterator;
+    // typedef std::reverse_iterator<iterator> reverse_iterator;
+    typedef typename Tp::reverse_iterator reverse_iterator;
+    // typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
+    typedef typename Tp::const_reverse_iterator const_reverse_iterator;
+
     for (const_iterator iter = v.begin(); iter != v.end(); iter++) {
         std::cout << *iter << " ";
     }
