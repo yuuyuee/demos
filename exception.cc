@@ -1,36 +1,39 @@
 #include <iostream>
-#include <exception>    // declared the exception, bad_exception
-#include <new>          // declared the bad_alloc
-#include <typeinfo>     // declared the bad_cast, bad_typeid
-#include <functional>   // declared the bad_function_call
-#include <memory>       // declared the bad_weak_ptr in shared_ptr.h
+#include <string>
+#include <exception>
+
+// class exception
+//      class logic_error: public exception
+//          class domain_error: public logic_error
+//          class invalid_argument: public logic_error
+//          class length_error: public logic_error
+//          class out_of_range: public logic_error
+//      class rumtime_error: public exception
+//          class range_error: public runtime_error
+//          class overflow_error: public runtime_error
+//          class underflow_error: public runtime_error
+
+template<typename Tp>
+void What(const std::string& title, const Tp& e) {
+    std::cout << title << ": " << e.what() << std::endl;
+}
 
 int main(void) {
-    std::exception exp;
+    What("std::exception", std::exception());
 
-    std::bad_exception be;
-    std::bad_alloc ba;
-    std::bad_cast bc;
-    std::bad_typeid bt;
-    std::bad_function_call bfc;
-    std::bad_weak_ptr bwp;
-#if 0
-    std::bad_logic_error ble;
-    std::bad_runtime_error bre;
-#endif
+    What("\tstd::logic_error", std::logic_error("std::logic_error"));
+    What("\t\tstd::domain_error", std::domain_error("std::domain_error"));
+    What("\t\tstd::invalid_error", std::invalid_argument("std::invalid_argument"));
+    What("\t\tstd::length_error", std::length_error("std::invalid_argument"));
+    What("\t\tstd::out_of_range", std::out_of_range("std::out_of_range"));
 
-    std::cout << "exception.what(): " << exp.what() << std::endl;
+    What("\tstd::runtime_error", std::runtime_error("std::runtime_error"));
+    What("\t\tstd::range_error", std::range_error("std::range_error"));
+    What("\t\tstd::overflow_error", std::overflow_error("std::overflow_error"));
+    What("\t\tstd::underflow_error", std::underflow_error("std::underflow_error"));
 
-    std::cout << "bad_exception.what(): " << be.what() << std::endl;
-    std::cout << "bad_alloc.what(): " << ba.what() << std::endl;
-    std::cout << "bad_cast.what(): " << bc.what() << std::endl;
-    std::cout << "bad_typeid.what(): " << bt.what() << std::endl;
-    std::cout << "bad_function_call.what(): " << bfc.what() << std::endl;
-    std::cout << "bad_weak_ptr.what(): " << bwp.what() << std::endl;
-#if 0
-    std::cout << "bad_logic_error.what(): " << ble.what() << std::endl;
-    std::cout << "bad_runtime_error.what(): " << bre.what() << std::endl;
-#endif
+    int num = std::uncaught_exceptions();
+    std::cout << num << std::endl;
 
     return 0;
 }

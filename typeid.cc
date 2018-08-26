@@ -6,6 +6,7 @@ struct test {
     Tp v;
     template<typename Tp1>
         bool cmp(const test<Tp1>& t) {
+            std::cout << typeid(v).name() << std::endl;
             return typeid(v) == typeid(t.v);
         }
 };
