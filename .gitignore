@@ -1,3 +1,6 @@
+# Prerequisites
+*.d
+
 # Compiled Object files
 *.slo
 *.lo
@@ -27,3 +30,8 @@
 *.exe
 *.out
 *.app
+
+# Eclipse CDT project files
+.project
+.cproject
+/.settings
