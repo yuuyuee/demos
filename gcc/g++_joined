@@ -1,0 +1,257 @@
+The following options take joined arguments:
+  --assert=                   This switch lacks documentation
+  --define-macro=             This switch lacks documentation
+  --dump=                     This switch lacks documentation
+  --help=<class>              Display descriptions of a specific class of options.  <class> is one or more of optimizers, target, warnings, undocumented, params
+  --imacros=                  This switch lacks documentation
+  --include-directory-after=  This switch lacks documentation
+  --include-directory=        This switch lacks documentation
+  --include-prefix=           This switch lacks documentation
+  --include-with-prefix-after= This switch lacks documentation
+  --include-with-prefix-before= This switch lacks documentation
+  --include-with-prefix=      This switch lacks documentation
+  --include=                  This switch lacks documentation
+  --output-class-directory=   This switch lacks documentation
+  --output-pch=               This switch lacks documentation
+  --output=                   This switch lacks documentation
+  --param=                    This switch lacks documentation
+  --resource=                 This switch lacks documentation
+  --undefine-macro=           This switch lacks documentation
+  -A<question>=<answer>       Assert the <answer> to <question>.  Putting '-' before <question> disables the <answer> to <question>
+  -D<macro>[=<val>]           Define a <macro> with <val> as its value.  If just <macro> is given, <val> is taken to be 1
+  -F <dir>                    Add <dir> to the end of the main framework include path
+  -I <dir>                    Add <dir> to the end of the main include path
+  -J<directory>               Put MODULE files in 'directory'
+  -L                          This switch lacks documentation
+  -MF <file>                  Write dependency output to the given file
+  -MQ <target>                Add a MAKE-quoted target
+  -MT <target>                Add an unquoted target
+  -O<number>                  Set optimization level to <number>
+  -U<macro>                   Undefine <macro>
+  -Wabi=                      Warn about things that change between the current -fabi-version and the specified version
+  -Warray-bounds=             Warn if an array is accessed out of bounds
+  -Werror=                    Treat specified warning as error
+  -Wformat=                   Warn about printf/scanf/strftime/strfmon format string anomalies
+  -Wframe-larger-than=<number> Warn if a function's stack frame requires more than <number> bytes
+  -Wlarger-than-              This switch lacks documentation
+  -Wlarger-than=<number>      Warn if an object is larger than <number> bytes
+  -Wnormalized=<none|id|nfc|nfkc> Warn about non-normalised Unicode strings
+  -Wstack-usage=              Warn if stack usage might be larger than specified amount
+  -Wstrict-aliasing=          Warn about code which might break strict aliasing rules
+  -Wstrict-overflow=          Warn about optimizations that assume that signed overflow is undefined
+  -aux-info=                  This switch lacks documentation
+  -cpp=                       This switch lacks documentation
+  -d<letters>                 Enable dumps from specific passes of the compiler
+  --CLASSPATH                 Deprecated; use --classpath instead
+  -fRTS=                      Select the runtime
+  -fXf=                       -fXf=<filename> Write JSON file to <filename>
+  -fabi-compat-version=       The version of the C++ ABI used for -Wabi warnings and link compatibility aliases
+  -fabi-version=              The version of the C++ ABI in use
+  -fada-spec-parent=          -fada-spec-parent=unit  Dump Ada specs as child units of given parent
+  -falign-functions=          This switch lacks documentation
+  -falign-jumps=              This switch lacks documentation
+  -falign-labels=             This switch lacks documentation
+  -falign-loops=              This switch lacks documentation
+  -fasan-shadow-offset=<number> Use custom shadow memory offset.
+  -fassume-compiled=          This switch lacks documentation
+  -fauto-profile=             Use sample profile information for call graph node weights. The profile file is specified in the argument.
+  -fblas-matmul-limit=<n>     Size of the smallest matrix for which matmul will use BLAS
+  --bootclasspath=<path>      Replace system path
+  -fbounds-check=[on|safeonly|off] Turn array bounds checks on, in @safe code only, or off.
+  -fbuiltin-                  This switch lacks documentation
+  -fcall-saved-<register>     Mark <register> as being preserved across functions
+  -fcall-used-<register>      Mark <register> as being corrupted by function calls
+  -fcheck=[...]               Specify which runtime checks are to be performed
+  --classpath=<path>          Set class path
+  -fcoarray=<none|single|lib> Specify which coarray parallelization should be used
+  -fcompare-debug[=<opts>]    Compile with and without e.g. -gtoggle, and compare the final-insns dump
+  -fcompile-resource=         This switch lacks documentation
+  -fconst-string-class=<name> Use class <name> for constant strings
+  -fconstexpr-depth=<number>  Specify maximum constexpr recursion depth
+  -fconvert=                  -fconvert=<big-endian|little-endian|native|swap> The endianness used for unformatted files.
+  -fdbg-cnt=<counter>:<limit>[,<counter>:<limit>,...] Set the debug counter limit.   
+  -fdebug-prefix-map=         Map one directory name to another in debug information
+  -fdebug=                    -fdebug,-fdebug=<level>,-fdebug=<ident> Compile in debug code, code <= level, or code identified by ident
+  -fdeps=                     -fdeps=<filename> Write module dependencies to filename
+  -fdiagnostics-color=[never|always|auto] Colorize diagnostics
+  -fdiagnostics-show-location=[once|every-line] How often to emit source location at the beginning of line-wrapped diagnostics
+  -fdisable-                  -fdisable-[tree|rtl|ipa]-<pass>=range1+range2 disables an optimization pass
+  -fdisable-assertions=       This switch lacks documentation
+  -fdoc-dir=                  -fdoc-dir=<docdir> Write documentation file to docdir directory
+  -fdoc-file=                 -fdoc-file=<filename> Write documentation file to filename
+  -fdoc-inc=                  -fdoc-inc=<filename> Include a Ddoc macro file
+  -fdump-<type>               Dump various compiler internals to a file
+  -fdump-final-insns=filename Dump to filename the insns at the end of translation
+  -fdump-go-spec=filename     Write all declarations to file as Go code
+  -femit-struct-debug-detailed=<spec-list> Detailed reduced debug info for structs
+  -fenable-                   -fenable-[tree|rtl|ipa]-<pass>=range1+range2 enables an optimization pass
+  -fenable-assertions=        This switch lacks documentation
+  --encoding=<encoding>       Choose input encoding (defaults from your locale)
+  -fexcess-precision=[fast|standard] Specify handling of excess floating-point precision
+  -fexec-charset=<cset>       Convert all strings and character constants to character set <cset>
+  --extdirs=<path>            Set the extension directory path
+  -ffixed-<register>          Mark <register> as being unavailable to the compiler
+  -ffixed-line-length-<n>     Use n as character line width in fixed mode
+  -ffp-contract=              -ffp-contract=[off|on|fast] Perform floating-point expression contraction.
+  -ffpe-summary=[...]         Print summary of floating point exceptions
+  -ffpe-trap=[...]            Stop on following floating point exceptions
+  -ffree-line-length-<n>      Use n as character line width in free mode
+  -fgo-dump-<type>            Dump Go frontend internal information
+  -fgo-optimize-<type>        Turn on optimization passes in the frontend
+  -fgo-pkgpath=<string>       Set Go package path
+  -fgo-prefix=<string>        Set package-specific prefix for exported Go names
+  -fgo-relative-import-path=  -fgo-relative-import-path=<path> Treat a relative import as relative to path
+  -fhelp=                     This switch lacks documentation
+  -finit-character=<n>        Initialize local character variables to ASCII value n
+  -finit-integer=<n>          Initialize local integer variables to n
+  -finit-logical=<true|false> Initialize local logical variables
+  -finit-real=<zero|snan|nan|inf|-inf> Initialize local real variables
+  -finline-limit-             This switch lacks documentation
+  -finline-limit=<number>     Limit the size of inlined functions to <number>
+  -finput-charset=<cset>      Specify the default character set for source files
+  -finstrument-functions-exclude-file-list= -finstrument-functions-exclude-file-list=filename,...  Do not instrument functions listed in files
+  -finstrument-functions-exclude-function-list= -finstrument-functions-exclude-function-list=name,...  Do not instrument listed functions
+  -fintfc-dir=                -fintfc-dir=<dir> Write D interface files to directory <dir>
+  -fintfc-file=               -fintfc-file=<filename> Write D interface file to <filename>
+  -fintrinsic-modules-path=   Specify where to find the compiled intrinsic modules
+  -fira-algorithm=            -fira-algorithm=[CB|priority] Set the used IRA algorithm
+  -fira-region=               -fira-region=[one|all|mixed] Set regions for IRA
+  -fira-verbose=<number>      Control IRA's level of diagnostic messages.
+  -fvisibility=[private|protected|public|package] Set the default symbol visibility
+  -flto-compression-level=<number> Use zlib compression level <number> for IL
+  -flto-partition=            Specify the algorithm to partition symbols and vars at linktime
+  -flto=                      Link-time optimization with number of parallel jobs or jobserver.
+  -fltrans-output-list=       Specify a file to which a list of files output by LTRANS is written.
+  -fmake-deps=                -fmake-deps=<file> Write makefile dependency output to the given file
+  -fmake-mdeps=               Like -fmake-deps=<file> but ignore system modules
+  -fmax-array-constructor=<n> Maximum number of objects in an array constructor
+  -fmax-errors=<number>       Maximum number of errors to report
+  -fmax-identifier-length=<n> Maximum identifier length
+  -fmax-stack-var-size=<n>    Size in bytes of the largest array that will be put on the stack
+  -fmax-subrecord-length=<n>  Maximum length for subrecords
+  -fmessage-length=<number>   Limit diagnostics to <number> characters per line.  0 suppresses line-wrapping
+  -fname-mangling-version-    This switch lacks documentation
+  -fobjc-abi-version=         Specify which ABI to use for Objective-C family code and meta-data generation.
+  -foffload-abi=              -foffload-abi=[lp64|ilp32]     Set the ABI to use in an offload compiler
+  -foffload=                  -foffload=<targets>=<options>  Specify offloading targets and options for them
+  -fonly=                     Process all modules specified on the command line, but only generate code for the module specified by the argument
+  -fopt-info[-<type>=filename] Dump compiler optimization details
+  -foutput-class-dir=         This switch lacks documentation
+  -fpack-struct=<number>      Set initial maximum structure member alignment
+  -fplugin-arg-<name>-<key>[=<value>] Specify argument <key>=<value> for plugin <name>
+  -fplugin=                   Specify a plugin to load
+  -fprofile-dir=              Set the top-level directory for storing the profile data. The default is 'pwd'.
+  -fprofile-generate=         Enable common options for generating profile info for profile feedback directed optimizations, and set -fprofile-dir=
+  -fprofile-use=              Enable common options for performing profile feedback directed optimizations, and set -fprofile-dir=
+  -frandom-seed=<string>      Make compile reproducible using <string>
+  -fresolution=               The resolution file
+  -fsanitize-recover=         After diagnosing undefined behavior attempt to continue execution
+  -fsanitize=                 Select what to sanitize
+  -fsched-stalled-insns-dep=<number> Set dependence distance checking in premature scheduling of queued insns
+  -fsched-stalled-insns=<number> Set number of queued insns that can be prematurely scheduled
+  -fsched-verbose=<number>    Set the verbosity level of the scheduler
+  -fsimd-cost-model=          Specifies the vectorization cost model for code marked with a simd directive
+  -fsource-filename=          This switch lacks documentation
+  -fsource=                   Set the source language version
+  -fstack-check=[no|generic|specific] Insert stack checking code into the program
+  -fstack-limit-register=<register> Trap if the stack goes past <register>
+  -fstack-limit-symbol=<name> Trap if the stack goes past symbol <name>
+  -fstack-reuse=              -fstack-reuse=[all|named_vars|none] Set stack reuse level for local variables.
+  -ftabstop=<number>          Distance between tab stops for column reporting
+  -ftarget=                   Set the target VM version
+  -ftemplate-backtrace-limit= Set the maximum number of template instantiation notes for a single warning or error
+  -ftemplate-depth-           This switch lacks documentation
+  -ftemplate-depth=<number>   Specify maximum template instantiation depth
+  -ftls-model=[global-dynamic|local-dynamic|initial-exec|local-exec] Set the default thread-local storage code generation model
+  -ftrack-macro-expansion     This switch lacks documentation
+  -ftrack-macro-expansion=    -ftrack-macro-expansion=<0|1|2>  Track locations of tokens coming from macro expansion and display them in error messages
+  -ftree-parallelize-loops=   Enable automatic parallelization of loops
+  -ftree-vectorizer-verbose=  Does nothing.  Preserved for backward compatibility.
+  -fvect-cost-model=          Specifies the cost model for vectorization
+  -fversion=                  -fversion=<level|ident> Compile in version code >= <level> or identified by <ident>
+  -fvisibility=[default|internal|hidden|protected] Set the default symbol visibility
+  -fvtable-verify=            Validate vtable pointers before using them.
+  -fwide-exec-charset=<cset>  Convert all wide strings and character constants to character set <cset>
+  -fwpa=                      Whole program analysis (WPA) mode with number of parallel jobs specified.
+  -g                          Generate debug information in default format
+  -gant                       Catch typos
+  -gcoff                      Generate debug information in COFF format
+  -gdwarf                     Generate debug information in default version of DWARF format
+  -gdwarf-                    Generate debug information in DWARF v2 (or later) format
+  -ggdb                       Generate debug information in default extended format
+  -gnat<options>              Specify options to GNAT
+  -gstabs                     Generate debug information in STABS format
+  -gstabs+                    Generate debug information in extended STABS format
+  -gvms                       Generate debug information in VMS format
+  -gxcoff                     Generate debug information in XCOFF format
+  -gxcoff+                    Generate debug information in extended XCOFF format
+  -gz=<format>                Generate compressed debug sections in format <format>
+  -idirafter <dir>            Add <dir> to the end of the system include path
+  -imacros <file>             Accept definition of macros in <file>
+  -imultiarch <dir>           Set <dir> to be the multiarch include subdirectory
+  -imultilib <dir>            Set <dir> to be the multilib include subdirectory
+  -include <file>             Include the contents of <file> before other files
+  -iplugindir=<dir>           Set <dir> to be the default plugin directory
+  -iprefix <path>             Specify <path> as a prefix for next two options
+  -iquote <dir>               Add <dir> to the end of the quote include path
+  -isysroot <dir>             Set <dir> to be the system root directory
+  -isystem <dir>              Add <dir> to the start of the system include path
+  -iwithprefix <dir>          Add <dir> to the end of the system include path
+  -iwithprefixbefore <dir>    Add <dir> to the end of the main include path
+  -mabi=                      Generate code that conforms to the given ABI
+  -maddress-mode=             Use given address mode
+  -malign-data=               Use the given data alignment
+  -malign-functions=          Function starts are aligned to this power of 2
+  -malign-jumps=              Jump targets are aligned to this power of 2
+  -malign-loops=              Loop code aligned to this power of 2
+  -march=                     Generate code for given CPU
+  -masm=                      Use given assembler dialect
+  -mbranch-cost=              Branches are this expensive (1-5, arbitrary units)
+  -mcmodel=                   Use given x86-64 code model
+  -mcpu=                      This switch lacks documentation
+  -mfpmath=                   Generate floating point mathematics using given instruction set
+  -mincoming-stack-boundary=  Assume incoming stack aligned to this power of 2
+  -mlarge-data-threshold=     Data greater than given threshold will go into .ldata section in x86-64 medium model
+  -mmemcpy-strategy=          Specify memcpy expansion strategy when expected size is known
+  -mmemset-strategy=          Specify memset expansion strategy when expected size is known
+  -mpreferred-stack-boundary= Attempt to keep stack aligned to this power of 2
+  -mrecip=                    Control generation of reciprocal estimates.
+  -mregparm=                  Number of registers used to pass integer arguments
+  -mstack-protector-guard=    Use given stack-protector guard
+  -mstringop-strategy=        Chose strategy to generate stringop using
+  -mtls-dialect=              Use given thread-local storage dialect
+  -mtune-ctrl=                Fine grain control of tune features
+  -mtune=                     Schedule code for given CPU
+  -mveclibabi=                Vector library ABI to use
+  -o <file>                   Place output into <file>
+
+  Known assembler dialects (for use with the -masm-dialect= option):
+    att intel
+
+  Known ABIs (for use with the -mabi= option):
+    ms sysv
+
+  Known code models (for use with the -mcmodel= option):
+    32 kernel large medium small
+
+  Valid arguments to -mfpmath=:
+    387 387+sse 387,sse both sse sse+387 sse,387
+
+  Known data alignment choices (for use with the -malign-data= option):
+    abi cacheline compat
+
+  Known vectorization library ABIs (for use with the -mveclibabi= option):
+    acml svml
+
+  Known address mode (for use with the -maddress-mode= option):
+    long short
+
+  Known stack protector guard (for use with the -mstack-protector-guard= option):
+    global tls
+
+  Valid arguments to -mstringop-strategy=:
+    byte_loop libcall loop rep_4byte rep_8byte rep_byte unrolled_loop vector_loop
+
+  Known TLS dialects (for use with the -mtls-dialect= option):
+    gnu gnu2
+

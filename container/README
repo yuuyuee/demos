@@ -1,0 +1,30 @@
+Sequence containers:
+implement data structures which can be accessed sequentially
+    array: static contaiguous array
+    vector: dynamic contiguous array
+    deque: double-ended queue
+    forward_list: singly-linked list
+    list: doubly-linked list
+
+Associative containers:
+implement sorted data structures that can be quickly searched(O(log n))
+complexity
+    set: collection of unique keys, sorted by keys
+    map: collection of key-value pairs, sorted by keys , keys are unique
+    multiset: collection of keys, sorted by keys
+    multmap: collection of key-value pairs, sorted by keys
+
+Unordered associative containers:
+implement unsorted(hashed) data structures that can be quickly
+searched(O(1)) amortized, O(n) worst-case complexity.
+    unordered_set: collection of unique keys, hashed by keys
+    unordered_map: collection of key-value pairs, hashed by keys, keys are
+                   unique
+    unordered_multiset: collection of keys. hashed by keys.
+    unordered_multimap: collection of key-value pairs, hashed by keys.
+
+Container adaptors:
+provide a different interface for sequential containers
+    stack: adapts a container to provide staick(LIFO data structure)
+    queue: adapts a container to provide queue(FIFO datga structure)
+    priority_queue: adapts a container to provide priority queue.

@@ -1,0 +1,42 @@
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+<<<<<<< HEAD
+.cproject
+.project
+=======
+# Eclipse CDT project files
+.project
+.cproject
+>>>>>>> 41b0cdc026df773ac91fd7a50f6a4205cb0c7772
+/.settings
