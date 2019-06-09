@@ -6,7 +6,11 @@ subdir  := $(filter-out $(unexpect),$(subdir))
 
 CC      = g++
 CFLAGS  += -std=c++11 -Wall -Werror -g -c
+<<<<<<< HEAD
 LDFLAGS += -lpthread
+=======
+LDFLAGS +=
+>>>>>>> 41b0cdc026df773ac91fd7a50f6a4205cb0c7772
 
 define make-target
 $1: $1.o

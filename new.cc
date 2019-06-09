@@ -1,4 +1,5 @@
 #include <iostream>
+<<<<<<< HEAD
 #include <cassert>
 #include <new>
 
@@ -57,5 +58,19 @@ int main(void) {
     ::operator delete(mem0);
     ::operator delete(mem1, std::nothrow);
 
+=======
+#include <new>
+#include <exception>
+
+int main(void) {
+    size_t size = (size_t)-1;
+    void *p;
+    try {
+        p = ::operator new(size);
+    }catch(std::exception &e) {
+        std::cout << e.what() << std::endl;
+    }
+    ::operator delete(p);
+>>>>>>> 41b0cdc026df773ac91fd7a50f6a4205cb0c7772
     return 0;
 }

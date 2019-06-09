@@ -1,5 +1,6 @@
 #include <iostream>
 <<<<<<< HEAD
+<<<<<<< HEAD
 #include <algorithm>
 
 #include <cxxabi.h>
@@ -44,6 +45,11 @@ int main() {
 #endif
   std::cout << int(char()) << std::endl;
   std::cout << ((-1)%10) << std::endl;
+=======
+
+int main() {
+  std::cout << "hello world" << std::endl;
+>>>>>>> 41b0cdc026df773ac91fd7a50f6a4205cb0c7772
 =======
 
 int main() {

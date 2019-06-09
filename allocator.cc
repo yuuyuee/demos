@@ -1,4 +1,5 @@
 #include <iostream>
+<<<<<<< HEAD
 #include <utility> // for std::addressof, std::forward
 #include <memory> // for GCC implement allocator
 #include <new> // for operator new/delete
@@ -76,5 +77,39 @@ int main(void) {
         iv.push_back(i);
     for (auto i = 0; i < 10; i++)
         std::cout << iv[i] << std::endl;
+=======
+#include <memory>
+
+class test {
+public:
+    test(int n): v(n) {
+        std::cout << "constructor" << std::endl;
+    }
+    ~test() {
+        std::cout << "destructor" << std::endl;
+    }
+
+    void print() {
+        std::cout << "v = " << v << std::endl;
+    }
+
+private:
+    int v;
+};
+
+#ifndef nullptr
+#   define nullptr NULL
+#endif
+
+int main(void) {
+    std::allocator<class test> alloc;
+    class test *tp = nullptr;
+
+    tp = alloc.allocate(sizeof(*tp), 0);
+    alloc.construct(tp, 100);
+    tp->print();
+    alloc.destroy(tp);
+    alloc.deallocate(tp, sizeof(*tp) + sizeof(int));
+>>>>>>> 41b0cdc026df773ac91fd7a50f6a4205cb0c7772
     return 0;
 }

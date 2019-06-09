@@ -1,6 +1,7 @@
 #include <iostream>
 #include <functional>
 
+<<<<<<< HEAD
 class base {
 public:
     base() = default;
@@ -37,5 +38,17 @@ int main(void) {
 
     std::reference_wrapper<base> br = std::ref(b);
     br.get().f1(100);
+=======
+template<typename Tp, typename FuncTp = std::less<Tp> >
+bool min(const Tp &lhl, const Tp &rhl, FuncTp func = FuncTp()) {
+    return func(lhl, rhl);
+}
+
+int main(void) {
+    const int a = 20, b = 10;
+    std::cout << min(10, 20) << std::endl;
+    std::cout << min(a, b) << std::endl;
+
+>>>>>>> 41b0cdc026df773ac91fd7a50f6a4205cb0c7772
     return 0;
 }

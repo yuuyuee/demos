@@ -1,9 +1,15 @@
+<<<<<<< HEAD
 #define _GLIBCXX_CONCEPT_CHECKS 1
 
 #include <iostream>
 #include <exception>
 #include <new>
 #include <memory>
+=======
+#include <iostream>
+#include <exception>
+#include <new>
+>>>>>>> 41b0cdc026df773ac91fd7a50f6a4205cb0c7772
 
 template<typename _Tp>
 class new_allocator {

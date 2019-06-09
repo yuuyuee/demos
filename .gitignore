@@ -32,8 +32,14 @@
 *.app
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 .cproject
 .project
+=======
+# Eclipse CDT project files
+.project
+.cproject
+>>>>>>> 41b0cdc026df773ac91fd7a50f6a4205cb0c7772
 =======
 # Eclipse CDT project files
 .project
