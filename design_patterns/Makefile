@@ -9,7 +9,7 @@ CXX ?= g++
 CPPFLAGS += -D_GNU_SOURCE
 CFLAGS += $(CPPFLAGS) -std=c99 -Wall -Wextra -g -rdynamic
 CXXFLAGS += $(CPPFLAGS) -std=c++11 -Wall -Wextra -g -rdynamic
-LDFLAGS += -lpthread -lz -lcurl -lcrypt
+LDFLAGS += -lpthread
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c -o $@ $^
