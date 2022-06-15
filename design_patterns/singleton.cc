@@ -1,8 +1,11 @@
-
-#include <iostream>
 #include <cassert>
 #include <type_traits>
-#include <mutex>  // NOLINT
+#if defined(USE_PTHREAD)
+# include <pthread.h>
+#else
+# include <mutex>
+# include <thread>
+#endif
 
 template <typename Tp>
 class Singleton {
@@ -13,12 +16,20 @@ class Singleton {
 
  private:
   static inline void Init();
+#if defined(USE_PTHREAD)
+  static pthread_once_t flag;
+#else
   static std::once_flag flag;
+#endif
   static Tp* ptr;
 };
 
 template <typename Tp>
+#if defined(USE_PTHREAD)
+pthread_once_t Singleton<Tp>::flag = PTHREAD_ONCE_INIT;
+#else
 std::once_flag Singleton<Tp>::flag;
+#endif
 
 template <typename Tp>
 Tp* Singleton<Tp>::ptr = nullptr;
@@ -31,11 +42,16 @@ void Singleton<Tp>::Init() {
 
 template <typename Tp>
 Tp* Singleton<Tp>::Instance() {
+#if defined(USE_PTHREAD)
+  pthread_once(&flag, Init);
+#else
   std::call_once(flag, Init);
+#endif
   return ptr;
 }
 
-
+//////////////////////////////////////////////////////////////////////
+#include <iostream>
 int main() {
   *(Singleton<int>::Instance()) = 100;
   std::cout <<*(Singleton<int>::Instance()) << std::endl;
