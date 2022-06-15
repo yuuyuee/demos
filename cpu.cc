@@ -16,11 +16,6 @@ int main(void) {
     memcpy(vendor, &ebx, 4);
     memcpy(vendor + 4, &edx, 4);
     memcpy(vendor + 8, &ecx, 4);
-<<<<<<< HEAD
-    vendor[12] = 0;
-
-=======
->>>>>>> 41b0cdc026df773ac91fd7a50f6a4205cb0c7772
     CPUID(eax, ebx, ecx, edx, 1);
     int family = (eax >> 8) & 0x0f;
     int model = (eax >> 4) & 0x0f;
@@ -32,12 +27,5 @@ int main(void) {
     std::cout << "family: " << family << std::endl;
     std::cout << "model: " << model << std::endl;
     std::cout << "vendor: " << vendor << std::endl;
-<<<<<<< HEAD
-    unsigned int val = 0;
-    while (true) {
-      val += 100;
-    }
-=======
->>>>>>> 41b0cdc026df773ac91fd7a50f6a4205cb0c7772
     return 0;
 }

@@ -4,10 +4,10 @@
 class Test {
 public:
     Test() { std::cout << "Default construct" << std::endl; }
-    Test(const Test& __attribute__((unused)) t) { std::cout << "Copy construct" << std::endl; }
-    Test(Test&& __attribute__((unused)) t) { std::cout << "Move Copy construct" << std::endl; }
-    const Test& operator=(const Test& __attribute__((unused)) t) { std::cout << "Assign construct" << std::endl; return *this; }
-    const Test& operator=(Test&& __attribute__((unused)) t) { std::cout << "Move assign construct" << std::endl; return *this; }
+    Test(const Test&) { std::cout << "Copy construct" << std::endl; }
+    Test(Test&&) { std::cout << "Move Copy construct" << std::endl; }
+    const Test& operator=(const Test&) { std::cout << "Assign construct" << std::endl; return *this; }
+    const Test& operator=(Test&&) { std::cout << "Move assign construct" << std::endl; return *this; }
 };
 
 void RefFunc(const Test&) {

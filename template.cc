@@ -1,33 +1,24 @@
 #include <iostream>
-#include <utility>
 
-struct Derive {
-    Derive() { std::cout << "derive constructor" << std::endl; }
-    ~Derive() { std::cout << "derive destructor" << std::endl; }
-
-    int func(int i) const { std::cout << "derive args: " << i << std::endl; return i + 1; }
-private:
-    Derive(const Derive&);
-    void operator=(const Derive&);
+template <typename _Tp, bool v = true>
+struct Compare {
+    bool operator()(const _Tp&, const _Tp&) {
+        std::cout << "Template operator()" << std::endl;
+        return true;
+    }
 };
 
-void f(const Derive& d) {
-    d.func(100);
-}
-
-template<typename Tp, size_t N>
-void DumpArray(const Tp* v) {
-    std::cout << "Array: ";
-    for (size_t i = 0; i < N; ++i) {
-        std::cout << v[i] << " ";
+template <typename _Tp>
+struct Compare<_Tp, false> {
+    bool operator()(const _Tp&, const _Tp&) {
+        std::cout << "Partial template operator()" << std::endl;
+        return false;
     }
-    std::cout << std::endl;
-}
+};
 
 int main(void) {
-    Derive p;
-    f(p);
-    int iv[10];
-    DumpArray<int, 10>(iv);
+    Compare<int, false>{}(0, 0);
+    Compare<int, true>{}(0, 0);
+    Compare<int>{}(0, 0);
     return 0;
 }

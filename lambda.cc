@@ -15,23 +15,6 @@
 // return type: optional
 // function body: must
 
-<<<<<<< HEAD
-#include <iostream>
-
-class test {
-public:
-    test() = default;
-    ~test() = default;
-
-    void ops() { std::cout << "test::ops()" << std::endl; }
-    void run_ops() {
-        auto f = [this](){this->ops();};
-        f();
-    }
-};
-
-=======
->>>>>>> 41b0cdc026df773ac91fd7a50f6a4205cb0c7772
 int main(void) {
     int a = 20, b = 10;
     auto Min = [](int a, int b) {return a < b ? a : b;};
@@ -47,10 +30,5 @@ int main(void) {
     std::cout << "Sub(20, 10): " << Sub() << std::endl;
     std::cout << "Mul(20, 10): " << Mul() << std::endl;
     std::cout << "Div(20, 10): " << Div() << std::endl;
-<<<<<<< HEAD
-    test().run_ops();
-=======
-
->>>>>>> 41b0cdc026df773ac91fd7a50f6a4205cb0c7772
     return 0;
 }
