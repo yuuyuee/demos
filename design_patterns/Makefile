@@ -31,7 +31,7 @@ CXX_SUFFIX = _cxx
 define make_c_target
 $1: $1$(CC_SUFFIX).o
 	$Q$(CC) -o $$@ $$^ $(LDFLAGS)
-	$@rm -f $$^
+	$Qrm -f $$^
 
 $1_clean:
 	-$Qrm -f $1
@@ -40,7 +40,7 @@ endef
 define make_cxx_target
 $1: $1$(CXX_SUFFIX).o
 	$Q$(CXX) -o $$@ $$^ $(LDFLAGS)
-	$@rm -f $$^
+	$Qrm -f $$^
 
 $1_clean:
 	-$Qrm -f $1

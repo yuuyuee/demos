@@ -2,8 +2,7 @@
 #include "product.h"
 
 class AbstractFactory {
-public:
-    AbstractFactory() {}
+ public:
     virtual ~AbstractFactory() {}
 
     virtual ProductA* CreateProductA() = 0;
@@ -11,15 +10,17 @@ public:
 };
 
 class ConcreteFactory1: public AbstractFactory {
-public:
+ public:
     ~ConcreteFactory1() {}
 
     ProductA* CreateProductA() {
-        return new ConcreteProductA1;
+      // business logic in here
+      return new ConcreteProductA1;
     }
 
     ProductB* CreateProductB() {
-        return new ConcreteProductB1;
+      // business logic in here
+      return new ConcreteProductB1;
     }
 
     static ConcreteFactory1* Instance() {
@@ -28,23 +29,24 @@ public:
         return instance_;
     }
 
-private:
-    ConcreteFactory1() {}
+ private:
     static ConcreteFactory1* instance_;
 };
 
 ConcreteFactory1* ConcreteFactory1::instance_ = 0;
 
 class ConcreteFactory2: public AbstractFactory {
-public:
+ public:
     ~ConcreteFactory2() {}
 
     ProductA* CreateProductA() {
-        return new ConcreteProductA2;
+      // business logic in here
+      return new ConcreteProductA2;
     }
 
     ProductB* CreateProductB() {
-        return new ConcreteProductB2;
+      // business logic in here
+      return new ConcreteProductB2;
     }
 
     static ConcreteFactory2* Instance() {
@@ -53,8 +55,7 @@ public:
         return instance_;
     }
 
-private:
-    ConcreteFactory2() {}
+ private:
     static ConcreteFactory2* instance_;
 };
 

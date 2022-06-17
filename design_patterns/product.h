@@ -5,7 +5,6 @@
 
 class ProductA {
  public:
-   ProductA() {}
    virtual ~ProductA() {}
 
    virtual void OperateA() const = 0;
@@ -13,8 +12,6 @@ class ProductA {
 
 class ConcreteProductA1: public ProductA {
  public:
-   ConcreteProductA1(): ProductA() {}
-   virtual ~ConcreteProductA1() {}
 
    virtual void OperateA() const {
      std::cout << "ConcreteProductA1::OperateA" << std::endl;
@@ -23,7 +20,6 @@ class ConcreteProductA1: public ProductA {
 
 class ConcreteProductA2: public ProductA {
  public:
-   ConcreteProductA2(): ProductA() {}
    virtual ~ConcreteProductA2() {}
 
    virtual void OperateA() const {
@@ -33,7 +29,6 @@ class ConcreteProductA2: public ProductA {
 
 class ProductB {
  public:
-   ProductB() {}
    virtual ~ProductB() {}
 
    virtual void OperateB() const = 0;
@@ -41,7 +36,6 @@ class ProductB {
 
 class ConcreteProductB1: public ProductB {
  public:
-   ConcreteProductB1(): ProductB() {}
    virtual ~ConcreteProductB1() {}
 
    virtual void OperateB() const {
