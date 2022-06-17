@@ -29,6 +29,7 @@ Tp* Singleton<Tp>::Instance() {
 }
 
 //////////////////////////////////////////////////////////////////////
+
 #include <thread>
 #include <iostream>
 int main() {
