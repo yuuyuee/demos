@@ -33,6 +33,9 @@ int bloom_filter_test(struct bloom_filter* object, const void* buffer, size_t le
 void bloom_filter_add_hash(struct bloom_filter* object, size_t hashval);
 void bloom_filter_add(struct bloom_filter* object, const void* buffer, size_t len);
 
+typedef void (*Visitor)(uint64_t m, uint64_t n, uint64_t k, double pfp);
+void bloom_filter_visit(struct bloom_filter* object, Visitor visitor);
+
 #ifdef __cplusplus
 }
 #endif

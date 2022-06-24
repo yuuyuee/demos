@@ -89,7 +89,7 @@ struct bloom_filter* bloom_filter_alloc(uint64_t entries, double pfp) {
   /* bpe = |-lnp / ln2^2| */
   bf->bpe = fabs(-(log(pfp) / 0.480453013918201));  /* ln(2)^2 */
   bf->n = entries;
-  /* m/n = -lnp / ln2^2 */
+  /* m/n = -lnp / ln2 */
   bf->m = (uint64_t)ceil(entries * bf->bpe);
   bf->k = (uint64_t)ceil(bf->bpe * 0.693147180559945);  /* ln(2) */
   bf->bytes = bf->m + 7 / 8;
@@ -142,4 +142,8 @@ void bloom_filter_add_hash(struct bloom_filter* object, size_t hashval) {
 void bloom_filter_add(struct bloom_filter* object, const void* buffer, size_t len) {
   uint32_t hashval = bloom_filter_hash(buffer, len);
   bloom_filter_add_hash(object, hashval);
+}
+
+void bloom_filter_visit(struct bloom_filter* object, Visitor visitor) {
+  visitor(object->m, object->n, object->k, object->pfp);
 }
