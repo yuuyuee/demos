@@ -117,7 +117,7 @@ void bloom_filter_free(struct bloom_filter* object) {
   free(object);
 }
 
-int bloom_filter_lookup_hash(struct bloom_filter* object, uint64_t hashval) {
+int bloom_filter_lookup_hash(const struct bloom_filter* object, uint64_t hashval) {
   const uint64_t delta = (hashval << 32) | (hashval >> 32);
   for (uint64_t i = 0; i < object->k; ++i) {
     const uint64_t pos = hashval % object->m;
@@ -128,7 +128,7 @@ int bloom_filter_lookup_hash(struct bloom_filter* object, uint64_t hashval) {
   return 1;
 }
 
-int bloom_filter_lookup(struct bloom_filter* object, const void* buffer, size_t len) {
+int bloom_filter_lookup(const struct bloom_filter* object, const void* buffer, size_t len) {
   uint32_t hashval = bloom_filter_hash(buffer, len);
   return bloom_filter_lookup_hash(object, hashval);
 }
