@@ -24,8 +24,8 @@ int main(int argc, char* argv[]) {
     return -1;
   }
 
-  bloom_filter_add(bf, "hello", 5);
-  bloom_filter_add(bf, "world", 5);
+  bloom_filter_insert(bf, "hello", 5);
+  bloom_filter_insert(bf, "world", 5);
 
   double got = 0.0;
   double total = 0.0;
@@ -33,7 +33,7 @@ int main(int argc, char* argv[]) {
   char key[] = {'\0', '\0'};
   for (char c = 'a'; c <= 'z'; ++c) {
     key[0] = c;
-    if (bloom_filter_test(bf, key, 1)) {
+    if (bloom_filter_lookup(bf, key, 1)) {
       printf("%c already exists or collision\n", c);
       ++got;
     } else {
@@ -43,7 +43,7 @@ int main(int argc, char* argv[]) {
   }
   printf("Probability of false positive: %f\n", got / total);
 
-  if (bloom_filter_test(bf, "world", 5)) {
+  if (bloom_filter_lookup(bf, "world", 5)) {
     printf("world already exists\n");
   }
 

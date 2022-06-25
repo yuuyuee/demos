@@ -26,12 +26,12 @@ void bloom_filter_free(struct bloom_filter* object);
     0 - element was not present.
     1 - indicates if element had already been added previously or a collision
         (probability of false positive). */
-int bloom_filter_test_hash(struct bloom_filter* object, size_t hashval);
-int bloom_filter_test(struct bloom_filter* object, const void* buffer, size_t len);
+int bloom_filter_lookup_hash(struct bloom_filter* object, size_t hashval);
+int bloom_filter_lookup(struct bloom_filter* object, const void* buffer, size_t len);
 
 /* Add the given element to the bloom filter.*/
-void bloom_filter_add_hash(struct bloom_filter* object, size_t hashval);
-void bloom_filter_add(struct bloom_filter* object, const void* buffer, size_t len);
+void bloom_filter_insert_hash(struct bloom_filter* object, size_t hashval);
+void bloom_filter_insert(struct bloom_filter* object, const void* buffer, size_t len);
 
 typedef void (*Visitor)(uint64_t m, uint64_t n, uint64_t k, double pfp);
 void bloom_filter_visit(struct bloom_filter* object, Visitor visitor);
