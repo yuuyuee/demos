@@ -7,9 +7,12 @@
 #include <float.h>
 #include <assert.h>
 
-#define SWITCH_FAILLTHROUGH \
-  do { \
-  } while (0)
+#define FALLTHROUGH_TAG_IMPL(tag)         \
+  goto _FALLTHROUGHT_TAG_ ## tag; break;  \
+  _FALLTHROUGHT_TAG_ ## tag:
+
+#define FALLTHROUGH_TAG(tag) FALLTHROUGH_TAG_IMPL(tag)
+#define FALLTHROUGH FALLTHROUGH_TAG(__LINE__)
 
 // MurmurHash64A, 64-bit versions, by Austin Appleby
 static uint64_t MurmurHash64A(const void* buffer, size_t len, uint64_t seed) {
@@ -34,22 +37,22 @@ static uint64_t MurmurHash64A(const void* buffer, size_t len, uint64_t seed) {
   case 7:
     h ^= ((uint64_t)ptr[6]) << 48;
     // Many compilers and analysis tools will flag fall through as a warning.
-    SWITCH_FAILLTHROUGH;
+    FALLTHROUGH;
   case 6:
     h ^= ((uint64_t)ptr[5]) << 40;
-    SWITCH_FAILLTHROUGH;
+    FALLTHROUGH;
   case 5:
     h ^= ((uint64_t)ptr[4]) << 32;
-    SWITCH_FAILLTHROUGH;
+    FALLTHROUGH;
   case 4:
     h ^= ((uint64_t)ptr[3]) << 24;
-    SWITCH_FAILLTHROUGH;
+    FALLTHROUGH;
   case 3:
     h ^= ((uint64_t)ptr[2]) << 16;
-    SWITCH_FAILLTHROUGH;
+    FALLTHROUGH;
   case 2:
     h ^= ((uint64_t)ptr[1]) << 8;
-    SWITCH_FAILLTHROUGH;
+    FALLTHROUGH;
   case 1:
     h ^= ((uint64_t)ptr[0]);
     h *= m;
