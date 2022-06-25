@@ -70,7 +70,7 @@ uint64_t bloom_filter_hash(const void* buffer, size_t len) {
 }
 
 struct bloom_filter {
-  double pfp;
+  double p;
   double bpe;
   uint64_t n;
   uint64_t m;
@@ -80,17 +80,17 @@ struct bloom_filter {
   unsigned char* array;
 };
 
-struct bloom_filter* bloom_filter_alloc(uint64_t entries, double pfp) {
-  if (pfp <= 0 || pfp >= 1.0 || entries == 0)
+struct bloom_filter* bloom_filter_alloc(uint64_t entries, double p) {
+  if (p <= 0 || p >= 1.0 || entries == 0)
     return NULL;
 
   struct bloom_filter* bf = malloc(sizeof(*bf));
   if (!bf)
     goto alloc_failed;
 
-  bf->pfp = pfp;
+  bf->p = p;
   /* bpe = |-lnp / ln2^2| */
-  bf->bpe = fabs(-(log(pfp) / 0.480453013918201));  /* ln(2)^2 */
+  bf->bpe = fabs(-(log(p) / 0.480453013918201));  /* ln(2)^2 */
   bf->n = entries;
   /* m/n = -lnp / ln2 */
   bf->m = (uint64_t)ceil(entries * bf->bpe);
@@ -133,7 +133,7 @@ int bloom_filter_lookup(const struct bloom_filter* object, const void* buffer, s
   return bloom_filter_lookup_hash(object, hashval);
 }
 
-void bloom_filter_insert_hash(struct bloom_filter* object, size_t hashval) {
+void bloom_filter_insert_hash(struct bloom_filter* object, uint64_t hashval) {
   const uint64_t delta = (hashval << 32) | (hashval >> 32);
   for (uint64_t i = 0; i < object->k; ++i) {
     const uint64_t pos = hashval % object->m;
@@ -148,5 +148,5 @@ void bloom_filter_insert(struct bloom_filter* object, const void* buffer, size_t
 }
 
 void bloom_filter_visit(struct bloom_filter* object, Visitor visitor) {
-  visitor(object->m, object->n, object->k, object->pfp);
+  visitor(object->bytes, object->n, object->k, object->p);
 }

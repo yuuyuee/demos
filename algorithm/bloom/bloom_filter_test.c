@@ -5,20 +5,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void bloom_filter_visitor(uint64_t m, uint64_t n, uint64_t k, double pfp) {
-  printf("m = %lu n = %lu k = %lu pfp = %f\n", m, n, k, pfp);
+void bloom_filter_visitor(uint64_t bytes, uint64_t entries, uint64_t hashs, double p) {
+  printf("bytes = %lu entries = %lu hashs = %lu p = %f\n", bytes, entries, hashs, p);
 }
 
 int main(int argc, char* argv[]) {
   uint64_t n = 80000000;
-  double pfp = 0.0001;
+  double p = 0.0001;
 
   if (argc == 3) {
     n = atol(argv[1]);
-    pfp = atof(argv[2]);
+    p = atof(argv[2]);
   }
 
-  struct bloom_filter* bf = bloom_filter_alloc(n, pfp);
+  struct bloom_filter* bf = bloom_filter_alloc(n, p);
   if (!bf) {
     printf("bloom_filter_alloc failed\n");
     return -1;
