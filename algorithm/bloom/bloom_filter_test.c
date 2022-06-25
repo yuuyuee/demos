@@ -6,7 +6,7 @@
 #include <stdlib.h>
 
 void bloom_filter_visitor(uint64_t bytes, uint64_t entries, uint64_t hashs, double p) {
-  printf("bytes = %lu entries = %lu hashs = %lu p = %f\n", bytes, entries, hashs, p);
+  printf("bytes = %lu entries = %lu hashs = %lu p = %f%%\n", bytes, entries, hashs, p);
 }
 
 int main(int argc, char* argv[]) {
@@ -41,7 +41,7 @@ int main(int argc, char* argv[]) {
     }
     ++total;
   }
-  printf("Probability of false positive: %f\n", got / total);
+  printf("Probability of false positive: %f%%\n", got / total * 100);
 
   if (bloom_filter_lookup(bf, "world", 5)) {
     printf("world already exists\n");
