@@ -91,7 +91,6 @@ struct bloom_filter* bloom_filter_alloc(uint64_t entries, double p) {
     goto alloc_failed;
 
   bf->p = p;
-  //bf->bpe = fabs(-(log(p) / 0.480453013918201));  /* ln(2)^2 */
   bf->bpe = -log(p) / 0.480453013918201;  /* ln(2)^2 */
   bf->n = entries;
   bf->m = (uint64_t)ceil(entries * bf->bpe);
