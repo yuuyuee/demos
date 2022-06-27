@@ -19,11 +19,11 @@ static uint64_t MurmurHash64A(const void* buffer, size_t len, uint64_t seed) {
   const uint64_t m = 0xc6a4a7935bd1e995ULL;
   const int r = 47;
   uint64_t h = seed ^ (len * m);
-  const uint64_t *ptr = (const uint64_t *)buffer;
-  const uint64_t *end = ptr + (len / 8);
+  const uint8_t *ptr = (const uint8_t *)buffer;
+  const uint8_t *end = ptr + len / 8 * 8;
 
   while (ptr != end) {
-    uint64_t k = *ptr++;
+    uint64_t k = *(const uint64_t*)ptr;
 
     k *= m;
     k ^= k >> r;
@@ -31,6 +31,8 @@ static uint64_t MurmurHash64A(const void* buffer, size_t len, uint64_t seed) {
 
     h ^= k;
     h *= m;
+
+    ptr += 8;
   }
 
   switch (len % 8) {
