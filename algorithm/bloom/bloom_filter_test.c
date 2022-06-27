@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 
 void bloom_filter_visitor(uint64_t bytes, uint64_t entries, uint64_t hashs, double p) {
   printf("bytes = %lu entries = %lu hashs = %lu p = %f%%\n", bytes, entries, hashs, p);
@@ -27,25 +28,8 @@ int main(int argc, char* argv[]) {
   bloom_filter_insert(bf, "hello", 5);
   bloom_filter_insert(bf, "world", 5);
 
-  double got = 0.0;
-  double total = 0.0;
-
-  char key[] = {'\0', '\0'};
-  for (char c = 'a'; c <= 'z'; ++c) {
-    key[0] = c;
-    if (bloom_filter_lookup(bf, key, 1)) {
-      printf("%c already exists or collision\n", c);
-      ++got;
-    } else {
-      printf("%c not exists\n", c);
-    }
-    ++total;
-  }
-  printf("Probability of false positive: %f%%\n", got / total * 100);
-
-  if (bloom_filter_lookup(bf, "world", 5)) {
-    printf("world already exists\n");
-  }
+  assert(bloom_filter_lookup(bf, "world", 5) == 1);
+  assert(bloom_filter_lookup(bf, "foo", 3) == 0);
 
   bloom_filter_visit(bf, bloom_filter_visitor);
   bloom_filter_free(bf);
