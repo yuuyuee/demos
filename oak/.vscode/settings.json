@@ -1,0 +1,6 @@
+{
+  "files.associations": {
+    "version.h": "c",
+    "cstddef": "cpp"
+  }
+}
