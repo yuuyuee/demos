@@ -1,3 +1,5 @@
+// Copyright 2022 The Oak Authors.
+
 #ifndef OAK_VERSION_H_
 #define OAK_VERSION_H_
 
@@ -14,4 +16,4 @@
 unsigned int oak_version();
 const char* oak_version_str();
 
-#endif /* TOOLKITS_VERSION_H_ */
+#endif /* OAK_VERSION_H_ */

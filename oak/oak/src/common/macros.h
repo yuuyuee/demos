@@ -1,8 +1,9 @@
+// Copyright 2022 The Oak Authors.
 
-#ifndef OAK_INTERNAL_MACROS_H_
-#define OAK_INTERNAL_MACROS_H_
+#ifndef OAK_COMMON_MACROS_H_
+#define OAK_COMMON_MACROS_H_
 
-#define OAK_ARRAY_SIZE(a) \
+#define OAK_ARRAYSIZE(a) \
   (sizeof(a) / sizeof(*(a)) * !(sizeof(a) % sizeof(*(a))))
 
 #include "oak/internal/compiler.h"
@@ -22,4 +23,4 @@
 #define OAK_CACHELINE_SIZE 64
 #define OAK_ATTR_CACHELINE_ALIGNED OAK_ATTR_ALIGNED(OAK_CACHELINE_SIZE)
 
-#endif /* OAK_INTERNAL_MACROS_H_ */
+#endif  // OAK_COMMON_MACROS_H_
