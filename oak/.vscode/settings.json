@@ -1,6 +1,8 @@
 {
   "files.associations": {
     "version.h": "c",
-    "cstddef": "cpp"
+    "cstddef": "cpp",
+    "cstring": "cpp",
+    "type_traits": "cpp"
   }
 }

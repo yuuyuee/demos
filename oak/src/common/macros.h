@@ -3,8 +3,18 @@
 #ifndef OAK_COMMON_MACROS_H_
 #define OAK_COMMON_MACROS_H_
 
-#define OAK_ARRAYSIZE(a) \
-  (sizeof(a) / sizeof(*(a)) * !(sizeof(a) % sizeof(*(a))))
+#define OAK_ARRAYSIZE(a) (sizeof(ArraySizeHelper(a)))
+
+#include <stddef.h>  // size_t
+
+namespace oak {
+namespace macros_internal {
+
+template <typename T, size_t N, typename R = char (&)[N]>
+R ArraySizeHelper(const T (&)[N]);
+
+}  // namespace macros_internal
+}  // namespace oak
 
 #include "oak/internal/compiler.h"
 
@@ -13,17 +23,19 @@
 #define OAK_ATTR_DEPRECATED(...)  __attribute__((deprecated(__VA_ARGS__)))
 #define OAK_ATTR_MAYBE_UNUSED     __attribute__((unused))
 #define OAK_ATTR_NODISCARD        __attribute__((warn_unused_result))
-#define OAK_ATTR_ALIGNED(size)    __attribute__((aligned(size)))
+#define OAK_ATTR_ALIGNED(n)       __attribute__((aligned(n)))
 #define OAK_ATTR_PACKED           __attribute__((packed))
-#define OAK_EXPECT_TRUE(x)        __builtin_expect(!!(x), 1)
-#define OAK_EXPECT_FALSE(x)       __builtin_expect(!!(x), 0)
+#define OAK_ATTR_PRINTF(index, first) \
+                                  __attribute__((__format__(__printf__, index, first)))
+// Use '__builtin_unreachable' rather than abort because which program reaches
+// on has undefined behavior, and the compliler may optimize accordingly.
+#define OAK_UNREACHABLE_CODE()    __builtin_unreachable()
+#define OAK_EXPECT_TRUE(x)        __builtin_expect(false || (x), true)
+#define OAK_EXPECT_FALSE(x)       __builtin_expect(false || (x), true)
 
 #include "oak/internal/platform.h"
 
 #define OAK_CACHELINE_SIZE 64
 #define OAK_ATTR_CACHELINE_ALIGNED OAK_ATTR_ALIGNED(OAK_CACHELINE_SIZE)
-
-#define OAK_NAMESPACE_BEGIN namespace oak {
-#define OAK_NAMESPACE_END }  // namespace oak
 
 #endif  // OAK_COMMON_MACROS_H_
