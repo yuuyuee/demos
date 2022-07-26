@@ -23,4 +23,7 @@
 #define OAK_CACHELINE_SIZE 64
 #define OAK_ATTR_CACHELINE_ALIGNED OAK_ATTR_ALIGNED(OAK_CACHELINE_SIZE)
 
+#define OAK_NAMESPACE_BEGIN namespace oak {
+#define OAK_NAMESPACE_END }  // namespace oak
+
 #endif  // OAK_COMMON_MACROS_H_
