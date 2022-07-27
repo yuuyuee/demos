@@ -25,7 +25,7 @@ OAK_MAKE_LOG_LEVEL_OPS(LogLevel, <=)
 OAK_MAKE_LOG_LEVEL_OPS(LogLevel, ==)
 OAK_MAKE_LOG_LEVEL_OPS(LogLevel, !=)
 
-constexpr const char* StrLogLevel(oak::LogLevel level) {
+constexpr const char* LogLevelName(oak::LogLevel level) {
   return level == LogLevel::OAK_LOG_LEVEL_DEBUG
       ? "DEBUG"
       : level == LogLevel::OAK_LOG_LEVEL_INFO
@@ -36,6 +36,19 @@ constexpr const char* StrLogLevel(oak::LogLevel level) {
                   ? "ERROR"
                   : level == LogLevel::OAK_LOG_LEVEL_FATAL
                     ? "FATAL" : "UNKNOWN";
+}
+
+constexpr const char* LogLevelShortName(oak::LogLevel level) {
+  return level == LogLevel::OAK_LOG_LEVEL_DEBUG
+      ? "D"
+      : level == LogLevel::OAK_LOG_LEVEL_INFO
+          ? "I"
+          : level == LogLevel::OAK_LOG_LEVEL_WARNING
+              ? "W"
+              : level == LogLevel::OAK_LOG_LEVEL_ERROR
+                  ? "E"
+                  : level == LogLevel::OAK_LOG_LEVEL_FATAL
+                    ? "F" : "U";
 }
 
 }  // namespace oak

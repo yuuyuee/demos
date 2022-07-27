@@ -3,6 +3,7 @@
     "version.h": "c",
     "cstddef": "cpp",
     "cstring": "cpp",
-    "type_traits": "cpp"
+    "type_traits": "cpp",
+    "atomic": "cpp"
   }
 }
