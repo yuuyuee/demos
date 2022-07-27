@@ -3,6 +3,7 @@
 #ifndef COMMON_PANIC_H_
 #define COMMON_PANIC_H_
 
+#include <stdlib.h>
 #include "common/macros.h"
 
 // OAK_PANIC
@@ -16,7 +17,7 @@
       oak::panic_internal::Basename(                      \
           __FILE__, sizeof(__FILE__) - 1),                \
       __LINE__, __VA_ARGS__);                             \
-  OAK_UNREACHABLE_CODE();                                 \
+  abort();                                                \
 } while (0)
 
 #define OAK_CHECK(cond, ...) do {                         \

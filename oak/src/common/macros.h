@@ -27,9 +27,6 @@ R ArraySizeHelper(const T (&)[N]);
 #define OAK_ATTR_PACKED           __attribute__((packed))
 #define OAK_ATTR_PRINTF(index, first) \
                                   __attribute__((__format__(__printf__, index, first)))
-// Use '__builtin_unreachable' rather than abort because which program reaches
-// on has undefined behavior, and the compliler may optimize accordingly.
-#define OAK_UNREACHABLE_CODE()    __builtin_unreachable()
 #define OAK_EXPECT_TRUE(x)        __builtin_expect(false || (x), true)
 #define OAK_EXPECT_FALSE(x)       __builtin_expect(false || (x), true)
 

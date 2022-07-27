@@ -12,7 +12,7 @@ size_t Format(char* buffer, size_t len, const char* fmt, ...)
     OAK_ATTR_PRINTF(3, 4);
 
 // vsnprintf called from below function.
-size_t Format(char* buffer, size_t len, const char* fmt, va_list ap)
+size_t VFormat(char* buffer, size_t len, const char* fmt, va_list ap)
     OAK_ATTR_PRINTF(3, 0);
 
 }  // namespace oak

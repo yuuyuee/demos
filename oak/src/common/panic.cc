@@ -23,7 +23,7 @@ void PanicLog(const char* fname, int line, const char* fmt, ...) {
 
   va_list ap;
   va_start(ap, fmt);
-  size_t len = Format(buffer + plen, kBufferSize - plen, fmt, ap);
+  size_t len = VFormat(buffer + plen, kBufferSize - plen, fmt, ap);
   if (len > kBufferSize - plen) {
     memcpy(buffer + kBufferSize - kTailMsgSize, kTailMsg, kTailMsgSize);
     // snprintf and vsnprintf wite at most size bytes inlcude
