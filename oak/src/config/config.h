@@ -4,5 +4,13 @@
 #define OAK_CONFIG_CONFIG_H_
 
 
+namespace oak {
+
+struct Config {
+
+};
+}  // namespace oak
+
+
 
 #endif  // OAK_CONFIG_CONFIG_H_

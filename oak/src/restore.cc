@@ -1,6 +1,6 @@
 // Copyright 2022 The Oak Authors.
 
-#include "oak/config/config.h"
+#include "config/config.h"
 
 void LoadConfig();
 void CreateShareMemory();
