@@ -17,12 +17,6 @@ R ArraySizeHelper(const T (&)[N]);
 
 #include "oak/internal/compiler.h"
 
-#if defined(__has_include)
-# define OAK_HAS_INCLUDE(x) __has_include(x)
-#else
-# define OAK_HAS_INCLUDE(x) 0
-#endif
-
 #if defined(__has_builtin)
 # define OAK_HAS_BUILTIN(x) __has_builtin(x)
 #else
@@ -35,12 +29,6 @@ R ArraySizeHelper(const T (&)[N]);
 # define OAK_HAS_ATTRIBUTE(x) 0
 #endif
 
-#if defined(__has_cpp_attribute)
-# define OAK_HAS_CPP_ATTRIBUTE(x) __has_cpp_attribute(x)
-#else
-# define OAK_HAS_CPP_ATTRIBUTE(x) 0
-#endif
-
 #if (defined(__GNUC__) && !defined(__clang__)) || \
     OAK_HAS_ATTRIBUTE(always_inline)
 # define OAK_ATTR_ALWAYS_INLINE inline __attribute__((always_inline))
@@ -48,7 +36,9 @@ R ArraySizeHelper(const T (&)[N]);
 # define OAK_ATTR_ALWAYS_INLINE
 #endif
 
-#if (defined(__GNUC__) && !defined(__clang__)) || \
+#if defined(__cplusplus) && __cplusplus >= 201103L
+# define OAK_ATTR_NORETURN [[noreturn]]
+#elif (defined(__GNUC__) && !defined(__clang__)) || \
     OAK_HAS_ATTRIBUTE(noreturn)
 # define OAK_ATTR_NORETURN __attribute__((noreturn))
 #else
@@ -69,7 +59,9 @@ R ArraySizeHelper(const T (&)[N]);
 # define OAK_ATTR_MAYBE_UNUSED
 #endif
 
-#if (defined(__GNUC__) && !defined(__clang__)) || \
+#if defined(__cplusplus) && __cplusplus >= 201103L
+# define OAK_ATTR_NODISCARD [[nodiscard]]
+#elif (defined(__GNUC__) && !defined(__clang__)) || \
     OAK_HAS_ATTRIBUTE(warn_unused_result)
 # define OAK_ATTR_NODISCARD __attribute__((warn_unused_result))
 #else
