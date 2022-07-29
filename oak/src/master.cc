@@ -5,8 +5,7 @@
 #include "oak/internal/compiler.h"
 #include "oak/internal/platform.h"
 #include "logging/logging.h"
-
-// #include "config/config.h"
+#include "config/config.h"
 
 using namespace oak;
 
