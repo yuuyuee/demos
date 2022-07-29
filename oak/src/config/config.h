@@ -6,14 +6,12 @@
 namespace oak {
 
 struct WorkConfig {
-
-  int state
+  int state;
 };
 
 #define OAK_MAX_WORKERS 128
 
 struct Config {
-
   WorkConfig work_config[OAK_MAX_WORKERS];
 };
 

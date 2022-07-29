@@ -4,7 +4,8 @@
 
 #include "oak/internal/compiler.h"
 #include "oak/internal/platform.h"
-#include "common/trivial.h"
+#include "logging/logging.h"
+
 //#include "config/config.h"
 
 using namespace oak;
@@ -21,13 +22,16 @@ void EventLoop();
 
 int main(int argc, char* argv[]) {
   if (AlreadyRunning(argv[0])) {
-    OAK_RAWLOG("%s already running.\n", argv[0]);
+    OAK_ERROR("Already running.\n");
     return 0;
   }
 
-/*
+  // Logger handler = {};
+  // RegisterLogger(handler);
+
   LoadConfig();
 
+/*
   CreateShareMemory();
   CreateWorkers();
   WaitWrokersReady();

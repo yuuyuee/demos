@@ -1,7 +1,7 @@
 
 all:
 	g++ -std=c++11 -Wall -Wextra -g -rdynamic -Iinclude -Isrc -o master \
-			src/master.cc src/common/trivial.cc
+			src/master.cc src/common/trivial.cc src/logging/logging.cc
 
 stringpiece_test:
 	g++ -std=c++11 -Wall -Wextra -g -rdynamic -Iinclude -Isrc -Ithird_party/gtest -o stringpiece_test \
