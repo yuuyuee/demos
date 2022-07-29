@@ -1,6 +1,6 @@
 // Copyright 2022 The Oak Authors.
 
-#include "common/panic.h"
+#include "common/trivial.h"
 
 #include <unistd.h>
 #include <string.h>
@@ -8,18 +8,18 @@
 #include "common/fmt.h"
 
 namespace oak {
-namespace panic_internal {
+namespace trivial_internal {
 namespace {
 
 constexpr const char kTailMsg[] = "... (message truncated)\n";
 constexpr const size_t kTailMsgSize = sizeof(kTailMsg);
 }  // anonymous namespace
 
-void PanicLog(const char* fname, int line, const char* fmt, ...) {
+void RawLog(const char* fname, int line, const char* fmt, ...) {
   constexpr const size_t kBufferSize = 2048;
   char buffer[kBufferSize];
 
-  size_t plen = Format(buffer, kBufferSize, "P [%s:%d] ", fname, line);
+  size_t plen = Format(buffer, kBufferSize, "P [%s:%d %s] ", fname, line);
 
   va_list ap;
   va_start(ap, fmt);
@@ -35,5 +35,5 @@ void PanicLog(const char* fname, int line, const char* fmt, ...) {
   write(STDERR_FILENO, buffer, plen + len);
 }
 
-}  // namespace panic_internal
+}  // namespace trivial_internal
 }  // namespace oak

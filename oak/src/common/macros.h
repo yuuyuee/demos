@@ -23,6 +23,12 @@ R ArraySizeHelper(const T (&)[N]);
 # define OAK_HAS_INCLUDE(x) 0
 #endif
 
+#if defined(__has_builtin)
+# define OAK_HAS_BUILTIN(x) __has_builtin(x)
+#else
+# define OAK_HAS_BUILTIN(x) 0
+#endif
+
 #if defined(__has_attribute)
 # define OAK_HAS_ATTRIBUTE(x) __has_attribute(x)
 #else
@@ -95,9 +101,19 @@ R ArraySizeHelper(const T (&)[N]);
 #define OAK_EXPECT_TRUE(x) __builtin_expect(false || (x), true)
 #define OAK_EXPECT_FALSE(x) __builtin_expect(false || (x), true)
 
+// Unreachable code which has undefined behavior and the compiler
+// may optimize accordingly.
+#if (defined(__GNUC__) && !defined(__clang__)) ||   \
+    OAK_HAS_BUILTIN(__builtin_unreachable)
+# define OAK_UNREACHABLE() __builtin_unreachable()
+#else
+# include <cstdlib>
+# define OAK_UNREACHABLE() abort()
+#endif
+
 #include "oak/internal/platform.h"
 
 #define OAK_CACHELINE_SIZE 64
-#define OAK_ATTR_CACHELINE_ALIGNED OAK_ATTR_ALIGNED(OAK_CACHELINE_SIZE)
+#define OAK_CACHELINE_ALIGNED OAK_ATTR_ALIGNED(OAK_CACHELINE_SIZE)
 
 #endif  // OAK_COMMON_MACROS_H_

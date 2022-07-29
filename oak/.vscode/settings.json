@@ -4,6 +4,7 @@
     "cstddef": "cpp",
     "cstring": "cpp",
     "type_traits": "cpp",
-    "atomic": "cpp"
+    "atomic": "cpp",
+    "cstdlib": "cpp"
   }
 }
