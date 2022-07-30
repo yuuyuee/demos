@@ -15,7 +15,7 @@ R ArraySizeHelper(const T (&)[N]);
 }  // namespace macros_internal
 }  // namespace oak
 
-#include "oak/internal/compiler.h"
+#include "oak/addons/internal/compiler.h"
 
 #if defined(__has_builtin)
 # define OAK_HAS_BUILTIN(x) __has_builtin(x)
@@ -103,7 +103,7 @@ R ArraySizeHelper(const T (&)[N]);
 # define OAK_UNREACHABLE() abort()
 #endif
 
-#include "oak/internal/platform.h"
+#include "oak/addons/internal/platform.h"
 
 #define OAK_CACHELINE_SIZE 64
 #define OAK_CACHELINE_ALIGNED OAK_ATTR_ALIGNED(OAK_CACHELINE_SIZE)

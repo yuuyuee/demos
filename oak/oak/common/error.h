@@ -1,5 +1,7 @@
 // Copyright 2022 The Oak Authors.
 
+#ifndef OAK_COMMON_ERROR_H_
+#define OAK_COMMON_ERROR_H_
 
 #define ERROR_MAP(XX) \
   XX(SUCCESS, "Success")
@@ -13,3 +15,5 @@ enum ErrorCode {
 };
 
 }  // namespace oak
+
+#endif  // OAK_COMMON_ERROR_H_

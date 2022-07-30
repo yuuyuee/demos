@@ -1,6 +1,6 @@
 // Copyright 2022 The Oak Authors.
 
-#include "config.h"
+#include "oak/config.h"
 
 namespace oak {
 

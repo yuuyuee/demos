@@ -3,7 +3,7 @@
 #ifndef OAK_COMMON_TRIVIAL_H_
 #define OAK_COMMON_TRIVIAL_H_
 
-#include "common/macros.h"
+#include "oak/common/macros.h"
 
 // This is are useful to call at any point during initialization,
 // they do not allocate memory or acquire locks, and are async-signal

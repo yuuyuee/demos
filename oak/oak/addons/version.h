@@ -1,7 +1,7 @@
 // Copyright 2022 The Oak Authors.
 
-#ifndef OAK_VERSION_H_
-#define OAK_VERSION_H_
+#ifndef OAK_ADDONS_VERSION_H_
+#define OAK_ADDONS_VERSION_H_
 
 #define OAK_VERSION_MAJOR 1
 #define OAK_VERSION_MINOR 0
@@ -21,4 +21,4 @@
     OAK_TO_STRING(OAK_VERSION_MINOR) "."  \
     OAK_TO_STRING(OAK_VERSION_PATCH)
 
-#endif /* OAK_VERSION_H_ */
+#endif  /* OAK_ADDONS_VERSION_H_ */

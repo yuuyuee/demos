@@ -9,9 +9,11 @@
 #include <limits>
 #include <ostream>
 #include <stdexcept>
+#include <utility>
+#include <algorithm>
 
-#include "common/trivial.h"
-#include "common/macros.h"
+#include "oak/common/trivial.h"
+#include "oak/common/macros.h"
 
 namespace oak {
 // The class template StringPiece describes an object that can refer to
@@ -81,7 +83,8 @@ class StringPieceImpl {
   // Element access
 
   // Return a const reference to the character at specified location pos.
-  // No bounds checking is performed, the behavior is undefined if pos >= size().
+  // No bounds checking is performed, the behavior is undefined if
+  // pos >= size().
   constexpr const_reference operator[](size_type pos) const {
     return OAK_ASSERT(pos < size()), ptr_[pos];
   }
@@ -160,7 +163,8 @@ class StringPieceImpl {
 
   // Returns a view of the substring[pos, pos + rcount), where rcount is the
   // smaller of count and size() - pos.
-  constexpr StringPieceImpl substr(size_type pos = 0, size_type n = npos) const {
+  constexpr StringPieceImpl substr(size_type pos = 0,
+                                   size_type n = npos) const {
     return StringPieceImpl(ptr_ + pos, n < len_ - pos ? n : len_ - pos);
   }
 
@@ -305,7 +309,8 @@ class StringPieceImpl {
   // @ch     character to searchc for
   // @return Position of the last occurence of any character of the substring,
   // or `npos' is no such character is found.
-  size_type find_last_of(StringPieceImpl s, size_type pos = npos) const noexcept;
+  size_type find_last_of(StringPieceImpl s,
+                         size_type pos = npos) const noexcept;
 
   size_type find_last_of(Char c, size_type pos = npos) const noexcept {
     return rfind(c, pos);
@@ -328,12 +333,13 @@ class StringPieceImpl {
   // @ch     character to searchc for
   // @return Position of the first character not equal to any character of
   // the substring, or `npos' is no such character is found.
-  size_type find_first_not_of(StringPieceImpl s, size_type pos = 0) const noexcept;
+  size_type find_first_not_of(StringPieceImpl s,
+                              size_type pos = 0) const noexcept;
 
   size_type find_first_not_of(Char c, size_type pos = 0) const noexcept;
 
   size_type find_first_not_of(const Char* s, size_type pos,
-      size_type count) const {
+                              size_type count) const {
     return find_first_not_of(StringPieceImpl(s, count), pos);
   }
 
@@ -585,7 +591,7 @@ constexpr bool operator>=(StringPiece lhs, StringPiece rhs) noexcept {
 
 namespace stringpiece_internal {
 template<typename Char, typename Traits>
-void WritePadding(std::basic_ostream<Char, Traits>& o, size_t pad) {
+void WritePadding(std::basic_ostream<Char, Traits>& o, size_t pad) { // NOLINT
   char fill_buf[32];
   memset(fill_buf, o.fill(), 32);
   while (pad) {
@@ -594,7 +600,7 @@ void WritePadding(std::basic_ostream<Char, Traits>& o, size_t pad) {
     pad -= n;
   }
 }
-} // namespace stringpiece_internal
+}  // namespace stringpiece_internal
 
 // IO Insertion Operator
 template<typename Char, typename Traits>

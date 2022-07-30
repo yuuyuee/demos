@@ -1,7 +1,11 @@
 // Copyright 2022 The Oak Authors.
 
-#ifndef OAK_INTERNAL_COMPILER_H_
-#define OAK_INTERNAL_COMPILER_H_
+#ifndef OAK_ADDONS_INTERNAL_COMPILER_H_
+#define OAK_ADDONS_INTERNAL_COMPILER_H_
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #if defined(__GNUC__) && !defined(__clang__)
 # define OAK_GCC_PREREQ(major, minor) \
@@ -34,4 +38,8 @@
 # error "This library requires glibc package."
 #endif
 
-#endif /* OAK_INTERNAL_COMPILER_H_ */
+#ifdef __cplusplus
+}
+#endif
+
+#endif  /* OAK_ADDONS_INTERNAL_COMPILER_H_ */

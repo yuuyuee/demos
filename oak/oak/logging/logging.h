@@ -3,8 +3,8 @@
 #ifndef OAK_LOGGING_LOGGING_H_
 #define OAK_LOGGING_LOGGING_H_
 
-#include "common/stringpiece.h"
-#include "logging/log_level.h"
+#include "oak/common/stringpiece.h"
+#include "oak/logging/log_level.h"
 
 #define OAK_LOG(level, ...)                           \
   oak::logging_internal::LogImpl(                     \

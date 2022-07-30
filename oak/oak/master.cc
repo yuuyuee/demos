@@ -2,12 +2,10 @@
 
 #include <unistd.h>
 
-#include "oak/internal/compiler.h"
-#include "oak/internal/platform.h"
-#include "logging/logging.h"
-#include "config/config.h"
-
-using namespace oak;
+#include "oak/addons/internal/compiler.h"
+#include "oak/addons/internal/platform.h"
+#include "oak/logging/logging.h"
+#include "oak/config.h"
 
 void LoadConfig();
 void CreateShareMemory();
@@ -20,7 +18,7 @@ void EventLoop();
 // the number of processes is configured in configuration.
 
 int main(int argc, char* argv[]) {
-  if (AlreadyRunning(argv[0])) {
+  if (oak::AlreadyRunning(argv[0])) {
     OAK_ERROR("Already running.\n");
     return 0;
   }
@@ -28,7 +26,7 @@ int main(int argc, char* argv[]) {
   // Logger handler = {};
   // RegisterLogger(handler);
 
-  LoadConfig();
+  // LoadConfig();
 
 /*
   CreateShareMemory();

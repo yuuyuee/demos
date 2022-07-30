@@ -1,9 +1,8 @@
 // Copyright 2022 The Oak Authors.
 
-#include "common/stringpiece.h"
+#include "oak/common/stringpiece.h"
 
 #include <map>
-#include <stdexcept>
 #include "gtest/gtest.h"
 
 TEST(StringViewTest, Ctor) {

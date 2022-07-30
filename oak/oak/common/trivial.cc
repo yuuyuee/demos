@@ -1,6 +1,6 @@
 // Copyright 2022 The Oak Authors.
 
-#include "common/trivial.h"
+#include "oak/common/trivial.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>

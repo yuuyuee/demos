@@ -1,6 +1,10 @@
 
-#ifndef OAK_INTERNAL_PLATFORM_H_
-#define OAK_INTERNAL_PLATFORM_H_
+#ifndef OAK_ADDONS_INTERNAL_PLATFORM_H_
+#define OAK_ADDONS_INTERNAL_PLATFORM_H_
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #if !defined(__linux__) && !defined(linux) && !defined(__linux)
 # error "This library requires linux operator system."
@@ -10,4 +14,8 @@
 # error "This library requires x86 architecture with 64-bit extensions."
 #endif
 
-#endif /* OAK_INTERNAL_PLATFORM_H_ */
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* OAK_ADDONS_INTERNAL_ */

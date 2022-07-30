@@ -1,9 +1,10 @@
 // Copyright 2022 The Oak Authors.
 
+#include "oak/logging/logging.h"
+
 #include <unistd.h>  // write
 #include <stdarg.h>
 #include <atomic>
-#include "logging/logging.h"
 
 namespace oak {
 namespace logging_internal {
@@ -11,11 +12,12 @@ namespace {
 
 constexpr const char kTailMsg[] = "... (message truncated)\n";
 constexpr const size_t kTailMsgSize = sizeof(kTailMsg);
-std::atomic<Logger> handler(DefaultLogger);
 
 void DefaultLogger(StringPiece msg) {
   write(STDERR_FILENO, msg.data(), msg.size());
 }
+
+std::atomic<Logger> kHandler(DefaultLogger);
 }  // anonymous namespace
 
 void LogImpl(LogLevel level, const char* fname, int line, const char* fmt, ...) {
@@ -36,13 +38,13 @@ void LogImpl(LogLevel level, const char* fname, int line, const char* fmt, ...) 
     len = kBufferSize - plen - 1;
   }
   va_end(ap);
-  Logger handler = logging_internal::handler.load(std::memory_order_acquire);
+  Logger handler = logging_internal::kHandler.load(std::memory_order_acquire);
   if (handler)
     handler({buffer, static_cast<size_t>(plen + len)});
 }
 }  // namespace logging_internal
 
 void RegisterLogger(Logger logger) {
-  logging_internal::handler.store(logger, std::memory_order_release);
+  logging_internal::kHandler.store(logger, std::memory_order_release);
 }
 }  // namespace oak
