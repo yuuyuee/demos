@@ -17,13 +17,14 @@ struct WorkConfig {
 };
 
 #define OAK_MAX_WORKERS 128
+#define OAK_MAX_PRONAME 128
 
 struct Config {
-  char config_path[PATH_MAX];
-  WorkConfig work_config[OAK_MAX_WORKERS];
+  bool multiple_process;
+
+  explicit Config(const char* fname);
 };
 
-int LoadConfig(const char* fname);
 }  // namespace oak
 
 #endif  // OAK_CONFIG_H_

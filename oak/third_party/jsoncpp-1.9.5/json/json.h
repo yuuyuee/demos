@@ -62,16 +62,11 @@ minor nuisance of being required to keep the above copyright notice
 and license text in the source code. Note also that by accepting the
 Public Domain "license" you can re-license your copy using whatever
 license you like.
-
 */
 
 // //////////////////////////////////////////////////////////////////////
 // End of content of file: LICENSE
 // //////////////////////////////////////////////////////////////////////
-
-
-
-
 
 #ifndef JSON_AMALGAMATED_H_INCLUDED
 # define JSON_AMALGAMATED_H_INCLUDED
@@ -99,9 +94,9 @@ license you like.
 #define JSONCPP_VERSION_MINOR 9
 #define JSONCPP_VERSION_PATCH 5
 #define JSONCPP_VERSION_QUALIFIER
-#define JSONCPP_VERSION_HEXA                                                   \
-  ((JSONCPP_VERSION_MAJOR << 24) | (JSONCPP_VERSION_MINOR << 16) |             \
-   (JSONCPP_VERSION_PATCH << 8))
+#define JSONCPP_VERSION_HEXA                                        \
+  ((JSONCPP_VERSION_MAJOR << 24) | (JSONCPP_VERSION_MINOR << 16) |  \
+  (JSONCPP_VERSION_PATCH << 8))
 
 #ifdef JSONCPP_USING_SECURE_MEMORY
 #undef JSONCPP_USING_SECURE_MEMORY
@@ -110,16 +105,11 @@ license you like.
 // If non-zero, the library zeroes any memory that it has allocated before
 // it frees its memory.
 
-#endif // JSON_VERSION_H_INCLUDED
+#endif  // JSON_VERSION_H_INCLUDED
 
 // //////////////////////////////////////////////////////////////////////
 // End of content of file: include/json/version.h
 // //////////////////////////////////////////////////////////////////////
-
-
-
-
-
 
 // //////////////////////////////////////////////////////////////////////
 // Beginning of content of file: include/json/allocator.h
@@ -140,7 +130,7 @@ license you like.
 
 namespace Json2 {
 template <typename T> class SecureAllocator {
-public:
+ public:
   // Type definitions
   using value_type = T;
   using pointer = T*;
@@ -195,7 +185,9 @@ public:
   // Boilerplate
   SecureAllocator() {}
   template <typename U> SecureAllocator(const SecureAllocator<U>&) {}
-  template <typename U> struct rebind { using other = SecureAllocator<U>; };
+  template <typename U> struct rebind {
+    using other = SecureAllocator<U>;
+  };
 };
 
 template <typename T, typename U>
@@ -208,20 +200,15 @@ bool operator!=(const SecureAllocator<T>&, const SecureAllocator<U>&) {
   return false;
 }
 
-} // namespace Json2
+}  // namespace Json2
 
 #pragma pack(pop)
 
-#endif // JSON_ALLOCATOR_H_INCLUDED
+#endif  // JSON_ALLOCATOR_H_INCLUDED
 
 // //////////////////////////////////////////////////////////////////////
 // End of content of file: include/json/allocator.h
 // //////////////////////////////////////////////////////////////////////
-
-
-
-
-
 
 // //////////////////////////////////////////////////////////////////////
 // Beginning of content of file: include/json/config.h
@@ -237,7 +224,7 @@ bool operator!=(const SecureAllocator<T>&, const SecureAllocator<U>&) {
 #include <cstddef>
 #include <cstdint>
 #include <istream>
-#include <memory>
+// #include <memory>
 #include <ostream>
 #include <sstream>
 #include <string>
@@ -266,22 +253,22 @@ bool operator!=(const SecureAllocator<T>&, const SecureAllocator<U>&) {
 #define JSONCPP_DISABLE_DLL_INTERFACE_WARNING
 #elif defined(__GNUC__) || defined(__clang__)
 #define JSON_API __attribute__((visibility("default")))
-#endif // if defined(_MSC_VER)
+#endif  // if defined(_MSC_VER)
 
 #elif defined(JSON_DLL)
 #if defined(_MSC_VER) || defined(__MINGW32__)
 #define JSON_API __declspec(dllimport)
 #define JSONCPP_DISABLE_DLL_INTERFACE_WARNING
-#endif // if defined(_MSC_VER)
-#endif // ifdef JSON_DLL_BUILD
+#endif  // if defined(_MSC_VER)
+#endif  // ifdef JSON_DLL_BUILD
 
 #if !defined(JSON_API)
 #define JSON_API
 #endif
 
 #if defined(_MSC_VER) && _MSC_VER < 1800
-#error                                                                         \
-    "ERROR:  Visual Studio 12 (2013) with _MSC_VER=1800 is the oldest supported compiler with sufficient C++11 capabilities"
+#error "ERROR:  Visual Studio 12 (2013) with _MSC_VER=1800 is" \
+       "the oldest supported compiler with sufficient C++11 capabilities"
 #endif
 
 #if defined(_MSC_VER) && _MSC_VER < 1900
@@ -307,20 +294,20 @@ extern JSON_API int msvc_pre1900_c99_snprintf(char* outBuf, size_t size,
 #if __has_extension(attribute_deprecated_with_message)
 #define JSONCPP_DEPRECATED(message) __attribute__((deprecated(message)))
 #endif
-#elif defined(__GNUC__) // not clang (gcc comes later since clang emulates gcc)
+#elif defined(__GNUC__)  // not clang (gcc comes later since clang emulates gcc)
 #if (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 5))
 #define JSONCPP_DEPRECATED(message) __attribute__((deprecated(message)))
 #elif (__GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 1))
 #define JSONCPP_DEPRECATED(message) __attribute__((__deprecated__))
-#endif                  // GNUC version
-#elif defined(_MSC_VER) // MSVC (after clang because clang on Windows emulates
-                        // MSVC)
+#endif                   // GNUC version
+#elif defined(_MSC_VER)  // MSVC (after clang because clang on Windows emulates
+                         // MSVC)
 #define JSONCPP_DEPRECATED(message) __declspec(deprecated(message))
-#endif // __clang__ || __GNUC__ || _MSC_VER
+#endif  // __clang__ || __GNUC__ || _MSC_VER
 
 #if !defined(JSONCPP_DEPRECATED)
 #define JSONCPP_DEPRECATED(message)
-#endif // if !defined(JSONCPP_DEPRECATED)
+#endif  // if !defined(JSONCPP_DEPRECATED)
 
 #if defined(__clang__) || (defined(__GNUC__) && (__GNUC__ >= 6))
 #define JSON_USE_INT64_DOUBLE_CONVERSION 1
@@ -331,7 +318,7 @@ extern JSON_API int msvc_pre1900_c99_snprintf(char* outBuf, size_t size,
 #include "allocator.h"
 #include "version.h"
 
-#endif // if !defined(JSON_IS_AMALGAMATION)
+#endif  // if !defined(JSON_IS_AMALGAMATION)
 
 namespace Json2 {
 using Int = int;
@@ -342,7 +329,7 @@ using LargestUInt = unsigned int;
 #undef JSON_HAS_INT64
 #else                 // if defined(JSON_NO_INT64)
 // For Microsoft Visual use specific types as long long is not supported
-#if defined(_MSC_VER) // Microsoft Visual Studio
+#if defined(_MSC_VER)  // Microsoft Visual Studio
 using Int64 = __int64;
 using UInt64 = unsigned __int64;
 #else                 // if defined(_MSC_VER) // Other platforms, use long long
@@ -352,7 +339,7 @@ using UInt64 = uint64_t;
 using LargestInt = Int64;
 using LargestUInt = UInt64;
 #define JSON_HAS_INT64
-#endif // if defined(JSON_NO_INT64)
+#endif  // if defined(JSON_NO_INT64)
 
 template <typename T>
 using Allocator =
@@ -367,7 +354,7 @@ using OStringStream =
                              String::allocator_type>;
 using IStream = std::istream;
 using OStream = std::ostream;
-} // namespace Json2
+}  // namespace Json2
 
 // Legacy names (formerly macros).
 using JSONCPP_STRING = Json2::String;
@@ -376,16 +363,11 @@ using JSONCPP_OSTRINGSTREAM = Json2::OStringStream;
 using JSONCPP_ISTREAM = Json2::IStream;
 using JSONCPP_OSTREAM = Json2::OStream;
 
-#endif // JSON_CONFIG_H_INCLUDED
+#endif  // JSON_CONFIG_H_INCLUDED
 
 // //////////////////////////////////////////////////////////////////////
 // End of content of file: include/json/config.h
 // //////////////////////////////////////////////////////////////////////
-
-
-
-
-
 
 // //////////////////////////////////////////////////////////////////////
 // Beginning of content of file: include/json/forwards.h
@@ -401,7 +383,7 @@ using JSONCPP_OSTREAM = Json2::OStream;
 
 #if !defined(JSON_IS_AMALGAMATION)
 #include "config.h"
-#endif // if !defined(JSON_IS_AMALGAMATION)
+#endif  // if !defined(JSON_IS_AMALGAMATION)
 
 namespace Json2 {
 
@@ -431,18 +413,13 @@ class ValueIteratorBase;
 class ValueIterator;
 class ValueConstIterator;
 
-} // namespace Json2
+}  // namespace Json2
 
-#endif // JSON_FORWARDS_H_INCLUDED
+#endif  // JSON_FORWARDS_H_INCLUDED
 
 // //////////////////////////////////////////////////////////////////////
 // End of content of file: include/json/forwards.h
 // //////////////////////////////////////////////////////////////////////
-
-
-
-
-
 
 // //////////////////////////////////////////////////////////////////////
 // Beginning of content of file: include/json/json_features.h
@@ -458,7 +435,7 @@ class ValueConstIterator;
 
 #if !defined(JSON_IS_AMALGAMATION)
 #include "forwards.h"
-#endif // if !defined(JSON_IS_AMALGAMATION)
+#endif  // if !defined(JSON_IS_AMALGAMATION)
 
 #pragma pack(push, 8)
 
@@ -469,7 +446,7 @@ namespace Json2 {
  * to behave in a standard conforming way.
  */
 class JSON_API Features {
-public:
+ public:
   /** \brief A configuration that allows all features and assumes all strings
    * are UTF-8.
    * - C & C++ comments are allowed
@@ -504,20 +481,15 @@ public:
   bool allowNumericKeys_{false};
 };
 
-} // namespace Json2
+}  // namespace Json2
 
 #pragma pack(pop)
 
-#endif // JSON_FEATURES_H_INCLUDED
+#endif  // JSON_FEATURES_H_INCLUDED
 
 // //////////////////////////////////////////////////////////////////////
 // End of content of file: include/json/json_features.h
 // //////////////////////////////////////////////////////////////////////
-
-
-
-
-
 
 // //////////////////////////////////////////////////////////////////////
 // Beginning of content of file: include/json/value.h
@@ -533,7 +505,7 @@ public:
 
 #if !defined(JSON_IS_AMALGAMATION)
 #include "forwards.h"
-#endif // if !defined(JSON_IS_AMALGAMATION)
+#endif  // if !defined(JSON_IS_AMALGAMATION)
 
 // Conditional NORETURN attribute on the throw functions would:
 // a) suppress false positives from static code analysis
@@ -576,7 +548,7 @@ public:
 #if defined(JSONCPP_DISABLE_DLL_INTERFACE_WARNING)
 #pragma warning(push)
 #pragma warning(disable : 4251 4275)
-#endif // if defined(JSONCPP_DISABLE_DLL_INTERFACE_WARNING)
+#endif  // if defined(JSONCPP_DISABLE_DLL_INTERFACE_WARNING)
 
 #pragma pack(push, 8)
 
@@ -590,12 +562,12 @@ namespace Json2 {
  * We use nothing but these internally. Of course, STL can throw others.
  */
 class JSON_API Exception : public std::exception {
-public:
+ public:
   Exception(String msg);
   ~Exception() noexcept override;
   char const* what() const noexcept override;
 
-protected:
+ protected:
   String msg_;
 };
 
@@ -606,7 +578,7 @@ protected:
  * \remark derived from Json2::Exception
  */
 class JSON_API RuntimeError : public Exception {
-public:
+ public:
   RuntimeError(String const& msg);
 };
 
@@ -617,7 +589,7 @@ public:
  * \remark derived from Json2::Exception
  */
 class JSON_API LogicError : public Exception {
-public:
+ public:
   LogicError(String const& msg);
 };
 #endif
@@ -630,7 +602,7 @@ JSONCPP_NORETURN void throwLogicError(String const& msg);
 /** \brief Type of the value held by a Value object.
  */
 enum ValueType {
-  nullValue = 0, ///< 'null' value
+  nullValue = 0,  ///< 'null' value
   intValue,      ///< signed integer value
   uintValue,     ///< unsigned integer value
   realValue,     ///< double value
@@ -641,18 +613,18 @@ enum ValueType {
 };
 
 enum CommentPlacement {
-  commentBefore = 0,      ///< a comment placed on the line before a value
-  commentAfterOnSameLine, ///< a comment just after a value on the same line
-  commentAfter, ///< a comment on the line after a value (only make sense for
-  /// root value)
+  commentBefore = 0,        ///< a comment placed on the line before a value
+  commentAfterOnSameLine,   ///< a comment just after a value on the same line
+  commentAfter,             ///< a comment on the line after a value (only make
+                            ///  sense for root value)
   numberOfCommentPlacement
 };
 
 /** \brief Type of precision for formatting of real values.
  */
 enum PrecisionType {
-  significantDigits = 0, ///< we set max number of significant digits in string
-  decimalPlaces          ///< we set max number of digits after "." in string
+  significantDigits = 0,  ///< we set max number of significant digits in string
+  decimalPlaces           ///< we set max number of digits after "." in string
 };
 
 /** \brief Lightweight wrapper to tag static string.
@@ -670,14 +642,14 @@ enum PrecisionType {
  * \endcode
  */
 class JSON_API StaticString {
-public:
+ public:
   explicit StaticString(const char* czstring) : c_str_(czstring) {}
 
   operator const char*() const { return c_str_; }
 
   const char* c_str() const { return c_str_; }
 
-private:
+ private:
   const char* c_str_;
 };
 
@@ -718,7 +690,7 @@ private:
 class JSON_API Value {
   friend class ValueIteratorBase;
 
-public:
+ public:
   using Members = std::vector<String>;
   using iterator = ValueIterator;
   using const_iterator = ValueConstIterator;
@@ -727,7 +699,7 @@ public:
 #if defined(JSON_HAS_INT64)
   using UInt64 = Json2::UInt64;
   using Int64 = Json2::Int64;
-#endif // defined(JSON_HAS_INT64)
+#endif  // defined(JSON_HAS_INT64)
   using LargestInt = Json2::LargestInt;
   using LargestUInt = Json2::LargestUInt;
   using ArrayIndex = Json2::ArrayIndex;
@@ -766,7 +738,7 @@ public:
   static constexpr Int64 maxInt64 = Int64(UInt64(-1) / 2);
   /// Maximum unsigned 64 bits int value that can be stored in a Json2::Value.
   static constexpr UInt64 maxUInt64 = UInt64(-1);
-#endif // defined(JSON_HAS_INT64)
+#endif  // defined(JSON_HAS_INT64)
   /// Default precision for real value for string representation.
   static constexpr UInt defaultRealPrecision = 17;
   // The constant is hard-coded because some compiler have trouble
@@ -777,13 +749,13 @@ public:
 // when using gcc and clang backend compilers.  CZString
 // cannot be defined as private.  See issue #486
 #ifdef __NVCC__
-public:
+ public:
 #else
-private:
+ private:
 #endif
 #ifndef JSONCPP_DOC_EXCLUDE_IMPLEMENTATION
   class CZString {
-  public:
+   public:
     enum DuplicationPolicy { noDuplication = 0, duplicate, duplicateOnCopy };
     CZString(ArrayIndex index);
     CZString(char const* str, unsigned length, DuplicationPolicy allocate);
@@ -801,26 +773,26 @@ private:
     unsigned length() const;
     bool isStaticString() const;
 
-  private:
+   private:
     void swap(CZString& other);
 
     struct StringStorage {
       unsigned policy_ : 2;
-      unsigned length_ : 30; // 1GB max
+      unsigned length_ : 30;  // 1GB max
     };
 
-    char const* cstr_; // actually, a prefixed string, unless policy is noDup
+    char const* cstr_;  // actually, a prefixed string, unless policy is noDup
     union {
       ArrayIndex index_;
       StringStorage storage_;
     };
   };
 
-public:
+ public:
   typedef std::map<CZString, Value> ObjectValues;
-#endif // ifndef JSONCPP_DOC_EXCLUDE_IMPLEMENTATION
+#endif  // ifndef JSONCPP_DOC_EXCLUDE_IMPLEMENTATION
 
-public:
+ public:
   /**
    * \brief Create a default Value of the given type.
    *
@@ -843,10 +815,10 @@ public:
 #if defined(JSON_HAS_INT64)
   Value(Int64 value);
   Value(UInt64 value);
-#endif // if defined(JSON_HAS_INT64)
+#endif  // if defined(JSON_HAS_INT64)
   Value(double value);
-  Value(const char* value); ///< Copy til first 0. (NULL causes to seg-fault.)
-  Value(const char* begin, const char* end); ///< Copy all, incl zeroes.
+  Value(const char* value);   ///< Copy til first 0. (NULL causes to seg-fault.)
+  Value(const char* begin, const char* end);  ///< Copy all, incl zeroes.
   /**
    * \brief Constructs a value from a static string.
    *
@@ -898,12 +870,13 @@ public:
   bool operator!=(const Value& other) const;
   int compare(const Value& other) const;
 
-  const char* asCString() const; ///< Embedded zeroes could cause you trouble!
+  // Embedded zeroes could cause you trouble!
+  const char* asCString() const;
 #if JSONCPP_USING_SECURE_MEMORY
-  unsigned getCStringLength() const; // Allows you to understand the length of
-                                     // the CString
+  unsigned getCStringLength() const;  // Allows you to understand the length
+                                      // of the CString
 #endif
-  String asString() const; ///< Embedded zeroes are possible.
+  String asString() const;  ///< Embedded zeroes are possible.
   /** Get raw char* of string-value.
    *  \return false if !string. (Seg-fault if str or end are NULL.)
    */
@@ -913,7 +886,7 @@ public:
 #if defined(JSON_HAS_INT64)
   Int64 asInt64() const;
   UInt64 asUInt64() const;
-#endif // if defined(JSON_HAS_INT64)
+#endif  // if defined(JSON_HAS_INT64)
   LargestInt asLargestInt() const;
   LargestUInt asLargestUInt() const;
   float asFloat() const;
@@ -1116,7 +1089,7 @@ public:
   ptrdiff_t getOffsetStart() const;
   ptrdiff_t getOffsetLimit() const;
 
-private:
+ private:
   void setType(ValueType v) {
     bits_.value_type_ = static_cast<unsigned char>(v);
   }
@@ -1145,7 +1118,7 @@ private:
     LargestUInt uint_;
     double real_;
     bool bool_;
-    char* string_; // if allocated_, ptr to { unsigned, char[] }.
+    char* string_;  // if allocated_, ptr to { unsigned, char[] }.
     ObjectValues* map_;
   } value_;
 
@@ -1157,7 +1130,7 @@ private:
   } bits_;
 
   class Comments {
-  public:
+   public:
     Comments() = default;
     Comments(const Comments& that);
     Comments(Comments&& that) noexcept;
@@ -1167,7 +1140,7 @@ private:
     String get(CommentPlacement slot) const;
     void set(CommentPlacement slot, String comment);
 
-  private:
+   private:
     using Array = std::array<String, numberOfCommentPlacement>;
     std::unique_ptr<Array> ptr_;
   };
@@ -1213,7 +1186,7 @@ template <> inline const char* Value::as<const char*>() const {
  * access a node.
  */
 class JSON_API PathArgument {
-public:
+ public:
   friend class Path;
 
   PathArgument();
@@ -1221,7 +1194,7 @@ public:
   PathArgument(const char* key);
   PathArgument(String key);
 
-private:
+ private:
   enum Kind { kindNone = 0, kindIndex, kindKey };
   String key_;
   ArrayIndex index_{};
@@ -1240,7 +1213,7 @@ private:
  * - ".[%]" => index is provided as parameter
  */
 class JSON_API Path {
-public:
+ public:
   Path(const String& path, const PathArgument& a1 = PathArgument(),
        const PathArgument& a2 = PathArgument(),
        const PathArgument& a3 = PathArgument(),
@@ -1253,13 +1226,13 @@ public:
   /// the node.
   Value& make(Value& root) const;
 
-private:
+ private:
   using InArgs = std::vector<const PathArgument*>;
   using Args = std::vector<PathArgument>;
 
   void makePath(const String& path, const InArgs& in);
   void addPathInArg(const String& path, const InArgs& in,
-                    InArgs::const_iterator& itInArg, PathArgument::Kind kind);
+                  InArgs::const_iterator& itInArg, PathArgument::Kind kind);
   static void invalidPath(const String& path, int location);
 
   Args args_;
@@ -1269,7 +1242,7 @@ private:
  *
  */
 class JSON_API ValueIteratorBase {
-public:
+ public:
   using iterator_category = std::bidirectional_iterator_tag;
   using size_t = unsigned int;
   using difference_type = int;
@@ -1307,7 +1280,7 @@ public:
   /// \note Better version than memberName(). Allows embedded nulls.
   char const* memberName(char const** end) const;
 
-protected:
+ protected:
   /*! Internal utility functions to assist with implementing
    *   other iterator functions. The const and non-const versions
    *   of the "deref" protected methods expose the protected
@@ -1327,12 +1300,12 @@ protected:
 
   void copy(const SelfType& other);
 
-private:
+ private:
   Value::ObjectValues::iterator current_;
   // Indicates that iterator is for a null value.
   bool isNull_{true};
 
-public:
+ public:
   // For some reason, BORLAND needs these at the end, rather
   // than earlier. No idea why.
   ValueIteratorBase();
@@ -1345,7 +1318,7 @@ public:
 class JSON_API ValueConstIterator : public ValueIteratorBase {
   friend class Value;
 
-public:
+ public:
   using value_type = const Value;
   // typedef unsigned int size_t;
   // typedef int difference_type;
@@ -1354,14 +1327,14 @@ public:
   using SelfType = ValueConstIterator;
 
   ValueConstIterator();
-  ValueConstIterator(ValueIterator const& other);
+  ValueConstIterator(ValueIterator const& other);  // NOLINT
 
-private:
+ private:
   /*! \internal Use by Value to create an iterator.
    */
   explicit ValueConstIterator(const Value::ObjectValues::iterator& current);
 
-public:
+ public:
   SelfType& operator=(const ValueIteratorBase& other);
 
   SelfType operator++(int) {
@@ -1396,7 +1369,7 @@ public:
 class JSON_API ValueIterator : public ValueIteratorBase {
   friend class Value;
 
-public:
+ public:
   using value_type = Value;
   using size_t = unsigned int;
   using difference_type = int;
@@ -1408,12 +1381,12 @@ public:
   explicit ValueIterator(const ValueConstIterator& other);
   ValueIterator(const ValueIterator& other);
 
-private:
+ private:
   /*! \internal Use by Value to create an iterator.
    */
   explicit ValueIterator(const Value::ObjectValues::iterator& current);
 
-public:
+ public:
   SelfType& operator=(const SelfType& other);
 
   SelfType operator++(int) {
@@ -1447,26 +1420,23 @@ public:
   pointer operator->() const { return const_cast<pointer>(&deref()); }
 };
 
-inline void swap(Value& a, Value& b) { a.swap(b); }
+inline void swap(Value& a, Value& b) {
+  a.swap(b);
+}
 
-} // namespace Json2
+}   // namespace Json2
 
 #pragma pack(pop)
 
 #if defined(JSONCPP_DISABLE_DLL_INTERFACE_WARNING)
 #pragma warning(pop)
-#endif // if defined(JSONCPP_DISABLE_DLL_INTERFACE_WARNING)
+#endif  // if defined(JSONCPP_DISABLE_DLL_INTERFACE_WARNING)
 
-#endif // JSON_H_INCLUDED
+#endif  // JSON_H_INCLUDED
 
 // //////////////////////////////////////////////////////////////////////
 // End of content of file: include/json/value.h
 // //////////////////////////////////////////////////////////////////////
-
-
-
-
-
 
 // //////////////////////////////////////////////////////////////////////
 // Beginning of content of file: include/json/reader.h
@@ -1483,7 +1453,7 @@ inline void swap(Value& a, Value& b) { a.swap(b); }
 #if !defined(JSON_IS_AMALGAMATION)
 #include "json_features.h"
 #include "value.h"
-#endif // if !defined(JSON_IS_AMALGAMATION)
+#endif  // if !defined(JSON_IS_AMALGAMATION)
 #include <deque>
 #include <iosfwd>
 #include <istream>
@@ -1495,7 +1465,7 @@ inline void swap(Value& a, Value& b) { a.swap(b); }
 #if defined(JSONCPP_DISABLE_DLL_INTERFACE_WARNING)
 #pragma warning(push)
 #pragma warning(disable : 4251)
-#endif // if defined(JSONCPP_DISABLE_DLL_INTERFACE_WARNING)
+#endif  // if defined(JSONCPP_DISABLE_DLL_INTERFACE_WARNING)
 
 #pragma pack(push, 8)
 
@@ -1508,7 +1478,7 @@ namespace Json2 {
  */
 
 class JSON_API Reader {
-public:
+ public:
   using Char = char;
   using Location = const Char*;
 
@@ -1628,7 +1598,7 @@ public:
    */
   bool good() const;
 
-private:
+ private:
   enum TokenType {
     tokenEndOfStream = 0,
     tokenObjectBegin,
@@ -1647,14 +1617,14 @@ private:
   };
 
   class Token {
-  public:
+   public:
     TokenType type_;
     Location start_;
     Location end_;
   };
 
   class ErrorInfo {
-  public:
+   public:
     Token token_;
     String message_;
     Location extra_;
@@ -1711,12 +1681,12 @@ private:
   String commentsBefore_;
   Features features_;
   bool collectComments_{};
-}; // Reader
+};  // Reader
 
 /** Interface for reading JSON from a char array.
  */
 class JSON_API CharReader {
-public:
+ public:
   virtual ~CharReader() = default;
   /** \brief Read a Value from a <a HREF="http://www.json.org">JSON</a>
    * document. The document must be a UTF-8 encoded string containing the
@@ -1738,14 +1708,14 @@ public:
                      String* errs) = 0;
 
   class JSON_API Factory {
-  public:
+   public:
     virtual ~Factory() = default;
     /** \brief Allocate a CharReader via operator new().
      * \throw std::exception if something goes wrong (e.g. invalid settings)
      */
     virtual CharReader* newCharReader() const = 0;
-  }; // Factory
-};   // CharReader
+  };  // Factory
+};    // CharReader
 
 /** \brief Build a CharReader implementation.
  *
@@ -1760,7 +1730,7 @@ public:
  *   \endcode
  */
 class JSON_API CharReaderBuilder : public CharReader::Factory {
-public:
+ public:
   // Note: We use a Json2::Value so that we can add data-members to this class
   // without a major version bump.
   /** Configuration of this builder.
@@ -1868,24 +1838,19 @@ bool JSON_API parseFromStream(CharReader::Factory const&, IStream&, Value* root,
  */
 JSON_API IStream& operator>>(IStream&, Value&);
 
-} // namespace Json2
+}   // namespace Json2
 
 #pragma pack(pop)
 
 #if defined(JSONCPP_DISABLE_DLL_INTERFACE_WARNING)
 #pragma warning(pop)
-#endif // if defined(JSONCPP_DISABLE_DLL_INTERFACE_WARNING)
+#endif  // if defined(JSONCPP_DISABLE_DLL_INTERFACE_WARNING)
 
-#endif // JSON_READER_H_INCLUDED
+#endif  // JSON_READER_H_INCLUDED
 
 // //////////////////////////////////////////////////////////////////////
 // End of content of file: include/json/reader.h
 // //////////////////////////////////////////////////////////////////////
-
-
-
-
-
 
 // //////////////////////////////////////////////////////////////////////
 // Beginning of content of file: include/json/writer.h
@@ -1901,7 +1866,7 @@ JSON_API IStream& operator>>(IStream&, Value&);
 
 #if !defined(JSON_IS_AMALGAMATION)
 #include "value.h"
-#endif // if !defined(JSON_IS_AMALGAMATION)
+#endif  // if !defined(JSON_IS_AMALGAMATION)
 #include <ostream>
 #include <string>
 #include <vector>
@@ -1911,7 +1876,7 @@ JSON_API IStream& operator>>(IStream&, Value&);
 #if defined(JSONCPP_DISABLE_DLL_INTERFACE_WARNING) && defined(_MSC_VER)
 #pragma warning(push)
 #pragma warning(disable : 4251)
-#endif // if defined(JSONCPP_DISABLE_DLL_INTERFACE_WARNING)
+#endif  // if defined(JSONCPP_DISABLE_DLL_INTERFACE_WARNING)
 
 #pragma pack(push, 8)
 
@@ -1932,9 +1897,9 @@ class Value;
  *  \endcode
  */
 class JSON_API StreamWriter {
-protected:
-  OStream* sout_; // not owned; will not delete
-public:
+ protected:
+  OStream* sout_;   // not owned; will not delete
+ public:
   StreamWriter();
   virtual ~StreamWriter();
   /** Write Value into document as configured in sub-class.
@@ -1949,14 +1914,14 @@ public:
   /** \brief A simple abstract factory.
    */
   class JSON_API Factory {
-  public:
+   public:
     virtual ~Factory();
     /** \brief Allocate a CharReader via operator new().
      * \throw std::exception if something goes wrong (e.g. invalid settings)
      */
     virtual StreamWriter* newStreamWriter() const = 0;
-  }; // Factory
-};   // StreamWriter
+  };  // Factory
+};    // StreamWriter
 
 /** \brief Write into stringstream, then return string, for convenience.
  * A StreamWriter will be created from the factory, used, and then deleted.
@@ -1980,7 +1945,7 @@ String JSON_API writeString(StreamWriter::Factory const& factory,
 *   \endcode
 */
 class JSON_API StreamWriterBuilder : public StreamWriter::Factory {
-public:
+ public:
   // Note: We use a Json2::Value so that we can add data-members to this class
   // without a major version bump.
   /** Configuration of this builder.
@@ -2041,7 +2006,7 @@ public:
  * \deprecated Use StreamWriter. (And really, this is an implementation detail.)
  */
 class JSON_API Writer {
-public:
+ public:
   virtual ~Writer();
 
   virtual String write(const Value& root) = 0;
@@ -2058,11 +2023,11 @@ public:
  */
 #if defined(_MSC_VER)
 #pragma warning(push)
-#pragma warning(disable : 4996) // Deriving from deprecated class
+#pragma warning(disable : 4996)   // Deriving from deprecated class
 #endif
 class JSON_API FastWriter
     : public Writer {
-public:
+ public:
   FastWriter();
   ~FastWriter() override = default;
 
@@ -2077,10 +2042,10 @@ public:
 
   void omitEndingLineFeed();
 
-public: // overridden from Writer
+ public:  // overridden from Writer
   String write(const Value& root) override;
 
-private:
+ private:
   void writeValue(const Value& value);
 
   String document_;
@@ -2118,22 +2083,22 @@ private:
  */
 #if defined(_MSC_VER)
 #pragma warning(push)
-#pragma warning(disable : 4996) // Deriving from deprecated class
+#pragma warning(disable : 4996)   // Deriving from deprecated class
 #endif
 class JSON_API
     StyledWriter : public Writer {
-public:
+ public:
   StyledWriter();
   ~StyledWriter() override = default;
 
-public: // overridden from Writer
+ public:  // overridden from Writer
   /** \brief Serialize a Value in <a HREF="http://www.json.org">JSON</a> format.
    * \param root Value to serialize.
    * \return String containing the JSON document that represents the root value.
    */
   String write(const Value& root) override;
 
-private:
+ private:
   void writeValue(const Value& value);
   void writeArrayValue(const Value& value);
   bool isMultilineArray(const Value& value);
@@ -2187,18 +2152,18 @@ private:
  */
 #if defined(_MSC_VER)
 #pragma warning(push)
-#pragma warning(disable : 4996) // Deriving from deprecated class
+#pragma warning(disable : 4996)   // Deriving from deprecated class
 #endif
 class JSON_API
     StyledStreamWriter {
-public:
+ public:
   /**
    * \param indentation Each level will be indented by this amount extra.
    */
   StyledStreamWriter(String indentation = "\t");
   ~StyledStreamWriter() = default;
 
-public:
+ public:
   /** \brief Serialize a Value in <a HREF="http://www.json.org">JSON</a> format.
    * \param out Stream to write to. (Can be ostringstream, e.g.)
    * \param root Value to serialize.
@@ -2207,7 +2172,7 @@ public:
    */
   void write(OStream& out, const Value& root);
 
-private:
+ private:
   void writeValue(const Value& value);
   void writeArrayValue(const Value& value);
   bool isMultilineArray(const Value& value);
@@ -2238,7 +2203,7 @@ private:
 #if defined(JSON_HAS_INT64)
 String JSON_API valueToString(Int value);
 String JSON_API valueToString(UInt value);
-#endif // if defined(JSON_HAS_INT64)
+#endif  // if defined(JSON_HAS_INT64)
 String JSON_API valueToString(LargestInt value);
 String JSON_API valueToString(LargestUInt value);
 String JSON_API valueToString(
@@ -2251,24 +2216,19 @@ String JSON_API valueToQuotedString(const char* value);
 /// \see Json2::operator>>()
 JSON_API OStream& operator<<(OStream&, const Value& root);
 
-} // namespace Json2
+}   // namespace Json2
 
 #pragma pack(pop)
 
 #if defined(JSONCPP_DISABLE_DLL_INTERFACE_WARNING)
 #pragma warning(pop)
-#endif // if defined(JSONCPP_DISABLE_DLL_INTERFACE_WARNING)
+#endif  // if defined(JSONCPP_DISABLE_DLL_INTERFACE_WARNING)
 
-#endif // JSON_WRITER_H_INCLUDED
+#endif  // JSON_WRITER_H_INCLUDED
 
 // //////////////////////////////////////////////////////////////////////
 // End of content of file: include/json/writer.h
 // //////////////////////////////////////////////////////////////////////
-
-
-
-
-
 
 // //////////////////////////////////////////////////////////////////////
 // Beginning of content of file: include/json/assertions.h
@@ -2287,7 +2247,7 @@ JSON_API OStream& operator<<(OStream&, const Value& root);
 
 #if !defined(JSON_IS_AMALGAMATION)
 #include "config.h"
-#endif // if !defined(JSON_IS_AMALGAMATION)
+#endif  // if !defined(JSON_IS_AMALGAMATION)
 
 /** It should not be possible for a maliciously designed file to
  *  cause an abort() or seg-fault, so these macros are used only
@@ -2296,48 +2256,48 @@ JSON_API OStream& operator<<(OStream&, const Value& root);
 #if JSON_USE_EXCEPTION
 
 // @todo <= add detail about condition in exception
-#define JSON_ASSERT(condition)                                                 \
-  do {                                                                         \
-    if (!(condition)) {                                                        \
-      Json2::throwLogicError("assert json failed");                             \
-    }                                                                          \
+#define JSON_ASSERT(condition)                                              \
+  do {                                                                      \
+    if (!(condition)) {                                                     \
+      Json2::throwLogicError("assert json failed");                         \
+    }                                                                       \
   } while (0)
 
-#define JSON_FAIL_MESSAGE(message)                                             \
-  do {                                                                         \
-    OStringStream oss;                                                         \
-    oss << message;                                                            \
-    Json2::throwLogicError(oss.str());                                          \
-    abort();                                                                   \
+#define JSON_FAIL_MESSAGE(message)                                          \
+  do {                                                                      \
+    OStringStream oss;                                                      \
+    oss << message;                                                         \
+    Json2::throwLogicError(oss.str());                                      \
+    abort();                                                                \
   } while (0)
 
-#else // JSON_USE_EXCEPTION
+#else  // JSON_USE_EXCEPTION
 
 #define JSON_ASSERT(condition) assert(condition)
 
 // The call to assert() will show the failure message in debug builds. In
 // release builds we abort, for a core-dump or debugger.
-#define JSON_FAIL_MESSAGE(message)                                             \
-  {                                                                            \
-    OStringStream oss;                                                         \
-    oss << message;                                                            \
-    assert(false && oss.str().c_str());                                        \
-    abort();                                                                   \
+#define JSON_FAIL_MESSAGE(message)                                          \
+  {                                                                         \
+    OStringStream oss;                                                      \
+    oss << message;                                                         \
+    assert(false && oss.str().c_str());                                     \
+    abort();                                                                \
   }
 
 #endif
 
-#define JSON_ASSERT_MESSAGE(condition, message)                                \
-  do {                                                                         \
-    if (!(condition)) {                                                        \
-      JSON_FAIL_MESSAGE(message);                                              \
-    }                                                                          \
+#define JSON_ASSERT_MESSAGE(condition, message)                             \
+  do {                                                                      \
+    if (!(condition)) {                                                     \
+      JSON_FAIL_MESSAGE(message);                                           \
+    }                                                                       \
   } while (0)
 
-#endif // JSON_ASSERTIONS_H_INCLUDED
+#endif  // JSON_ASSERTIONS_H_INCLUDED
 
 // //////////////////////////////////////////////////////////////////////
 // End of content of file: include/json/assertions.h
 // //////////////////////////////////////////////////////////////////////
 
-#endif //ifndef JSON_AMALGAMATED_H_INCLUDED
+#endif  // ifndef JSON_AMALGAMATED_H_INCLUDED

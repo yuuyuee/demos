@@ -1,3 +1,4 @@
+// Copyright (c) 2007-2010 by Baptiste Lepilleur and The JsonCpp Authors.
 /// Json-cpp amalgamated forward header (http://jsoncpp.sourceforge.net/).
 /// It is intended to be used with #include "json/json-forwards.h"
 /// This header provides forward declaration for all JsonCpp types.
@@ -97,7 +98,7 @@ license you like.
 #define JSONCPP_VERSION_QUALIFIER
 #define JSONCPP_VERSION_HEXA                                                   \
   ((JSONCPP_VERSION_MAJOR << 24) | (JSONCPP_VERSION_MINOR << 16) |             \
-   (JSONCPP_VERSION_PATCH << 8))
+  (JSONCPP_VERSION_PATCH << 8))
 
 #ifdef JSONCPP_USING_SECURE_MEMORY
 #undef JSONCPP_USING_SECURE_MEMORY
@@ -106,7 +107,7 @@ license you like.
 // If non-zero, the library zeroes any memory that it has allocated before
 // it frees its memory.
 
-#endif // JSON_VERSION_H_INCLUDED
+#endif  // JSON_VERSION_H_INCLUDED
 
 // //////////////////////////////////////////////////////////////////////
 // End of content of file: include/json/version.h
@@ -126,12 +127,13 @@ license you like.
 
 #include <cstring>
 #include <memory>
+#include <utility>
 
 #pragma pack(push, 8)
 
 namespace Json2 {
 template <typename T> class SecureAllocator {
-public:
+ public:
   // Type definitions
   using value_type = T;
   using pointer = T*;
@@ -186,7 +188,9 @@ public:
   // Boilerplate
   SecureAllocator() {}
   template <typename U> SecureAllocator(const SecureAllocator<U>&) {}
-  template <typename U> struct rebind { using other = SecureAllocator<U>; };
+  template <typename U> struct rebind {
+    using other = SecureAllocator<U>;
+  };
 };
 
 template <typename T, typename U>
@@ -199,20 +203,15 @@ bool operator!=(const SecureAllocator<T>&, const SecureAllocator<U>&) {
   return false;
 }
 
-} // namespace Json2
+}  // namespace Json2
 
 #pragma pack(pop)
 
-#endif // JSON_ALLOCATOR_H_INCLUDED
+#endif  // JSON_ALLOCATOR_H_INCLUDED
 
 // //////////////////////////////////////////////////////////////////////
 // End of content of file: include/json/allocator.h
 // //////////////////////////////////////////////////////////////////////
-
-
-
-
-
 
 // //////////////////////////////////////////////////////////////////////
 // Beginning of content of file: include/json/config.h
@@ -228,7 +227,7 @@ bool operator!=(const SecureAllocator<T>&, const SecureAllocator<U>&) {
 #include <cstddef>
 #include <cstdint>
 #include <istream>
-#include <memory>
+// #include <memory>
 #include <ostream>
 #include <sstream>
 #include <string>
@@ -257,22 +256,22 @@ bool operator!=(const SecureAllocator<T>&, const SecureAllocator<U>&) {
 #define JSONCPP_DISABLE_DLL_INTERFACE_WARNING
 #elif defined(__GNUC__) || defined(__clang__)
 #define JSON_API __attribute__((visibility("default")))
-#endif // if defined(_MSC_VER)
+#endif  // if defined(_MSC_VER)
 
 #elif defined(JSON_DLL)
 #if defined(_MSC_VER) || defined(__MINGW32__)
 #define JSON_API __declspec(dllimport)
 #define JSONCPP_DISABLE_DLL_INTERFACE_WARNING
-#endif // if defined(_MSC_VER)
-#endif // ifdef JSON_DLL_BUILD
+#endif  // if defined(_MSC_VER)
+#endif  // ifdef JSON_DLL_BUILD
 
 #if !defined(JSON_API)
 #define JSON_API
 #endif
 
 #if defined(_MSC_VER) && _MSC_VER < 1800
-#error                                                                         \
-    "ERROR:  Visual Studio 12 (2013) with _MSC_VER=1800 is the oldest supported compiler with sufficient C++11 capabilities"
+#error "ERROR:  Visual Studio 12 (2013) with _MSC_VER=1800 " \
+       "is the oldest supported compiler with sufficient C++11 capabilities"
 #endif
 
 #if defined(_MSC_VER) && _MSC_VER < 1900
@@ -298,20 +297,20 @@ extern JSON_API int msvc_pre1900_c99_snprintf(char* outBuf, size_t size,
 #if __has_extension(attribute_deprecated_with_message)
 #define JSONCPP_DEPRECATED(message) __attribute__((deprecated(message)))
 #endif
-#elif defined(__GNUC__) // not clang (gcc comes later since clang emulates gcc)
+#elif defined(__GNUC__)  // not clang (gcc comes later since clang emulates gcc)
 #if (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 5))
 #define JSONCPP_DEPRECATED(message) __attribute__((deprecated(message)))
 #elif (__GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 1))
 #define JSONCPP_DEPRECATED(message) __attribute__((__deprecated__))
-#endif                  // GNUC version
-#elif defined(_MSC_VER) // MSVC (after clang because clang on Windows emulates
+#endif                   // GNUC version
+#elif defined(_MSC_VER)  // MSVC (after clang because clang on Windows emulates
                         // MSVC)
 #define JSONCPP_DEPRECATED(message) __declspec(deprecated(message))
-#endif // __clang__ || __GNUC__ || _MSC_VER
+#endif  // __clang__ || __GNUC__ || _MSC_VER
 
 #if !defined(JSONCPP_DEPRECATED)
 #define JSONCPP_DEPRECATED(message)
-#endif // if !defined(JSONCPP_DEPRECATED)
+#endif  // if !defined(JSONCPP_DEPRECATED)
 
 #if defined(__clang__) || (defined(__GNUC__) && (__GNUC__ >= 6))
 #define JSON_USE_INT64_DOUBLE_CONVERSION 1
@@ -322,7 +321,7 @@ extern JSON_API int msvc_pre1900_c99_snprintf(char* outBuf, size_t size,
 #include "allocator.h"
 #include "version.h"
 
-#endif // if !defined(JSON_IS_AMALGAMATION)
+#endif  // if !defined(JSON_IS_AMALGAMATION)
 
 namespace Json2 {
 using Int = int;
@@ -331,9 +330,9 @@ using UInt = unsigned int;
 using LargestInt = int;
 using LargestUInt = unsigned int;
 #undef JSON_HAS_INT64
-#else                 // if defined(JSON_NO_INT64)
+#else                  // if defined(JSON_NO_INT64)
 // For Microsoft Visual use specific types as long long is not supported
-#if defined(_MSC_VER) // Microsoft Visual Studio
+#if defined(_MSC_VER)  // Microsoft Visual Studio
 using Int64 = __int64;
 using UInt64 = unsigned __int64;
 #else                 // if defined(_MSC_VER) // Other platforms, use long long
@@ -343,7 +342,7 @@ using UInt64 = uint64_t;
 using LargestInt = Int64;
 using LargestUInt = UInt64;
 #define JSON_HAS_INT64
-#endif // if defined(JSON_NO_INT64)
+#endif  // if defined(JSON_NO_INT64)
 
 template <typename T>
 using Allocator =
@@ -358,7 +357,7 @@ using OStringStream =
                              String::allocator_type>;
 using IStream = std::istream;
 using OStream = std::ostream;
-} // namespace Json2
+}  // namespace Json2
 
 // Legacy names (formerly macros).
 using JSONCPP_STRING = Json2::String;
@@ -367,7 +366,7 @@ using JSONCPP_OSTRINGSTREAM = Json2::OStringStream;
 using JSONCPP_ISTREAM = Json2::IStream;
 using JSONCPP_OSTREAM = Json2::OStream;
 
-#endif // JSON_CONFIG_H_INCLUDED
+#endif  // JSON_CONFIG_H_INCLUDED
 
 // //////////////////////////////////////////////////////////////////////
 // End of content of file: include/json/config.h
@@ -387,7 +386,7 @@ using JSONCPP_OSTREAM = Json2::OStream;
 
 #if !defined(JSON_IS_AMALGAMATION)
 #include "config.h"
-#endif // if !defined(JSON_IS_AMALGAMATION)
+#endif  // if !defined(JSON_IS_AMALGAMATION)
 
 namespace Json2 {
 
@@ -417,12 +416,12 @@ class ValueIteratorBase;
 class ValueIterator;
 class ValueConstIterator;
 
-} // namespace Json2
+}  // namespace Json2
 
-#endif // JSON_FORWARDS_H_INCLUDED
+#endif  // JSON_FORWARDS_H_INCLUDED
 
 // //////////////////////////////////////////////////////////////////////
 // End of content of file: include/json/forwards.h
 // //////////////////////////////////////////////////////////////////////
 
-#endif //ifndef JSON_FORWARD_AMALGAMATED_H_INCLUDED
+#endif  // ifndef JSON_FORWARD_AMALGAMATED_H_INCLUDED

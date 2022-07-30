@@ -1,5 +1,6 @@
 // Copyright 2022 The Oak Authors.
 
+#include <sys/types.h>
 #include <unistd.h>
 
 #include "oak/addons/internal/compiler.h"
@@ -7,12 +8,18 @@
 #include "oak/logging/logging.h"
 #include "oak/config.h"
 
-void LoadConfig();
-void CreateShareMemory();
-void AssignShareMemory();
-void CreateWorkers();
-void WaitWrokersReady();
-void EventLoop();
+class FunctionDelegate {
+ public:
+
+};
+
+void CreateSlave() {}
+void WaitWrokersReady() {}
+void EventLoop() {
+  while (true) {
+    sleep(2);
+  }
+}
 
 // can not creating multiple processes with boot many process, because
 // the number of processes is configured in configuration.
@@ -26,18 +33,14 @@ int main(int argc, char* argv[]) {
   // Logger handler = {};
   // RegisterLogger(handler);
 
-  // LoadConfig();
+  oak::Config config("setup.json");
 
-/*
-  CreateShareMemory();
-  CreateWorkers();
-  WaitWrokersReady();
+  if (config.multiple_process) {
+
+  } else {
+    CreateSlave();
+  }
+
   EventLoop();
-  AssignShareMemory();
-*/
-
-  while (true)
-    sleep(2);
-
   return 0;
 }
