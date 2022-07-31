@@ -13,6 +13,8 @@
 #include <errno.h>
 #include <limits.h>
 
+#include "oak/common/ignore_unused.h"
+
 namespace oak {
 namespace trivial_internal {
 namespace {
@@ -25,7 +27,7 @@ void RawLog(const char* fname, int line, const char* fmt, ...) {
   constexpr const int kBufferSize = 2048;
   char buffer[kBufferSize];
 
-  int plen = snprintf(buffer, kBufferSize, "P [%s:%d] ", fname, line);
+  int plen = snprintf(buffer, kBufferSize, "R [%s:%d] ", fname, line);
 
   va_list ap;
   va_start(ap, fmt);
@@ -39,7 +41,7 @@ void RawLog(const char* fname, int line, const char* fmt, ...) {
   }
   va_end(ap);
 
-  write(STDERR_FILENO, buffer, plen + len);
+  IgnoreUnused(write(STDERR_FILENO, buffer, plen + len));
 }
 
 }  // namespace trivial_internal

@@ -36,5 +36,6 @@
 .cproject
 /.settings
 /.vscode
+/oak.code-workspace
 
 *.pid

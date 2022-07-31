@@ -3,15 +3,21 @@
 #ifndef OAK_LOGGING_LOGGING_H_
 #define OAK_LOGGING_LOGGING_H_
 
+#include <stdlib.h>
 #include "oak/common/stringpiece.h"
 #include "oak/logging/log_level.h"
+#include "oak/common/macros.h"
 
-#define OAK_LOG(level, ...)                           \
+#define OAK_LOG(level, ...) do {                      \
   oak::logging_internal::LogImpl(                     \
       oak::LogLevel::OAK_LOG_LEVEL_ ## level,         \
       oak::logging_internal::Basename(                \
           __FILE__, sizeof(__FILE__) - 1),            \
-      __LINE__, __VA_ARGS__)
+      __LINE__, __VA_ARGS__);                         \
+  if (oak::LogLevel::OAK_LOG_LEVEL_ ## level ==       \
+      oak::LogLevel::OAK_LOG_LEVEL_FATAL)             \
+    abort();                                          \
+} while (0)
 
 #define OAK_DEBUG(...)    OAK_LOG(DEBUG, __VA_ARGS__)
 #define OAK_INFO(...)     OAK_LOG(INFO, __VA_ARGS__)

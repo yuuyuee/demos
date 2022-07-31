@@ -8,6 +8,8 @@
 #include "oak/logging/logging.h"
 #include "oak/config.h"
 
+#define PROGRAM_NAME "Master"
+
 class FunctionDelegate {
  public:
 
@@ -25,7 +27,7 @@ void EventLoop() {
 // the number of processes is configured in configuration.
 
 int main(int argc, char* argv[]) {
-  if (oak::AlreadyRunning(argv[0])) {
+  if (oak::AlreadyRunning(PROGRAM_NAME)) {
     OAK_ERROR("Already running.\n");
     return 0;
   }
@@ -36,7 +38,7 @@ int main(int argc, char* argv[]) {
   oak::Config config("setup.json");
 
   if (config.multiple_process) {
-
+    CreateSlave();
   } else {
     CreateSlave();
   }

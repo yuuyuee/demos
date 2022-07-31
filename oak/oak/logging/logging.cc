@@ -2,9 +2,11 @@
 
 #include "oak/logging/logging.h"
 
-#include <unistd.h>  // write
+#include <unistd.h>
 #include <stdarg.h>
 #include <atomic>
+
+#include "oak/common/ignore_unused.h"
 
 namespace oak {
 namespace logging_internal {
@@ -14,7 +16,7 @@ constexpr const char kTailMsg[] = "... (message truncated)\n";
 constexpr const size_t kTailMsgSize = sizeof(kTailMsg);
 
 void DefaultLogger(StringPiece msg) {
-  write(STDERR_FILENO, msg.data(), msg.size());
+  IgnoreUnused(write(STDERR_FILENO, msg.data(), msg.size()));
 }
 
 std::atomic<Logger> kHandler(DefaultLogger);

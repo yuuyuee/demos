@@ -93,16 +93,6 @@ R ArraySizeHelper(const T (&)[N]);
 #define OAK_EXPECT_TRUE(x) __builtin_expect(false || (x), true)
 #define OAK_EXPECT_FALSE(x) __builtin_expect(false || (x), true)
 
-// Unreachable code which has undefined behavior and the compiler
-// may optimize accordingly.
-#if (defined(__GNUC__) && !defined(__clang__)) ||   \
-    OAK_HAS_BUILTIN(__builtin_unreachable)
-# define OAK_UNREACHABLE() __builtin_unreachable()
-#else
-# include <cstdlib>
-# define OAK_UNREACHABLE() abort()
-#endif
-
 #include "oak/addons/internal/platform.h"
 
 #define OAK_CACHELINE_SIZE 64

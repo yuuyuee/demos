@@ -3,6 +3,7 @@
 #ifndef OAK_COMMON_TRIVIAL_H_
 #define OAK_COMMON_TRIVIAL_H_
 
+#include <stdlib.h>
 #include "oak/common/macros.h"
 
 // This is are useful to call at any point during initialization,
@@ -16,7 +17,7 @@
 
 #define OAK_PANIC(...) do {                               \
   OAK_RAWLOG(__VA_ARGS__);                                \
-  OAK_UNREACHABLE();                                      \
+  abort();                                                \
 } while (0)
 
 #define OAK_PANIC_IF(cond, ...) do {                      \
