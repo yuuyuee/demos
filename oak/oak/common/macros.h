@@ -7,13 +7,11 @@
 
 #include <stddef.h>  // size_t
 
-namespace oak {
-namespace macros_internal {
+namespace oak::macros_internal {
 
 template <typename T, size_t N, typename R = char (&)[N]>
 R ArraySizeHelper(const T (&)[N]);
-}  // namespace macros_internal
-}  // namespace oak
+}  // namespace oak::macros_internal
 
 #include "oak/addons/internal/compiler.h"
 
@@ -97,5 +95,18 @@ R ArraySizeHelper(const T (&)[N]);
 
 #define OAK_CACHELINE_SIZE 64
 #define OAK_CACHELINE_ALIGNED OAK_ATTR_ALIGNED(OAK_CACHELINE_SIZE)
+
+// IGNORE_UNUNSED()
+
+#define IGNORE_UNUESD(...) oak::macros_internal::IgnoreUnused(__VA_ARGS__)
+
+namespace oak::macros_internal {
+
+template <typename... Args>
+constexpr void IgnoreUnused(Args const&...) {}
+
+template <typename...>
+constexpr void IgnoreUnused() {}
+}  // namespace oak::macros_internal
 
 #endif  // OAK_COMMON_MACROS_H_

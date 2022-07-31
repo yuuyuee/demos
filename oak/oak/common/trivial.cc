@@ -13,8 +13,6 @@
 #include <errno.h>
 #include <limits.h>
 
-#include "oak/common/ignore_unused.h"
-
 namespace oak {
 namespace trivial_internal {
 namespace {
@@ -41,7 +39,7 @@ void RawLog(const char* fname, int line, const char* fmt, ...) {
   }
   va_end(ap);
 
-  IgnoreUnused(write(STDERR_FILENO, buffer, plen + len));
+  IGNORE_UNUESD(write(STDERR_FILENO, buffer, plen + len));
 }
 
 }  // namespace trivial_internal

@@ -16,7 +16,7 @@ constexpr const char kTailMsg[] = "... (message truncated)\n";
 constexpr const size_t kTailMsgSize = sizeof(kTailMsg);
 
 void DefaultLogger(StringPiece msg) {
-  IgnoreUnused(write(STDERR_FILENO, msg.data(), msg.size()));
+  IGNORE_UNUESD(write(STDERR_FILENO, msg.data(), msg.size()));
 }
 
 std::atomic<Logger> kHandler(DefaultLogger);
