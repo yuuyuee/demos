@@ -12,7 +12,6 @@
 #include <utility>
 #include <algorithm>
 
-#include "oak/common/trivial.h"
 #include "oak/common/macros.h"
 
 namespace oak {

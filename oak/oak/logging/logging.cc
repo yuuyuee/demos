@@ -6,8 +6,6 @@
 #include <stdarg.h>
 #include <atomic>
 
-#include "oak/common/ignore_unused.h"
-
 namespace oak {
 namespace logging_internal {
 namespace {
@@ -35,8 +33,8 @@ void LogImpl(LogLevel level, const char* fname, int line, const char* fmt, ...) 
   if (len < 0) len = 0;
   if (len >= kBufferSize - plen) {
     memcpy(buffer + kBufferSize - kTailMsgSize, kTailMsg, kTailMsgSize);
-    // snprintf and vsnprintf wite at most size bytes inlcude
-    // the terminating null byte '\0'.
+    // snprintf and vsnprintf write at most size bytes inlcude the
+    // terminating null byte '\0'.
     len = kBufferSize - plen - 1;
   }
   va_end(ap);

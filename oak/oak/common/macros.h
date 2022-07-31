@@ -8,25 +8,20 @@
 #include <stddef.h>  // size_t
 
 namespace oak::macros_internal {
-
 template <typename T, size_t N, typename R = char (&)[N]>
 R ArraySizeHelper(const T (&)[N]);
 }  // namespace oak::macros_internal
 
 #include "oak/addons/internal/compiler.h"
 
-#if defined(__has_builtin)
-# define OAK_HAS_BUILTIN(x) __has_builtin(x)
-#else
-# define OAK_HAS_BUILTIN(x) 0
-#endif
-
+// OAK_HAS_ATTRIBUTE()
 #if defined(__has_attribute)
 # define OAK_HAS_ATTRIBUTE(x) __has_attribute(x)
 #else
 # define OAK_HAS_ATTRIBUTE(x) 0
 #endif
 
+// OAK_ATTR_ALWAYS_INLINE()
 #if (defined(__GNUC__) && !defined(__clang__)) || \
     OAK_HAS_ATTRIBUTE(always_inline)
 # define OAK_ATTR_ALWAYS_INLINE inline __attribute__((always_inline))
@@ -34,6 +29,7 @@ R ArraySizeHelper(const T (&)[N]);
 # define OAK_ATTR_ALWAYS_INLINE
 #endif
 
+// OAK_ATTR_NORETURN()
 #if defined(__cplusplus) && __cplusplus >= 201103L
 # define OAK_ATTR_NORETURN [[noreturn]]
 #elif (defined(__GNUC__) && !defined(__clang__)) || \
@@ -43,6 +39,7 @@ R ArraySizeHelper(const T (&)[N]);
 # define OAK_ATTR_NORETURN
 #endif
 
+// OAK_ATTR_DEPRECATED()
 #if (defined(__GNUC__) && !defined(__clang__)) || \
     OAK_HAS_ATTRIBUTE(deprecated)
 # define OAK_ATTR_DEPRECATED(...) __attribute__((deprecated(__VA_ARGS__)))
@@ -50,6 +47,7 @@ R ArraySizeHelper(const T (&)[N]);
 # define OAK_ATTR_DEPRECATED(...)
 #endif
 
+// OAK_ATTR_MAYBE_UNUSED()
 #if (defined(__GNUC__) && !defined(__clang__)) || \
     OAK_HAS_ATTRIBUTE(unused)
 # define OAK_ATTR_MAYBE_UNUSED __attribute__((unused))
@@ -57,6 +55,7 @@ R ArraySizeHelper(const T (&)[N]);
 # define OAK_ATTR_MAYBE_UNUSED
 #endif
 
+// OAK_ATTR_NODISCARD()
 #if defined(__cplusplus) && __cplusplus >= 201103L
 # define OAK_ATTR_NODISCARD [[nodiscard]]
 #elif (defined(__GNUC__) && !defined(__clang__)) || \
@@ -66,6 +65,7 @@ R ArraySizeHelper(const T (&)[N]);
 # define OAK_ATTR_NODISCARD
 #endif
 
+// OAK_ATTR_ALIGNED()
 #if (defined(__GNUC__) && !defined(__clang__)) || \
     OAK_HAS_ATTRIBUTE(aligned)
 # define OAK_ATTR_ALIGNED(n) __attribute__((aligned(n)))
@@ -73,6 +73,7 @@ R ArraySizeHelper(const T (&)[N]);
 # define OAK_ATTR_ALIGNED(n)
 #endif
 
+// OAK_ATTR_PACKED()
 #if (defined(__GNUC__) && !defined(__clang__)) || \
     OAK_HAS_ATTRIBUTE(packed)
 # define OAK_ATTR_PACKED __attribute__((packed))
@@ -80,6 +81,7 @@ R ArraySizeHelper(const T (&)[N]);
 # define OAK_ATTR_PACKED
 #endif
 
+// OAK_ATTR_PRINTF()
 #if (defined(__GNUC__) && !defined(__clang__)) || \
     OAK_HAS_ATTRIBUTE(__format__)
 # define OAK_ATTR_PRINTF(index, first) \
@@ -88,8 +90,22 @@ R ArraySizeHelper(const T (&)[N]);
 # define OAK_ATTR_PRINTF(index, first)
 #endif
 
-#define OAK_EXPECT_TRUE(x) __builtin_expect(false || (x), true)
-#define OAK_EXPECT_FALSE(x) __builtin_expect(false || (x), true)
+// OAK_HAS_BUILTIN()
+#if defined(__has_builtin)
+# define OAK_HAS_BUILTIN(x) __has_builtin(x)
+#else
+# define OAK_HAS_BUILTIN(x) 0
+#endif
+
+// OAK_EXPECT_TRUE(), OAK_EXPECT_FALSE()
+#if (defined(__GNUC__) && !defined(__clang__)) || \
+    OAK_HAS_BUILTIN(__builtin_expect)
+# define OAK_EXPECT_TRUE(x) __builtin_expect(false || (x), true)
+# define OAK_EXPECT_FALSE(x) __builtin_expect(false || (x), false)
+#else
+# define OAK_EXPECT_TRUE(x) (x)
+# define OAK_EXPECT_FALSE(x) (x)
+#endif
 
 #include "oak/addons/internal/platform.h"
 
@@ -97,16 +113,28 @@ R ArraySizeHelper(const T (&)[N]);
 #define OAK_CACHELINE_ALIGNED OAK_ATTR_ALIGNED(OAK_CACHELINE_SIZE)
 
 // IGNORE_UNUNSED()
-
 #define IGNORE_UNUESD(...) oak::macros_internal::IgnoreUnused(__VA_ARGS__)
 
 namespace oak::macros_internal {
-
 template <typename... Args>
 constexpr void IgnoreUnused(Args const&...) {}
 
 template <typename...>
 constexpr void IgnoreUnused() {}
 }  // namespace oak::macros_internal
+
+// OAK_ASSERT()
+// This is an runtime assert and that can be used portably within
+// constexpr functions.
+#if defined(NDEBUG)
+# define OAK_ASSERT(cond)                                 \
+    (false ? static_cast<void>(cond) : static_cast<void>(0))
+#else
+# include <assert.h>
+# define OAK_ASSERT(cond)                                 \
+    (OAK_EXPECT_TRUE(cond)                                \
+        ? static_cast<void>(0)                            \
+        : [] { assert(false && #cond); }())
+#endif
 
 #endif  // OAK_COMMON_MACROS_H_

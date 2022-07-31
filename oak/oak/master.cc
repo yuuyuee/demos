@@ -5,17 +5,18 @@
 
 #include "oak/addons/internal/compiler.h"
 #include "oak/addons/internal/platform.h"
+#include "oak/common/trivial.h"
 #include "oak/logging/logging.h"
 #include "oak/config.h"
 
-#define PROGRAM_NAME "Master"
+#define PROGRAM_NAME "master"
 
 class FunctionDelegate {
  public:
 
 };
 
-void CreateSlave() {}
+void CreateSlave(oak::Config&) {}
 void WaitWrokersReady() {}
 void EventLoop() {
   while (true) {
@@ -32,16 +33,12 @@ int main(int argc, char* argv[]) {
     return 0;
   }
 
+  oak::Config config("setup.json");
+
   // Logger handler = {};
   // RegisterLogger(handler);
 
-  oak::Config config("setup.json");
-
-  if (config.multiple_process) {
-    CreateSlave();
-  } else {
-    CreateSlave();
-  }
+  CreateSlave(config);
 
   EventLoop();
   return 0;
