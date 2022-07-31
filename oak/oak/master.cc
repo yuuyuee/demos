@@ -11,13 +11,7 @@
 
 #define PROGRAM_NAME "master"
 
-class FunctionDelegate {
- public:
-
-};
-
 void CreateSlave(oak::Config&) {}
-void WaitWrokersReady() {}
 void EventLoop() {
   while (true) {
     sleep(2);
