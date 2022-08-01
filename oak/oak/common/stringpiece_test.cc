@@ -5,52 +5,56 @@
 #include <map>
 #include "gtest/gtest.h"
 
+using oak::StringPiece;
+
+namespace {
+
 TEST(StringViewTest, Ctor) {
   {
     // Null.
-    oak::StringPiece s10;
+    StringPiece s10;
     EXPECT_TRUE(s10.data() == nullptr);
-    EXPECT_EQ(0, s10.length());
+    EXPECT_EQ(0U, s10.length());
   }
 
   {
     // const char* without length.
     const char* hello = "hello";
-    oak::StringPiece v1(hello);
+    StringPiece v1(hello);
     EXPECT_TRUE(v1.data() == hello);
-    EXPECT_EQ(5, v1.length());
+    EXPECT_EQ(5U, v1.length());
 
     // const char* with length.
-    oak::StringPiece v2(hello, 4);
+    StringPiece v2(hello, 4);
     EXPECT_TRUE(v2.data() == hello);
-    EXPECT_EQ(4, v2.length());
+    EXPECT_EQ(4U, v2.length());
 
     // Not recommended, but valid C++
-    oak::StringPiece v3(hello, 6);
+    StringPiece v3(hello, 6);
     EXPECT_TRUE(v3.data() == hello);
-    EXPECT_EQ(6, v3.length());
+    EXPECT_EQ(6U, v3.length());
   }
 
   {
     // std::string.
     std::string hola = "hola";
-    oak::StringPiece v1(hola);
+    StringPiece v1(hola);
     EXPECT_TRUE(v1.data() == hola.data());
-    EXPECT_EQ(4, v1.length());
+    EXPECT_EQ(4U, v1.length());
 
     // std::string with embedded '\0'.
     hola.push_back('\0');
     hola.append("h2");
     hola.push_back('\0');
-    oak::StringPiece v2(hola);
+    StringPiece v2(hola);
     EXPECT_TRUE(v2.data() == hola.data());
-    EXPECT_EQ(8, v2.length());
+    EXPECT_EQ(8U, v2.length());
   }
 }
 
 TEST(StringViewTest, Swap) {
-  oak::StringPiece a("a");
-  oak::StringPiece b("bbb");
+  StringPiece a("a");
+  StringPiece b("bbb");
   EXPECT_TRUE(noexcept(a.swap(b)));
   a.swap(b);
   EXPECT_EQ(a, "bbb");
@@ -65,17 +69,17 @@ TEST(StringViewTest, STLComparator) {
   std::string s2("bar");
   std::string s3("baz");
 
-  oak::StringPiece p1(s1);
-  oak::StringPiece p2(s2);
-  oak::StringPiece p3(s3);
+  StringPiece p1(s1);
+  StringPiece p2(s2);
+  StringPiece p3(s3);
 
-  typedef std::map<oak::StringPiece, int> TestMap;
+  typedef std::map<StringPiece, int> TestMap;
   TestMap map;
 
   map.insert(std::make_pair(p1, 0));
   map.insert(std::make_pair(p2, 1));
   map.insert(std::make_pair(p3, 2));
-  EXPECT_EQ(map.size(), 3);
+  EXPECT_EQ(map.size(), 3U);
 
   TestMap::const_iterator iter = map.begin();
   EXPECT_EQ(iter->second, 1);
@@ -93,7 +97,7 @@ TEST(StringViewTest, STLComparator) {
   EXPECT_TRUE(new_iter != map.end());
 
   map.erase(new_iter);
-  EXPECT_EQ(map.size(), 2);
+  EXPECT_EQ(map.size(), 2U);
 
   iter = map.begin();
   EXPECT_EQ(iter->second, 2);
@@ -104,13 +108,13 @@ TEST(StringViewTest, STLComparator) {
 }
 
 #define COMPARE(result, op, x, y)                                     \
-  EXPECT_EQ(result, oak::StringPiece((x)) op oak::StringPiece((y)));  \
-  EXPECT_EQ(result, oak::StringPiece((x)).compare(oak::StringPiece((y))) op 0)
+  EXPECT_EQ(result, StringPiece((x)) op StringPiece((y)));  \
+  EXPECT_EQ(result, StringPiece((x)).compare(StringPiece((y))) op 0)
 
 TEST(StringViewTest, ComparisonOperators) {
   COMPARE(true, ==, "",   "");
-  COMPARE(true, ==, "", oak::StringPiece());
-  COMPARE(true, ==, oak::StringPiece(), "");
+  COMPARE(true, ==, "", StringPiece());
+  COMPARE(true, ==, StringPiece(), "");
   COMPARE(true, ==, "a",  "a");
   COMPARE(true, ==, "aa", "aa");
   COMPARE(false, ==, "a",  "");
@@ -206,26 +210,26 @@ struct is_type {
 };
 
 TEST(StringViewTest, NposMatchesStdStringView) {
-  EXPECT_EQ(oak::StringPiece::npos, std::string::npos);
+  EXPECT_EQ(StringPiece::npos, std::string::npos);
 
-  EXPECT_TRUE(is_type<size_t>::same(oak::StringPiece::npos));
+  EXPECT_TRUE(is_type<size_t>::same(StringPiece::npos));
   EXPECT_FALSE(is_type<size_t>::same(""));
 
-  // Make sure oak::StringPiece::npos continues to be a header constant.
-  char test[oak::StringPiece::npos & 1] = {0};
+  // Make sure StringPiece::npos continues to be a header constant.
+  char test[StringPiece::npos & 1] = {0};
   EXPECT_EQ(0, test[0]);
 }
 
 TEST(StringViewTest, STL1) {
-  const oak::StringPiece a("abcdefghijklmnopqrstuvwxyz");
-  const oak::StringPiece b("abc");
-  const oak::StringPiece c("xyz");
-  const oak::StringPiece d("foobar");
-  const oak::StringPiece e;
+  const StringPiece a("abcdefghijklmnopqrstuvwxyz");
+  const StringPiece b("abc");
+  const StringPiece c("xyz");
+  const StringPiece d("foobar");
+  const StringPiece e;
   std::string temp("123");
   temp += '\0';
   temp += "456";
-  const oak::StringPiece f(temp);
+  const StringPiece f(temp);
 
   EXPECT_EQ(a[6], 'g');
   EXPECT_EQ(b[0], 'a');
@@ -246,12 +250,12 @@ TEST(StringViewTest, STL1) {
   EXPECT_EQ(*(c.rend() - 1), 'x');
   EXPECT_TRUE(a.rbegin() + 26 == a.rend());
 
-  EXPECT_EQ(a.size(), 26);
-  EXPECT_EQ(b.size(), 3);
-  EXPECT_EQ(c.size(), 3);
-  EXPECT_EQ(d.size(), 6);
-  EXPECT_EQ(e.size(), 0);
-  EXPECT_EQ(f.size(), 7);
+  EXPECT_EQ(a.size(), 26U);
+  EXPECT_EQ(b.size(), 3U);
+  EXPECT_EQ(c.size(), 3U);
+  EXPECT_EQ(d.size(), 6U);
+  EXPECT_EQ(e.size(), 0U);
+  EXPECT_EQ(f.size(), 7U);
 
   EXPECT_TRUE(!d.empty());
   EXPECT_TRUE(d.begin() != d.end());
@@ -261,132 +265,130 @@ TEST(StringViewTest, STL1) {
   EXPECT_TRUE(e.begin() == e.end());
 
   char buf[4] = { '%', '%', '%', '%' };
-  EXPECT_EQ(a.copy(buf, 4), 4);
+  EXPECT_EQ(a.copy(buf, 4), 4U);
   EXPECT_EQ(buf[0], a[0]);
   EXPECT_EQ(buf[1], a[1]);
   EXPECT_EQ(buf[2], a[2]);
   EXPECT_EQ(buf[3], a[3]);
-  EXPECT_EQ(a.copy(buf, 3, 7), 3);
+  EXPECT_EQ(a.copy(buf, 3, 7), 3U);
   EXPECT_EQ(buf[0], a[7]);
   EXPECT_EQ(buf[1], a[8]);
   EXPECT_EQ(buf[2], a[9]);
   EXPECT_EQ(buf[3], a[3]);
-  EXPECT_EQ(c.copy(buf, 99), 3);
+  EXPECT_EQ(c.copy(buf, 99), 3U);
   EXPECT_EQ(buf[0], c[0]);
   EXPECT_EQ(buf[1], c[1]);
   EXPECT_EQ(buf[2], c[2]);
   EXPECT_EQ(buf[3], a[3]);
-#ifdef oak_HAVE_EXCEPTIONS
   EXPECT_THROW(a.copy(buf, 1, 27), std::out_of_range);
-#endif
 }
 
 // Separated from STL1() because some compilers produce an overly
 // large stack frame for the combined function.
 TEST(StringViewTest, STL2) {
-  const oak::StringPiece a("abcdefghijklmnopqrstuvwxyz");
-  const oak::StringPiece b("abc");
-  const oak::StringPiece c("xyz");
-  oak::StringPiece d("foobar");
-  const oak::StringPiece e;
-  const oak::StringPiece f(
+  const StringPiece a("abcdefghijklmnopqrstuvwxyz");
+  const StringPiece b("abc");
+  const StringPiece c("xyz");
+  StringPiece d("foobar");
+  const StringPiece e;
+  const StringPiece f(
       "123"
       "\0"
       "456",
       7);
-  oak::StringPiece g("xx not found bb");
+  StringPiece g("xx not found bb");
 
-  d = oak::StringPiece();
-  EXPECT_EQ(d.size(), 0);
+  d = StringPiece();
+  EXPECT_EQ(d.size(), 0U);
   EXPECT_TRUE(d.empty());
   EXPECT_TRUE(d.data() == nullptr);
   EXPECT_TRUE(d.begin() == d.end());
 
-  EXPECT_EQ(a.find(b), 0);
-  EXPECT_EQ(a.find(b, 1), oak::StringPiece::npos);
-  EXPECT_EQ(a.find(c), 23);
-  EXPECT_EQ(a.find(c, 9), 23);
-  EXPECT_EQ(a.find(c, oak::StringPiece::npos), oak::StringPiece::npos);
-  EXPECT_EQ(b.find(c), oak::StringPiece::npos);
-  EXPECT_EQ(b.find(c, oak::StringPiece::npos), oak::StringPiece::npos);
-  EXPECT_EQ(a.find(d), 0);
-  EXPECT_EQ(a.find(e), 0);
-  EXPECT_EQ(a.find(d, 12), 12);
-  EXPECT_EQ(a.find(e, 17), 17);
-  EXPECT_EQ(a.find(g), oak::StringPiece::npos);
+  EXPECT_EQ(a.find(b), 0U);
+  EXPECT_EQ(a.find(b, 1), StringPiece::npos);
+  EXPECT_EQ(a.find(c), 23U);
+  EXPECT_EQ(a.find(c, 9), 23U);
+  EXPECT_EQ(a.find(c, StringPiece::npos), StringPiece::npos);
+  EXPECT_EQ(b.find(c), StringPiece::npos);
+  EXPECT_EQ(b.find(c, StringPiece::npos), StringPiece::npos);
+  EXPECT_EQ(a.find(d), 0U);
+  EXPECT_EQ(a.find(e), 0U);
+  EXPECT_EQ(a.find(d, 12), 12U);
+  EXPECT_EQ(a.find(e, 17), 17U);
+  EXPECT_EQ(a.find(g), StringPiece::npos);
   // empty string nonsense
-  EXPECT_EQ(d.find(b), oak::StringPiece::npos);
-  EXPECT_EQ(e.find(b), oak::StringPiece::npos);
-  EXPECT_EQ(d.find(b, 4), oak::StringPiece::npos);
-  EXPECT_EQ(e.find(b, 7), oak::StringPiece::npos);
+  EXPECT_EQ(d.find(b), StringPiece::npos);
+  EXPECT_EQ(e.find(b), StringPiece::npos);
+  EXPECT_EQ(d.find(b, 4), StringPiece::npos);
+  EXPECT_EQ(e.find(b, 7), StringPiece::npos);
 
   size_t empty_search_pos = std::string().find(std::string());
-  EXPECT_EQ(d.find(d), 0);
+  EXPECT_EQ(d.find(d), 0U);
   EXPECT_EQ(d.find(e), empty_search_pos);
-  EXPECT_EQ(e.find(d), 0);
-  EXPECT_EQ(e.find(e), 0);
+  EXPECT_EQ(e.find(d), 0U);
+  EXPECT_EQ(e.find(e), 0U);
   EXPECT_EQ(d.find(d, 4), std::string().find(std::string(), 4));
   EXPECT_EQ(d.find(e, 4), std::string().find(std::string(), 4));
   EXPECT_EQ(e.find(d, 4), std::string().find(std::string(), 4));
   EXPECT_EQ(e.find(e, 4), std::string().find(std::string(), 4));
 
-  EXPECT_EQ(a.find('a'), 0);
-  EXPECT_EQ(a.find('c'), 2);
-  EXPECT_EQ(a.find('z'), 25);
-  EXPECT_EQ(a.find('$'), oak::StringPiece::npos);
-  EXPECT_EQ(a.find('\0'), oak::StringPiece::npos);
-  EXPECT_EQ(f.find('\0'), 3);
-  EXPECT_EQ(f.find('3'), 2);
-  EXPECT_EQ(f.find('5'), 5);
-  EXPECT_EQ(g.find('o'), 4);
-  EXPECT_EQ(g.find('o', 4), 4);
-  EXPECT_EQ(g.find('o', 5), 8);
-  EXPECT_EQ(a.find('b', 5), oak::StringPiece::npos);
+  EXPECT_EQ(a.find('a'), 0U);
+  EXPECT_EQ(a.find('c'), 2U);
+  EXPECT_EQ(a.find('z'), 25U);
+  EXPECT_EQ(a.find('$'), StringPiece::npos);
+  EXPECT_EQ(a.find('\0'), StringPiece::npos);
+  EXPECT_EQ(f.find('\0'), 3U);
+  EXPECT_EQ(f.find('3'), 2U);
+  EXPECT_EQ(f.find('5'), 5U);
+  EXPECT_EQ(g.find('o'), 4U);
+  EXPECT_EQ(g.find('o', 4), 4U);
+  EXPECT_EQ(g.find('o', 5), 8U);
+  EXPECT_EQ(a.find('b', 5), StringPiece::npos);
   // empty string nonsense
-  EXPECT_EQ(d.find('\0'), oak::StringPiece::npos);
-  EXPECT_EQ(e.find('\0'), oak::StringPiece::npos);
-  EXPECT_EQ(d.find('\0', 4), oak::StringPiece::npos);
-  EXPECT_EQ(e.find('\0', 7), oak::StringPiece::npos);
-  EXPECT_EQ(d.find('x'), oak::StringPiece::npos);
-  EXPECT_EQ(e.find('x'), oak::StringPiece::npos);
-  EXPECT_EQ(d.find('x', 4), oak::StringPiece::npos);
-  EXPECT_EQ(e.find('x', 7), oak::StringPiece::npos);
+  EXPECT_EQ(d.find('\0'), StringPiece::npos);
+  EXPECT_EQ(e.find('\0'), StringPiece::npos);
+  EXPECT_EQ(d.find('\0', 4), StringPiece::npos);
+  EXPECT_EQ(e.find('\0', 7), StringPiece::npos);
+  EXPECT_EQ(d.find('x'), StringPiece::npos);
+  EXPECT_EQ(e.find('x'), StringPiece::npos);
+  EXPECT_EQ(d.find('x', 4), StringPiece::npos);
+  EXPECT_EQ(e.find('x', 7), StringPiece::npos);
 
-  EXPECT_EQ(a.find(b.data(), 1, 0), 1);
-  EXPECT_EQ(a.find(c.data(), 9, 0), 9);
-  EXPECT_EQ(a.find(c.data(), oak::StringPiece::npos, 0),
-            oak::StringPiece::npos);
-  EXPECT_EQ(b.find(c.data(), oak::StringPiece::npos, 0),
-            oak::StringPiece::npos);
+  EXPECT_EQ(a.find(b.data(), 1, 0), 1U);
+  EXPECT_EQ(a.find(c.data(), 9, 0), 9U);
+  EXPECT_EQ(a.find(c.data(), StringPiece::npos, 0),
+            StringPiece::npos);
+  EXPECT_EQ(b.find(c.data(), StringPiece::npos, 0),
+            StringPiece::npos);
   // empty string nonsense
-  EXPECT_EQ(d.find(b.data(), 4, 0), oak::StringPiece::npos);
-  EXPECT_EQ(e.find(b.data(), 7, 0), oak::StringPiece::npos);
+  EXPECT_EQ(d.find(b.data(), 4, 0), StringPiece::npos);
+  EXPECT_EQ(e.find(b.data(), 7, 0), StringPiece::npos);
 
-  EXPECT_EQ(a.find(b.data(), 1), oak::StringPiece::npos);
-  EXPECT_EQ(a.find(c.data(), 9), 23);
-  EXPECT_EQ(a.find(c.data(), oak::StringPiece::npos), oak::StringPiece::npos);
-  EXPECT_EQ(b.find(c.data(), oak::StringPiece::npos), oak::StringPiece::npos);
+  EXPECT_EQ(a.find(b.data(), 1), StringPiece::npos);
+  EXPECT_EQ(a.find(c.data(), 9), 23U);
+  EXPECT_EQ(a.find(c.data(), StringPiece::npos), StringPiece::npos);
+  EXPECT_EQ(b.find(c.data(), StringPiece::npos), StringPiece::npos);
   // empty string nonsense
-  EXPECT_EQ(d.find(b.data(), 4), oak::StringPiece::npos);
-  EXPECT_EQ(e.find(b.data(), 7), oak::StringPiece::npos);
+  EXPECT_EQ(d.find(b.data(), 4), StringPiece::npos);
+  EXPECT_EQ(e.find(b.data(), 7), StringPiece::npos);
 
-  EXPECT_EQ(a.rfind(b), 0);
-  EXPECT_EQ(a.rfind(b, 1), 0);
-  EXPECT_EQ(a.rfind(c), 23);
-  EXPECT_EQ(a.rfind(c, 22), oak::StringPiece::npos);
-  EXPECT_EQ(a.rfind(c, 1), oak::StringPiece::npos);
-  EXPECT_EQ(a.rfind(c, 0), oak::StringPiece::npos);
-  EXPECT_EQ(b.rfind(c), oak::StringPiece::npos);
-  EXPECT_EQ(b.rfind(c, 0), oak::StringPiece::npos);
+  EXPECT_EQ(a.rfind(b), 0U);
+  EXPECT_EQ(a.rfind(b, 1), 0U);
+  EXPECT_EQ(a.rfind(c), 23U);
+  EXPECT_EQ(a.rfind(c, 22), StringPiece::npos);
+  EXPECT_EQ(a.rfind(c, 1), StringPiece::npos);
+  EXPECT_EQ(a.rfind(c, 0), StringPiece::npos);
+  EXPECT_EQ(b.rfind(c), StringPiece::npos);
+  EXPECT_EQ(b.rfind(c, 0), StringPiece::npos);
   EXPECT_EQ(a.rfind(d), std::string(a).rfind(std::string()));
   EXPECT_EQ(a.rfind(e), std::string(a).rfind(std::string()));
-  EXPECT_EQ(a.rfind(d, 12), 12);
-  EXPECT_EQ(a.rfind(e, 17), 17);
-  EXPECT_EQ(a.rfind(g), oak::StringPiece::npos);
-  EXPECT_EQ(d.rfind(b), oak::StringPiece::npos);
-  EXPECT_EQ(e.rfind(b), oak::StringPiece::npos);
-  EXPECT_EQ(d.rfind(b, 4), oak::StringPiece::npos);
-  EXPECT_EQ(e.rfind(b, 7), oak::StringPiece::npos);
+  EXPECT_EQ(a.rfind(d, 12), 12U);
+  EXPECT_EQ(a.rfind(e, 17), 17U);
+  EXPECT_EQ(a.rfind(g), StringPiece::npos);
+  EXPECT_EQ(d.rfind(b), StringPiece::npos);
+  EXPECT_EQ(e.rfind(b), StringPiece::npos);
+  EXPECT_EQ(d.rfind(b, 4), StringPiece::npos);
+  EXPECT_EQ(e.rfind(b, 7), StringPiece::npos);
   // empty string nonsense
   EXPECT_EQ(d.rfind(d, 4), std::string().rfind(std::string()));
   EXPECT_EQ(e.rfind(d, 7), std::string().rfind(std::string()));
@@ -398,211 +400,211 @@ TEST(StringViewTest, STL2) {
   EXPECT_EQ(e.rfind(e), std::string().rfind(std::string()));
 
   // g = "xx not found bb"
-  EXPECT_EQ(g.rfind('o'), 8);
-  EXPECT_EQ(g.rfind('q'), oak::StringPiece::npos);
-  EXPECT_EQ(g.rfind('o', 8), 8);
-  EXPECT_EQ(g.rfind('o', 7), 4);
-  EXPECT_EQ(g.rfind('o', 3), oak::StringPiece::npos);
-  EXPECT_EQ(f.rfind('\0'), 3);
-  EXPECT_EQ(f.rfind('\0', 12), 3);
-  EXPECT_EQ(f.rfind('3'), 2);
-  EXPECT_EQ(f.rfind('5'), 5);
+  EXPECT_EQ(g.rfind('o'), 8U);
+  EXPECT_EQ(g.rfind('q'), StringPiece::npos);
+  EXPECT_EQ(g.rfind('o', 8), 8U);
+  EXPECT_EQ(g.rfind('o', 7), 4U);
+  EXPECT_EQ(g.rfind('o', 3), StringPiece::npos);
+  EXPECT_EQ(f.rfind('\0'), 3U);
+  EXPECT_EQ(f.rfind('\0', 12), 3U);
+  EXPECT_EQ(f.rfind('3'), 2U);
+  EXPECT_EQ(f.rfind('5'), 5U);
   // empty string nonsense
-  EXPECT_EQ(d.rfind('o'), oak::StringPiece::npos);
-  EXPECT_EQ(e.rfind('o'), oak::StringPiece::npos);
-  EXPECT_EQ(d.rfind('o', 4), oak::StringPiece::npos);
-  EXPECT_EQ(e.rfind('o', 7), oak::StringPiece::npos);
+  EXPECT_EQ(d.rfind('o'), StringPiece::npos);
+  EXPECT_EQ(e.rfind('o'), StringPiece::npos);
+  EXPECT_EQ(d.rfind('o', 4), StringPiece::npos);
+  EXPECT_EQ(e.rfind('o', 7), StringPiece::npos);
 
-  EXPECT_EQ(a.rfind(b.data(), 1, 0), 1);
-  EXPECT_EQ(a.rfind(c.data(), 22, 0), 22);
-  EXPECT_EQ(a.rfind(c.data(), 1, 0), 1);
-  EXPECT_EQ(a.rfind(c.data(), 0, 0), 0);
-  EXPECT_EQ(b.rfind(c.data(), 0, 0), 0);
-  EXPECT_EQ(d.rfind(b.data(), 4, 0), 0);
-  EXPECT_EQ(e.rfind(b.data(), 7, 0), 0);
+  EXPECT_EQ(a.rfind(b.data(), 1, 0), 1U);
+  EXPECT_EQ(a.rfind(c.data(), 22, 0), 22U);
+  EXPECT_EQ(a.rfind(c.data(), 1, 0), 1U);
+  EXPECT_EQ(a.rfind(c.data(), 0, 0), 0U);
+  EXPECT_EQ(b.rfind(c.data(), 0, 0), 0U);
+  EXPECT_EQ(d.rfind(b.data(), 4, 0), 0U);
+  EXPECT_EQ(e.rfind(b.data(), 7, 0), 0U);
 }
 
 // Continued from STL2
 TEST(StringViewTest, STL2FindFirst) {
-  const oak::StringPiece a("abcdefghijklmnopqrstuvwxyz");
-  const oak::StringPiece b("abc");
-  const oak::StringPiece c("xyz");
-  oak::StringPiece d("foobar");
-  const oak::StringPiece e;
-  const oak::StringPiece f(
+  const StringPiece a("abcdefghijklmnopqrstuvwxyz");
+  const StringPiece b("abc");
+  const StringPiece c("xyz");
+  StringPiece d("foobar");
+  const StringPiece e;
+  const StringPiece f(
       "123"
       "\0"
       "456",
       7);
-  oak::StringPiece g("xx not found bb");
+  StringPiece g("xx not found bb");
 
-  d = oak::StringPiece();
-  EXPECT_EQ(a.find_first_of(b), 0);
-  EXPECT_EQ(a.find_first_of(b, 0), 0);
-  EXPECT_EQ(a.find_first_of(b, 1), 1);
-  EXPECT_EQ(a.find_first_of(b, 2), 2);
-  EXPECT_EQ(a.find_first_of(b, 3), oak::StringPiece::npos);
-  EXPECT_EQ(a.find_first_of(c), 23);
-  EXPECT_EQ(a.find_first_of(c, 23), 23);
-  EXPECT_EQ(a.find_first_of(c, 24), 24);
-  EXPECT_EQ(a.find_first_of(c, 25), 25);
-  EXPECT_EQ(a.find_first_of(c, 26), oak::StringPiece::npos);
-  EXPECT_EQ(g.find_first_of(b), 13);
-  EXPECT_EQ(g.find_first_of(c), 0);
-  EXPECT_EQ(a.find_first_of(f), oak::StringPiece::npos);
-  EXPECT_EQ(f.find_first_of(a), oak::StringPiece::npos);
+  d = StringPiece();
+  EXPECT_EQ(a.find_first_of(b), 0U);
+  EXPECT_EQ(a.find_first_of(b, 0), 0U);
+  EXPECT_EQ(a.find_first_of(b, 1), 1U);
+  EXPECT_EQ(a.find_first_of(b, 2), 2U);
+  EXPECT_EQ(a.find_first_of(b, 3), StringPiece::npos);
+  EXPECT_EQ(a.find_first_of(c), 23U);
+  EXPECT_EQ(a.find_first_of(c, 23), 23U);
+  EXPECT_EQ(a.find_first_of(c, 24), 24U);
+  EXPECT_EQ(a.find_first_of(c, 25), 25U);
+  EXPECT_EQ(a.find_first_of(c, 26), StringPiece::npos);
+  EXPECT_EQ(g.find_first_of(b), 13U);
+  EXPECT_EQ(g.find_first_of(c), 0U);
+  EXPECT_EQ(a.find_first_of(f), StringPiece::npos);
+  EXPECT_EQ(f.find_first_of(a), StringPiece::npos);
   // empty string nonsense
-  EXPECT_EQ(a.find_first_of(d), oak::StringPiece::npos);
-  EXPECT_EQ(a.find_first_of(e), oak::StringPiece::npos);
-  EXPECT_EQ(d.find_first_of(b), oak::StringPiece::npos);
-  EXPECT_EQ(e.find_first_of(b), oak::StringPiece::npos);
-  EXPECT_EQ(d.find_first_of(d), oak::StringPiece::npos);
-  EXPECT_EQ(e.find_first_of(d), oak::StringPiece::npos);
-  EXPECT_EQ(d.find_first_of(e), oak::StringPiece::npos);
-  EXPECT_EQ(e.find_first_of(e), oak::StringPiece::npos);
+  EXPECT_EQ(a.find_first_of(d), StringPiece::npos);
+  EXPECT_EQ(a.find_first_of(e), StringPiece::npos);
+  EXPECT_EQ(d.find_first_of(b), StringPiece::npos);
+  EXPECT_EQ(e.find_first_of(b), StringPiece::npos);
+  EXPECT_EQ(d.find_first_of(d), StringPiece::npos);
+  EXPECT_EQ(e.find_first_of(d), StringPiece::npos);
+  EXPECT_EQ(d.find_first_of(e), StringPiece::npos);
+  EXPECT_EQ(e.find_first_of(e), StringPiece::npos);
 
-  EXPECT_EQ(a.find_first_not_of(b), 3);
-  EXPECT_EQ(a.find_first_not_of(c), 0);
-  EXPECT_EQ(b.find_first_not_of(a), oak::StringPiece::npos);
-  EXPECT_EQ(c.find_first_not_of(a), oak::StringPiece::npos);
-  EXPECT_EQ(f.find_first_not_of(a), 0);
-  EXPECT_EQ(a.find_first_not_of(f), 0);
-  EXPECT_EQ(a.find_first_not_of(d), 0);
-  EXPECT_EQ(a.find_first_not_of(e), 0);
+  EXPECT_EQ(a.find_first_not_of(b), 3U);
+  EXPECT_EQ(a.find_first_not_of(c), 0U);
+  EXPECT_EQ(b.find_first_not_of(a), StringPiece::npos);
+  EXPECT_EQ(c.find_first_not_of(a), StringPiece::npos);
+  EXPECT_EQ(f.find_first_not_of(a), 0U);
+  EXPECT_EQ(a.find_first_not_of(f), 0U);
+  EXPECT_EQ(a.find_first_not_of(d), 0U);
+  EXPECT_EQ(a.find_first_not_of(e), 0U);
   // empty string nonsense
-  EXPECT_EQ(a.find_first_not_of(d), 0);
-  EXPECT_EQ(a.find_first_not_of(e), 0);
-  EXPECT_EQ(a.find_first_not_of(d, 1), 1);
-  EXPECT_EQ(a.find_first_not_of(e, 1), 1);
+  EXPECT_EQ(a.find_first_not_of(d), 0U);
+  EXPECT_EQ(a.find_first_not_of(e), 0U);
+  EXPECT_EQ(a.find_first_not_of(d, 1), 1U);
+  EXPECT_EQ(a.find_first_not_of(e, 1), 1U);
   EXPECT_EQ(a.find_first_not_of(d, a.size() - 1), a.size() - 1);
   EXPECT_EQ(a.find_first_not_of(e, a.size() - 1), a.size() - 1);
-  EXPECT_EQ(a.find_first_not_of(d, a.size()), oak::StringPiece::npos);
-  EXPECT_EQ(a.find_first_not_of(e, a.size()), oak::StringPiece::npos);
-  EXPECT_EQ(a.find_first_not_of(d, oak::StringPiece::npos),
-            oak::StringPiece::npos);
-  EXPECT_EQ(a.find_first_not_of(e, oak::StringPiece::npos),
-            oak::StringPiece::npos);
-  EXPECT_EQ(d.find_first_not_of(a), oak::StringPiece::npos);
-  EXPECT_EQ(e.find_first_not_of(a), oak::StringPiece::npos);
-  EXPECT_EQ(d.find_first_not_of(d), oak::StringPiece::npos);
-  EXPECT_EQ(e.find_first_not_of(d), oak::StringPiece::npos);
-  EXPECT_EQ(d.find_first_not_of(e), oak::StringPiece::npos);
-  EXPECT_EQ(e.find_first_not_of(e), oak::StringPiece::npos);
+  EXPECT_EQ(a.find_first_not_of(d, a.size()), StringPiece::npos);
+  EXPECT_EQ(a.find_first_not_of(e, a.size()), StringPiece::npos);
+  EXPECT_EQ(a.find_first_not_of(d, StringPiece::npos),
+            StringPiece::npos);
+  EXPECT_EQ(a.find_first_not_of(e, StringPiece::npos),
+            StringPiece::npos);
+  EXPECT_EQ(d.find_first_not_of(a), StringPiece::npos);
+  EXPECT_EQ(e.find_first_not_of(a), StringPiece::npos);
+  EXPECT_EQ(d.find_first_not_of(d), StringPiece::npos);
+  EXPECT_EQ(e.find_first_not_of(d), StringPiece::npos);
+  EXPECT_EQ(d.find_first_not_of(e), StringPiece::npos);
+  EXPECT_EQ(e.find_first_not_of(e), StringPiece::npos);
 
-  oak::StringPiece h("====");
-  EXPECT_EQ(h.find_first_not_of('='), oak::StringPiece::npos);
-  EXPECT_EQ(h.find_first_not_of('=', 3), oak::StringPiece::npos);
-  EXPECT_EQ(h.find_first_not_of('\0'), 0);
-  EXPECT_EQ(g.find_first_not_of('x'), 2);
-  EXPECT_EQ(f.find_first_not_of('\0'), 0);
-  EXPECT_EQ(f.find_first_not_of('\0', 3), 4);
-  EXPECT_EQ(f.find_first_not_of('\0', 2), 2);
+  StringPiece h("====");
+  EXPECT_EQ(h.find_first_not_of('='), StringPiece::npos);
+  EXPECT_EQ(h.find_first_not_of('=', 3), StringPiece::npos);
+  EXPECT_EQ(h.find_first_not_of('\0'), 0U);
+  EXPECT_EQ(g.find_first_not_of('x'), 2U);
+  EXPECT_EQ(f.find_first_not_of('\0'), 0U);
+  EXPECT_EQ(f.find_first_not_of('\0', 3), 4U);
+  EXPECT_EQ(f.find_first_not_of('\0', 2), 2U);
   // empty string nonsense
-  EXPECT_EQ(d.find_first_not_of('x'), oak::StringPiece::npos);
-  EXPECT_EQ(e.find_first_not_of('x'), oak::StringPiece::npos);
-  EXPECT_EQ(d.find_first_not_of('\0'), oak::StringPiece::npos);
-  EXPECT_EQ(e.find_first_not_of('\0'), oak::StringPiece::npos);
+  EXPECT_EQ(d.find_first_not_of('x'), StringPiece::npos);
+  EXPECT_EQ(e.find_first_not_of('x'), StringPiece::npos);
+  EXPECT_EQ(d.find_first_not_of('\0'), StringPiece::npos);
+  EXPECT_EQ(e.find_first_not_of('\0'), StringPiece::npos);
 }
 
 // Continued from STL2
 TEST(StringViewTest, STL2FindLast) {
-  const oak::StringPiece a("abcdefghijklmnopqrstuvwxyz");
-  const oak::StringPiece b("abc");
-  const oak::StringPiece c("xyz");
-  oak::StringPiece d("foobar");
-  const oak::StringPiece e;
-  const oak::StringPiece f(
+  const StringPiece a("abcdefghijklmnopqrstuvwxyz");
+  const StringPiece b("abc");
+  const StringPiece c("xyz");
+  StringPiece d("foobar");
+  const StringPiece e;
+  const StringPiece f(
       "123"
       "\0"
       "456",
       7);
-  oak::StringPiece g("xx not found bb");
-  oak::StringPiece h("====");
-  oak::StringPiece i("56");
+  StringPiece g("xx not found bb");
+  StringPiece h("====");
+  StringPiece i("56");
 
-  d = oak::StringPiece();
-  EXPECT_EQ(h.find_last_of(a), oak::StringPiece::npos);
+  d = StringPiece();
+  EXPECT_EQ(h.find_last_of(a), StringPiece::npos);
   EXPECT_EQ(g.find_last_of(a), g.size()-1);
-  EXPECT_EQ(a.find_last_of(b), 2);
+  EXPECT_EQ(a.find_last_of(b), 2U);
   EXPECT_EQ(a.find_last_of(c), a.size()-1);
-  EXPECT_EQ(f.find_last_of(i), 6);
-  EXPECT_EQ(a.find_last_of('a'), 0);
-  EXPECT_EQ(a.find_last_of('b'), 1);
-  EXPECT_EQ(a.find_last_of('z'), 25);
-  EXPECT_EQ(a.find_last_of('a', 5), 0);
-  EXPECT_EQ(a.find_last_of('b', 5), 1);
-  EXPECT_EQ(a.find_last_of('b', 0), oak::StringPiece::npos);
-  EXPECT_EQ(a.find_last_of('z', 25), 25);
-  EXPECT_EQ(a.find_last_of('z', 24), oak::StringPiece::npos);
-  EXPECT_EQ(f.find_last_of(i, 5), 5);
-  EXPECT_EQ(f.find_last_of(i, 6), 6);
-  EXPECT_EQ(f.find_last_of(a, 4), oak::StringPiece::npos);
+  EXPECT_EQ(f.find_last_of(i), 6U);
+  EXPECT_EQ(a.find_last_of('a'), 0U);
+  EXPECT_EQ(a.find_last_of('b'), 1U);
+  EXPECT_EQ(a.find_last_of('z'), 25U);
+  EXPECT_EQ(a.find_last_of('a', 5), 0U);
+  EXPECT_EQ(a.find_last_of('b', 5), 1U);
+  EXPECT_EQ(a.find_last_of('b', 0), StringPiece::npos);
+  EXPECT_EQ(a.find_last_of('z', 25), 25U);
+  EXPECT_EQ(a.find_last_of('z', 24), StringPiece::npos);
+  EXPECT_EQ(f.find_last_of(i, 5), 5U);
+  EXPECT_EQ(f.find_last_of(i, 6), 6U);
+  EXPECT_EQ(f.find_last_of(a, 4), StringPiece::npos);
   // empty string nonsense
-  EXPECT_EQ(f.find_last_of(d), oak::StringPiece::npos);
-  EXPECT_EQ(f.find_last_of(e), oak::StringPiece::npos);
-  EXPECT_EQ(f.find_last_of(d, 4), oak::StringPiece::npos);
-  EXPECT_EQ(f.find_last_of(e, 4), oak::StringPiece::npos);
-  EXPECT_EQ(d.find_last_of(d), oak::StringPiece::npos);
-  EXPECT_EQ(d.find_last_of(e), oak::StringPiece::npos);
-  EXPECT_EQ(e.find_last_of(d), oak::StringPiece::npos);
-  EXPECT_EQ(e.find_last_of(e), oak::StringPiece::npos);
-  EXPECT_EQ(d.find_last_of(f), oak::StringPiece::npos);
-  EXPECT_EQ(e.find_last_of(f), oak::StringPiece::npos);
-  EXPECT_EQ(d.find_last_of(d, 4), oak::StringPiece::npos);
-  EXPECT_EQ(d.find_last_of(e, 4), oak::StringPiece::npos);
-  EXPECT_EQ(e.find_last_of(d, 4), oak::StringPiece::npos);
-  EXPECT_EQ(e.find_last_of(e, 4), oak::StringPiece::npos);
-  EXPECT_EQ(d.find_last_of(f, 4), oak::StringPiece::npos);
-  EXPECT_EQ(e.find_last_of(f, 4), oak::StringPiece::npos);
+  EXPECT_EQ(f.find_last_of(d), StringPiece::npos);
+  EXPECT_EQ(f.find_last_of(e), StringPiece::npos);
+  EXPECT_EQ(f.find_last_of(d, 4), StringPiece::npos);
+  EXPECT_EQ(f.find_last_of(e, 4), StringPiece::npos);
+  EXPECT_EQ(d.find_last_of(d), StringPiece::npos);
+  EXPECT_EQ(d.find_last_of(e), StringPiece::npos);
+  EXPECT_EQ(e.find_last_of(d), StringPiece::npos);
+  EXPECT_EQ(e.find_last_of(e), StringPiece::npos);
+  EXPECT_EQ(d.find_last_of(f), StringPiece::npos);
+  EXPECT_EQ(e.find_last_of(f), StringPiece::npos);
+  EXPECT_EQ(d.find_last_of(d, 4), StringPiece::npos);
+  EXPECT_EQ(d.find_last_of(e, 4), StringPiece::npos);
+  EXPECT_EQ(e.find_last_of(d, 4), StringPiece::npos);
+  EXPECT_EQ(e.find_last_of(e, 4), StringPiece::npos);
+  EXPECT_EQ(d.find_last_of(f, 4), StringPiece::npos);
+  EXPECT_EQ(e.find_last_of(f, 4), StringPiece::npos);
 
   EXPECT_EQ(a.find_last_not_of(b), a.size()-1);
-  EXPECT_EQ(a.find_last_not_of(c), 22);
-  EXPECT_EQ(b.find_last_not_of(a), oak::StringPiece::npos);
-  EXPECT_EQ(b.find_last_not_of(b), oak::StringPiece::npos);
-  EXPECT_EQ(f.find_last_not_of(i), 4);
-  EXPECT_EQ(a.find_last_not_of(c, 24), 22);
-  EXPECT_EQ(a.find_last_not_of(b, 3), 3);
-  EXPECT_EQ(a.find_last_not_of(b, 2), oak::StringPiece::npos);
+  EXPECT_EQ(a.find_last_not_of(c), 22U);
+  EXPECT_EQ(b.find_last_not_of(a), StringPiece::npos);
+  EXPECT_EQ(b.find_last_not_of(b), StringPiece::npos);
+  EXPECT_EQ(f.find_last_not_of(i), 4U);
+  EXPECT_EQ(a.find_last_not_of(c, 24), 22U);
+  EXPECT_EQ(a.find_last_not_of(b, 3), 3U);
+  EXPECT_EQ(a.find_last_not_of(b, 2), StringPiece::npos);
   // empty string nonsense
   EXPECT_EQ(f.find_last_not_of(d), f.size()-1);
   EXPECT_EQ(f.find_last_not_of(e), f.size()-1);
-  EXPECT_EQ(f.find_last_not_of(d, 4), 4);
-  EXPECT_EQ(f.find_last_not_of(e, 4), 4);
-  EXPECT_EQ(d.find_last_not_of(d), oak::StringPiece::npos);
-  EXPECT_EQ(d.find_last_not_of(e), oak::StringPiece::npos);
-  EXPECT_EQ(e.find_last_not_of(d), oak::StringPiece::npos);
-  EXPECT_EQ(e.find_last_not_of(e), oak::StringPiece::npos);
-  EXPECT_EQ(d.find_last_not_of(f), oak::StringPiece::npos);
-  EXPECT_EQ(e.find_last_not_of(f), oak::StringPiece::npos);
-  EXPECT_EQ(d.find_last_not_of(d, 4), oak::StringPiece::npos);
-  EXPECT_EQ(d.find_last_not_of(e, 4), oak::StringPiece::npos);
-  EXPECT_EQ(e.find_last_not_of(d, 4), oak::StringPiece::npos);
-  EXPECT_EQ(e.find_last_not_of(e, 4), oak::StringPiece::npos);
-  EXPECT_EQ(d.find_last_not_of(f, 4), oak::StringPiece::npos);
-  EXPECT_EQ(e.find_last_not_of(f, 4), oak::StringPiece::npos);
+  EXPECT_EQ(f.find_last_not_of(d, 4), 4U);
+  EXPECT_EQ(f.find_last_not_of(e, 4), 4U);
+  EXPECT_EQ(d.find_last_not_of(d), StringPiece::npos);
+  EXPECT_EQ(d.find_last_not_of(e), StringPiece::npos);
+  EXPECT_EQ(e.find_last_not_of(d), StringPiece::npos);
+  EXPECT_EQ(e.find_last_not_of(e), StringPiece::npos);
+  EXPECT_EQ(d.find_last_not_of(f), StringPiece::npos);
+  EXPECT_EQ(e.find_last_not_of(f), StringPiece::npos);
+  EXPECT_EQ(d.find_last_not_of(d, 4), StringPiece::npos);
+  EXPECT_EQ(d.find_last_not_of(e, 4), StringPiece::npos);
+  EXPECT_EQ(e.find_last_not_of(d, 4), StringPiece::npos);
+  EXPECT_EQ(e.find_last_not_of(e, 4), StringPiece::npos);
+  EXPECT_EQ(d.find_last_not_of(f, 4), StringPiece::npos);
+  EXPECT_EQ(e.find_last_not_of(f, 4), StringPiece::npos);
 
   EXPECT_EQ(h.find_last_not_of('x'), h.size() - 1);
-  EXPECT_EQ(h.find_last_not_of('='), oak::StringPiece::npos);
-  EXPECT_EQ(b.find_last_not_of('c'), 1);
-  EXPECT_EQ(h.find_last_not_of('x', 2), 2);
-  EXPECT_EQ(h.find_last_not_of('=', 2), oak::StringPiece::npos);
-  EXPECT_EQ(b.find_last_not_of('b', 1), 0);
+  EXPECT_EQ(h.find_last_not_of('='), StringPiece::npos);
+  EXPECT_EQ(b.find_last_not_of('c'), 1U);
+  EXPECT_EQ(h.find_last_not_of('x', 2), 2U);
+  EXPECT_EQ(h.find_last_not_of('=', 2), StringPiece::npos);
+  EXPECT_EQ(b.find_last_not_of('b', 1), 0U);
   // empty string nonsense
-  EXPECT_EQ(d.find_last_not_of('x'), oak::StringPiece::npos);
-  EXPECT_EQ(e.find_last_not_of('x'), oak::StringPiece::npos);
-  EXPECT_EQ(d.find_last_not_of('\0'), oak::StringPiece::npos);
-  EXPECT_EQ(e.find_last_not_of('\0'), oak::StringPiece::npos);
+  EXPECT_EQ(d.find_last_not_of('x'), StringPiece::npos);
+  EXPECT_EQ(e.find_last_not_of('x'), StringPiece::npos);
+  EXPECT_EQ(d.find_last_not_of('\0'), StringPiece::npos);
+  EXPECT_EQ(e.find_last_not_of('\0'), StringPiece::npos);
 }
 
 // Continued from STL2
 TEST(StringViewTest, STL2Substr) {
-  const oak::StringPiece a("abcdefghijklmnopqrstuvwxyz");
-  const oak::StringPiece b("abc");
-  const oak::StringPiece c("xyz");
-  oak::StringPiece d("foobar");
-  const oak::StringPiece e;
+  const StringPiece a("abcdefghijklmnopqrstuvwxyz");
+  const StringPiece b("abc");
+  const StringPiece c("xyz");
+  StringPiece d("foobar");
+  const StringPiece e;
 
-  d = oak::StringPiece();
+  d = StringPiece();
   EXPECT_EQ(a.substr(0, 3), b);
   EXPECT_EQ(a.substr(23), c);
   EXPECT_EQ(a.substr(23, 3), c);
@@ -613,8 +615,8 @@ TEST(StringViewTest, STL2Substr) {
   // empty string nonsense
   EXPECT_EQ(d.substr(0, 99), e);
   // use of npos
-  EXPECT_EQ(a.substr(0, oak::StringPiece::npos), a);
-  EXPECT_EQ(a.substr(23, oak::StringPiece::npos), c);
+  EXPECT_EQ(a.substr(0, StringPiece::npos), a);
+  EXPECT_EQ(a.substr(23, StringPiece::npos), c);
   // throw exception
 #ifdef ABSL_HAVE_EXCEPTIONS
   EXPECT_THROW((void)a.substr(99, 2), std::out_of_range);
@@ -624,9 +626,9 @@ TEST(StringViewTest, STL2Substr) {
 TEST(StringViewTest, UTF8) {
   std::string utf8 = "\u00E1";
   std::string utf8_twice = utf8 + " " + utf8;
-  int utf8_len = strlen(utf8.data());
-  EXPECT_EQ(utf8_len, oak::StringPiece(utf8_twice).find_first_of(" "));
-  EXPECT_EQ(utf8_len, oak::StringPiece(utf8_twice).find_first_of(" \t"));
+  size_t utf8_len = strlen(utf8.data());
+  EXPECT_EQ(utf8_len, StringPiece(utf8_twice).find_first_of(" "));
+  EXPECT_EQ(utf8_len, StringPiece(utf8_twice).find_first_of(" \t"));
 }
 
 TEST(StringViewTest, FindConformance) {
@@ -656,9 +658,9 @@ TEST(StringViewTest, FindConformance) {
     SCOPED_TRACE(s.haystack);
     SCOPED_TRACE(s.needle);
     std::string st = s.haystack;
-    oak::StringPiece sp = s.haystack;
+    StringPiece sp = s.haystack;
     for (size_t i = 0; i <= sp.size(); ++i) {
-      size_t pos = (i == sp.size()) ? oak::StringPiece::npos : i;
+      size_t pos = (i == sp.size()) ? StringPiece::npos : i;
       SCOPED_TRACE(pos);
       EXPECT_EQ(sp.find(s.needle, pos),
                 st.find(s.needle, pos));
@@ -677,15 +679,15 @@ TEST(StringViewTest, FindConformance) {
 }
 
 TEST(StringViewTest, Remove) {
-  oak::StringPiece a("foobar");
+  StringPiece a("foobar");
   std::string s1("123");
   s1 += '\0';
   s1 += "456";
-  oak::StringPiece e;
+  StringPiece e;
   std::string s2;
 
   // remove_prefix
-  oak::StringPiece c(a);
+  StringPiece c(a);
   c.remove_prefix(3);
   EXPECT_EQ(c, "bar");
   c = a;
@@ -706,32 +708,32 @@ TEST(StringViewTest, Remove) {
 }
 
 TEST(StringViewTest, Set) {
-  oak::StringPiece a("foobar");
-  oak::StringPiece empty;
-  oak::StringPiece b;
+  StringPiece a("foobar");
+  StringPiece empty;
+  StringPiece b;
 
   // set
-  b = oak::StringPiece("foobar", 6);
+  b = StringPiece("foobar", 6);
   EXPECT_EQ(b, a);
-  b = oak::StringPiece("foobar", 0);
+  b = StringPiece("foobar", 0);
   EXPECT_EQ(b, empty);
-  b = oak::StringPiece("foobar", 7);
+  b = StringPiece("foobar", 7);
   EXPECT_NE(b, a);
 
-  b = oak::StringPiece("foobar");
+  b = StringPiece("foobar");
   EXPECT_EQ(b, a);
 }
 
 TEST(StringViewTest, FrontBack) {
   static const char arr[] = "abcd";
-  const oak::StringPiece csp(arr, 4);
+  const StringPiece csp(arr, 4);
   EXPECT_EQ(&arr[0], &csp.front());
   EXPECT_EQ(&arr[3], &csp.back());
 }
 
 TEST(StringViewTest, FrontBackSingleChar) {
   static const char c = 'a';
-  const oak::StringPiece csp(&c, 1);
+  const StringPiece csp(&c, 1);
   EXPECT_EQ(&c, &csp.front());
   EXPECT_EQ(&c, &csp.back());
 }
@@ -739,15 +741,15 @@ TEST(StringViewTest, FrontBackSingleChar) {
 #if !defined(oak_HAVE_STD_StringPiece)
 
 TEST(StringViewTest, NULLInput) {
-  oak::StringPiece s;
+  StringPiece s;
   EXPECT_EQ(s.data(), nullptr);
-  EXPECT_EQ(s.size(), 0);
+  EXPECT_EQ(s.size(), 0U);
 
-  s = oak::StringPiece(nullptr);
+  s = StringPiece(nullptr);
   EXPECT_EQ(s.data(), nullptr);
-  EXPECT_EQ(s.size(), 0);
+  EXPECT_EQ(s.size(), 0U);
 
-  // .ToString() on a oak::StringPiece with nullptr should produce the empty
+  // .ToString() on a StringPiece with nullptr should produce the empty
   // string.
   EXPECT_EQ("", std::string(s));
 }
@@ -762,31 +764,31 @@ TEST(StringViewTest, Comparisons2) {
   //  (5) compare(pos1, count1, s)
   //  (6) compare(pos1, count1, s, count2)
 
-  oak::StringPiece abc("abcdefghijklmnopqrstuvwxyz");
+  StringPiece abc("abcdefghijklmnopqrstuvwxyz");
 
   // check comparison operations on strings longer than 4 bytes.
-  EXPECT_EQ(abc, oak::StringPiece("abcdefghijklmnopqrstuvwxyz"));
-  EXPECT_EQ(abc.compare(oak::StringPiece("abcdefghijklmnopqrstuvwxyz")), 0);
+  EXPECT_EQ(abc, StringPiece("abcdefghijklmnopqrstuvwxyz"));
+  EXPECT_EQ(abc.compare(StringPiece("abcdefghijklmnopqrstuvwxyz")), 0);
 
-  EXPECT_LT(abc, oak::StringPiece("abcdefghijklmnopqrstuvwxzz"));
-  EXPECT_LT(abc.compare(oak::StringPiece("abcdefghijklmnopqrstuvwxzz")), 0);
+  EXPECT_LT(abc, StringPiece("abcdefghijklmnopqrstuvwxzz"));
+  EXPECT_LT(abc.compare(StringPiece("abcdefghijklmnopqrstuvwxzz")), 0);
 
-  EXPECT_GT(abc, oak::StringPiece("abcdefghijklmnopqrstuvwxyy"));
-  EXPECT_GT(abc.compare(oak::StringPiece("abcdefghijklmnopqrstuvwxyy")), 0);
+  EXPECT_GT(abc, StringPiece("abcdefghijklmnopqrstuvwxyy"));
+  EXPECT_GT(abc.compare(StringPiece("abcdefghijklmnopqrstuvwxyy")), 0);
 
   // The "substr" variants of `compare`.
-  oak::StringPiece digits("0123456789");
-  auto npos = oak::StringPiece::npos;
+  StringPiece digits("0123456789");
+  auto npos = StringPiece::npos;
 
   // Taking StringPiece
-  EXPECT_EQ(digits.compare(3, npos, oak::StringPiece("3456789")), 0);  // 2
-  EXPECT_EQ(digits.compare(3, 4, oak::StringPiece("3456")), 0);        // 2
-  EXPECT_EQ(digits.compare(10, 0, oak::StringPiece()), 0);             // 2
-  EXPECT_EQ(digits.compare(3, 4, oak::StringPiece("0123456789"), 3, 4),
+  EXPECT_EQ(digits.compare(3, npos, StringPiece("3456789")), 0);  // 2
+  EXPECT_EQ(digits.compare(3, 4, StringPiece("3456")), 0);        // 2
+  EXPECT_EQ(digits.compare(10, 0, StringPiece()), 0);             // 2
+  EXPECT_EQ(digits.compare(3, 4, StringPiece("0123456789"), 3, 4),
             0);  // 3
-  EXPECT_LT(digits.compare(3, 4, oak::StringPiece("0123456789"), 3, 5),
+  EXPECT_LT(digits.compare(3, 4, StringPiece("0123456789"), 3, 5),
             0);  // 3
-  EXPECT_LT(digits.compare(0, npos, oak::StringPiece("0123456789"), 3, 5),
+  EXPECT_LT(digits.compare(0, npos, StringPiece("0123456789"), 3, 5),
             0);  // 3
   // Taking const char*
   EXPECT_EQ(digits.compare(3, 4, "3456"), 0);                 // 5
@@ -798,14 +800,14 @@ TEST(StringViewTest, Comparisons2) {
 }
 
 TEST(StringViewTest, At) {
-  oak::StringPiece abc = "abc";
+  StringPiece abc = "abc";
   EXPECT_EQ(abc.at(0), 'a');
   EXPECT_EQ(abc.at(1), 'b');
   EXPECT_EQ(abc.at(2), 'c');
 }
 
 TEST(StringViewTest, StartsWith) {
-  oak::StringPiece v = "abc123";
+  StringPiece v = "abc123";
   EXPECT_EQ(v.starts_with('a'), true);
   EXPECT_EQ(v.starts_with('b'), false);
   EXPECT_EQ(v.starts_with("abc"), true);
@@ -815,7 +817,7 @@ TEST(StringViewTest, StartsWith) {
 }
 
 TEST(StringViewTest, EndsWith) {
-  oak::StringPiece v = "abc123";
+  StringPiece v = "abc123";
   EXPECT_EQ(v.ends_with('3'), true);
   EXPECT_EQ(v.ends_with('2'), false);
   EXPECT_EQ(v.ends_with("123"), true);
@@ -825,18 +827,18 @@ TEST(StringViewTest, EndsWith) {
 }
 
 TEST(StringViewTest, ExplicitConversionOperator) {
-  oak::StringPiece sp = "hi";
+  StringPiece sp = "hi";
   EXPECT_EQ(sp, std::string(sp));
 }
 
 TEST(StringViewTest, ConstexprCompiles) {
-  constexpr oak::StringPiece sp;
-  constexpr oak::StringPiece cstr_len("cstr", 4);
+  constexpr StringPiece sp;
+  constexpr StringPiece cstr_len("cstr", 4);
 
-  constexpr oak::StringPiece::iterator const_begin = cstr_len.begin();
-  constexpr oak::StringPiece::iterator const_end = cstr_len.end();
-  constexpr oak::StringPiece::size_type const_size = cstr_len.size();
-  constexpr oak::StringPiece::size_type const_length = cstr_len.length();
+  constexpr StringPiece::iterator const_begin = cstr_len.begin();
+  constexpr StringPiece::iterator const_end = cstr_len.end();
+  constexpr StringPiece::size_type const_size = cstr_len.size();
+  constexpr StringPiece::size_type const_length = cstr_len.length();
   static_assert(const_begin + const_size == const_end,
                 "pointer arithmetic check");
   static_assert(const_begin + const_length == const_end,
@@ -861,25 +863,25 @@ TEST(StringViewTest, ConstexprCompiles) {
   EXPECT_NE(cstr_ptr, nullptr);
 
   constexpr size_t sp_npos = sp.npos;
-  EXPECT_EQ(sp_npos, -1);
+  EXPECT_EQ(sp_npos, static_cast<size_t>(-1));
 }
 
 TEST(StringViewTest, ConstexprMethods) {
   // substr
-  constexpr oak::StringPiece foobar("foobar", 6);
-  constexpr oak::StringPiece foo = foobar.substr(0, 3);
-  constexpr oak::StringPiece bar = foobar.substr(3);
+  constexpr StringPiece foobar("foobar", 6);
+  constexpr StringPiece foo = foobar.substr(0, 3);
+  constexpr StringPiece bar = foobar.substr(3);
   EXPECT_EQ(foo, "foo");
   EXPECT_EQ(bar, "bar");
 }
 
 TEST(StringViewTest, Noexcept) {
-  EXPECT_TRUE((std::is_nothrow_constructible<oak::StringPiece,
+  EXPECT_TRUE((std::is_nothrow_constructible<StringPiece,
                                              const std::string&>::value));
-  EXPECT_TRUE((std::is_nothrow_constructible<oak::StringPiece,
+  EXPECT_TRUE((std::is_nothrow_constructible<StringPiece,
                                              const std::string&>::value));
-  EXPECT_TRUE(std::is_nothrow_constructible<oak::StringPiece>::value);
-  constexpr oak::StringPiece sp;
+  EXPECT_TRUE(std::is_nothrow_constructible<StringPiece>::value);
+  constexpr StringPiece sp;
   EXPECT_TRUE(noexcept(sp.begin()));
   EXPECT_TRUE(noexcept(sp.end()));
   EXPECT_TRUE(noexcept(sp.cbegin()));
@@ -913,35 +915,35 @@ TEST(ComparisonOpsTest, StringCompareNotAmbiguous) {
 }
 
 TEST(ComparisonOpsTest, HeterogenousStringViewEquals) {
-  EXPECT_EQ(oak::StringPiece("hello"), std::string("hello"));
-  EXPECT_EQ("hello", oak::StringPiece("hello"));
+  EXPECT_EQ(StringPiece("hello"), std::string("hello"));
+  EXPECT_EQ("hello", StringPiece("hello"));
 }
 
 TEST(FindOneCharTest, EdgeCases) {
-  oak::StringPiece a("xxyyyxx");
+  StringPiece a("xxyyyxx");
 
   // Set a = "xyyyx".
   a.remove_prefix(1);
   a.remove_suffix(1);
 
-  EXPECT_EQ(0, a.find('x'));
-  EXPECT_EQ(0, a.find('x', 0));
-  EXPECT_EQ(4, a.find('x', 1));
-  EXPECT_EQ(4, a.find('x', 4));
-  EXPECT_EQ(oak::StringPiece::npos, a.find('x', 5));
+  EXPECT_EQ(0U, a.find('x'));
+  EXPECT_EQ(0U, a.find('x', 0));
+  EXPECT_EQ(4U, a.find('x', 1));
+  EXPECT_EQ(4U, a.find('x', 4));
+  EXPECT_EQ(StringPiece::npos, a.find('x', 5));
 
-  EXPECT_EQ(4, a.rfind('x'));
-  EXPECT_EQ(4, a.rfind('x', 5));
-  EXPECT_EQ(4, a.rfind('x', 4));
-  EXPECT_EQ(0, a.rfind('x', 3));
-  EXPECT_EQ(0, a.rfind('x', 0));
+  EXPECT_EQ(4U, a.rfind('x'));
+  EXPECT_EQ(4U, a.rfind('x', 5));
+  EXPECT_EQ(4U, a.rfind('x', 4));
+  EXPECT_EQ(0U, a.rfind('x', 3));
+  EXPECT_EQ(0U, a.rfind('x', 0));
 
   // Set a = "yyy".
   a.remove_prefix(1);
   a.remove_suffix(1);
 
-  EXPECT_EQ(oak::StringPiece::npos, a.find('x'));
-  EXPECT_EQ(oak::StringPiece::npos, a.rfind('x'));
+  EXPECT_EQ(StringPiece::npos, a.find('x'));
+  EXPECT_EQ(StringPiece::npos, a.rfind('x'));
 }
 
 class StringViewStreamTest : public ::testing::Test {
@@ -964,7 +966,7 @@ class StringViewStreamTest : public ::testing::Test {
 
 TEST_F(StringViewStreamTest, Padding) {
   std::string s("hello");
-  oak::StringPiece sp(s);
+  StringPiece sp(s);
   for (int w = -64; w < 64; ++w) {
     SCOPED_TRACE(w);
     EXPECT_EQ(Pad(s, w), Pad(sp, w));
@@ -981,7 +983,7 @@ TEST_F(StringViewStreamTest, ResetsWidth) {
   // we'd have width=5 carrying over to the printing of the "]",
   // creating "[###hi####]".
   std::string s = "hi";
-  oak::StringPiece sp = s;
+  StringPiece sp = s;
   {
     std::ostringstream oss;
     oss << "[" << std::setfill('#') << std::setw(5) << s << "]";
@@ -997,6 +999,8 @@ TEST_F(StringViewStreamTest, ResetsWidth) {
 TEST(StringViewHashTest, Hash) {
   std::string s("hello");
   std::string empty;
-  EXPECT_EQ(std::hash<oak::StringPiece>{}(s), std::hash<std::string>{}(s));
-  EXPECT_EQ(std::hash<oak::StringPiece>{}(empty), 0);
+  EXPECT_EQ(std::hash<StringPiece>{}(s), std::hash<std::string>{}(s));
+  EXPECT_EQ(std::hash<StringPiece>{}(empty), 0U);
 }
+
+}  // anonymous namespace
