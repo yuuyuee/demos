@@ -1,4 +1,6 @@
 {
+  "log_method": "debug:file:/xxx.log",
+
   "task": {
     "module": {
       "kafka": {
@@ -10,38 +12,43 @@
     }
   },
 
-  "source": {
-    "num_threads": 2,
+  "worker": {
+    "log_method": "debug:file:/xxx.log",
 
-    "module": {
-      "kafka": {
-        "enable": true,
-        "group": true,
-        "bootstrap": "",
-        "topic": ""
+    "source": {
+      "num_threads": 2,
+
+      "module": {
+        "kafka": {
+          "enable": true,
+          "group": true,
+          "bootstrap": "",
+          "topic": ""
+        }
       }
-    }
-  },
+    },
 
-  "parse": {
-    "num_threads": 2,
+    "parser": {
+      "num_threads": 2,
 
-    "module": {
-      "streampipe": {
-        "enable": true,
-        "address": ""
+      "module": {
+        "streampipe": {
+          "enable": true,
+          "address": ""
+        }
       }
-    }
-  },
+    },
 
-  "sink": {
-    "num_threads": 2,
+    "sink": {
+      "num_threads": 2,
 
-    "module": {
-      "streampipe": {
-        "enable": true,
-        "address": ""
+      "module": {
+        "streampipe": {
+          "enable": true,
+          "address": ""
+        }
       }
     }
   }
+
 }

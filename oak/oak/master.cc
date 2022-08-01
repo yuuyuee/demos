@@ -38,6 +38,7 @@ Selector& Selector::From(std::initializer_list<const char*> dirs) {
     }
     path_.push_back(std::move(path));
   }
+  return *this;
 }
 
 Selector::operator const char*() const noexcept {
@@ -66,9 +67,7 @@ int main(int argc, char* argv[]) {
     return 0;
   }
 
-  oak::Config config(
-    Selector{"setup.json"}
-    .From({".", "../etc", "/etc"}));
+  oak::Config config(Selector{"setup.json"}.From({".", "../etc", "/etc"}));
 
   // Logger handler = {};
   // RegisterLogger(handler);

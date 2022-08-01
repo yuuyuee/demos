@@ -4,6 +4,7 @@
 
 #include <assert.h>
 #include <fstream>
+#include <utility>
 #include <unordered_map>
 
 #include "json/json.h"
@@ -12,8 +13,9 @@
 namespace oak {
 namespace {
 
-using ModuleParser = bool (*)(const char* node, const Json2::Value&, Module*);
+using ModuleParser = bool (*)(const char*, const Json2::Value&, Module*);
 
+// Kafka config parser
 bool KafkaModuleParser(const char* node,
                        const Json2::Value& root,
                        Module* module) {
@@ -22,20 +24,20 @@ bool KafkaModuleParser(const char* node,
   if (root.isMember("enable"))
     module->enable = root["enable"].asBool();
   if (!module->enable) {
-    OAK_INFO("%s.module.kafka.enable is not enabled.\n", node);
+    OAK_INFO("%s.kafka.enable is not enabled.\n", node);
     return false;
   }
 
   KafkaConfig config;
 
   if (!root.isMember("bootstrap")) {
-    OAK_INFO("%s.module.kafka.bootstrap is not found.\n", node);
+    OAK_ERROR("%s.kafka.bootstrap is not found.\n", node);
     return false;
   }
   config.bootstrap = root["bootstrap"].asString();
 
   if (!root.isMember("topic")) {
-    OAK_INFO("%s.module.kafka.topic is not found.\n", node);
+    OAK_ERROR("%s.kafka.topic is not found.\n", node);
     return false;
   }
   config.topic = root["topic"].asString();
@@ -52,6 +54,7 @@ bool KafkaModuleParser(const char* node,
   return true;
 }
 
+// StreamPipe config parser
 bool StreamPipeModuleParser(const char* node,
                             const Json2::Value& root,
                             Module* module) {
@@ -60,20 +63,20 @@ bool StreamPipeModuleParser(const char* node,
   if (root.isMember("enable"))
     module->enable = root["enable"].asBool();
   if (!module->enable) {
-    OAK_INFO("%s.module.streampipe.enable is not enabled.\n", node);
+    OAK_INFO("%s.streampipe.enable is not enabled.\n", node);
     return false;
   }
 
   StreamPipeConfig config;
 
   if (!root.isMember("address")) {
-    OAK_INFO("%s.module.streampipe.address is not found.\n", node);
+    OAK_ERROR("%s.streampipe.address is not found.\n", node);
     return false;
   }
   config.address = root["address"].asString();
 
   module->config = std::move(config);
-  return 0;
+  return true;
 }
 
 const std::unordered_map<std::string, ModuleParser> kModuleParsers{
@@ -86,17 +89,55 @@ void ParseModule(const char* node,
                  std::vector<Module>* modules) {
   assert(root.isObject() && "Invalid module config");
 
-  for (auto const& module_name : root.getMemberNames()) {
+  for (const auto& module_name : root.getMemberNames()) {
     auto it = kModuleParsers.find(module_name);
     if (it == kModuleParsers.cend()) {
-      OAK_ERROR("Unknown module \'%s.module.%s\' has been ignored.\n",
-          node, module_name);
+      OAK_ERROR("Unknown module \'%s.%s\' has been ignored.\n",
+          node, module_name.c_str());
       continue;
     }
     Module module;
     if (it->second(node, root[module_name], &module))
       modules->push_back(std::move(module));
   }
+}
+
+void ParseSourceConfig(const Json2::Value& root, SourceConfig* config) {
+  config->num_threads = -1;
+  if (root.isMember("num_threads"))
+    config->num_threads = root["num_threads"].asUInt();
+
+  if (root.isMember("module"))
+    ParseModule("worker.source.module", root["module"], &config->modules);
+}
+
+void ParseParserConfig(const Json2::Value& root, SourceConfig* config) {
+  config->num_threads = -1;
+  if (root.isMember("num_threads"))
+    config->num_threads = root["num_threads"].asUInt();
+
+  if (root.isMember("module"))
+    ParseModule("worker.parser.module", root["module"], &config->modules);
+}
+
+void ParseSinkConfig(const Json2::Value& root, SourceConfig* config) {
+  config->num_threads = -1;
+  if (root.isMember("num_threads"))
+    config->num_threads = root["num_threads"].asUInt();
+
+  if (root.isMember("module"))
+    ParseModule("worker.sink.module", root["module"], &config->modules);
+}
+
+void ParseWorkerConfig(const Json2::Value& root, WorkerConfig* config) {
+  if (root.isMember("source"))
+    ParseSourceConfig(root["source"], &config->source_config);
+
+  if (root.isMember("parser"))
+    ParseParserConfig(root["parser"], &config->source_config);
+
+  if (root.isMember("sink"))
+    ParseSinkConfig(root["sink"], &config->source_config);
 }
 }  // anonymous namespace
 
@@ -113,33 +154,17 @@ Config::Config(const char* fname) {
         fname, reader.getFormattedErrorMessages().c_str());
   }
 
+  if (root.isMember("log_method"))
+    log_method = root["log_method"].asString();
+
   if (root.isMember("task")) {
-    auto& task = root["task"];
-    if (task.isMember("module")) {
-      ParseModule("task", task["module"], &task_config.modules);
-    }
+    const auto& node = root["task"];
+    if (node.isMember("module"))
+      ParseModule("task", node["module"], &task_config.modules);
   }
 
-  if (root.isMember("source")) {
-    auto& src = root["source"];
-    if (src.isMember("module")) {
-      ParseModule("", src["module"], &source_config.modules);
-    }
-  }
-
-  if (root.isMember("parse")) {
-    auto& parse = root["parse"];
-    if (parse.isMember("module")) {
-      ParseModule("parse", parse["module"], &parse_config.modules);
-    }
-  }
-
-  if (root.isMember("sink")) {
-    auto& sink = root["task"];
-    if (sink.isMember("module")) {
-      ParseModule("sink", sink["module"], &sink_config.modules);
-    }
-  }
+  if (root.isMember("worker"))
+    ParseWorkerConfig(root["worker"], &worker_config);
 }
 
 }  // namespace oak
