@@ -67,7 +67,11 @@ int main(int argc, char* argv[]) {
     return 0;
   }
 
-  oak::Config config(Selector{"setup.json"}.From({".", "../etc", "/etc"}));
+  oak::Config config;
+  oak::LoadConfig(
+      Selector{"setup.json"}
+          .From({".", "../etc", "/etc"}),
+      &config);
 
   // Logger handler = {};
   // RegisterLogger(handler);

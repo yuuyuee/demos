@@ -97,8 +97,11 @@ void ParseModule(const char* node,
       continue;
     }
     Module module;
-    if (it->second(node, root[module_name], &module))
+    if (it->second(node, root[module_name], &module)) {
+      assert(module.enable && module.type != Module::Type::UNKNOWN &&
+          "Invalid module config");
       modules->push_back(std::move(module));
+    }
   }
 }
 
@@ -141,7 +144,7 @@ void ParseWorkerConfig(const Json2::Value& root, WorkerConfig* config) {
 }
 }  // anonymous namespace
 
-Config::Config(const char* fname) {
+void LoadConfig(const char* fname, Config* config) {
   std::ifstream in(fname);
   if (!in) return;
 
@@ -155,16 +158,16 @@ Config::Config(const char* fname) {
   }
 
   if (root.isMember("log_method"))
-    log_method = root["log_method"].asString();
+    config->log_method = root["log_method"].asString();
 
   if (root.isMember("task")) {
     const auto& node = root["task"];
     if (node.isMember("module"))
-      ParseModule("task", node["module"], &task_config.modules);
+      ParseModule("task", node["module"], &config->task_config.modules);
   }
 
   if (root.isMember("worker"))
-    ParseWorkerConfig(root["worker"], &worker_config);
+    ParseWorkerConfig(root["worker"], &config->worker_config);
 }
 
 }  // namespace oak

@@ -41,15 +41,13 @@ struct Module {
   };
 
   // Whether the module is enable
-  bool enable;
+  bool enable{false};
 
   // module type
-  enum Type type;
+  enum Type type{Type::UNKNOWN};
 
   // module config
   Any config;
-
-  Module(): enable(false), type(Type::UNKNOWN), config() {}
 };
 
 struct TaskConfig {
@@ -85,9 +83,9 @@ struct Config {
   std::string log_method;
   TaskConfig task_config;
   WorkerConfig worker_config;
-
-  explicit Config(const char* fname);
 };
+
+void LoadConfig(const char* fname, Config* config);
 
 }  // namespace oak
 
