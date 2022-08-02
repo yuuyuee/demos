@@ -8,6 +8,9 @@ extern "C" {
 #endif
 
 
+struct Sink
+
+
 #ifdef __cplusplus
 }
 #endif
