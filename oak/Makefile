@@ -18,7 +18,13 @@ any_test:
 			third_party/gtest/gtest_main.cc third_party/gtest/gmock-gtest-all.cc \
 			-lpthread
 
-clean:
-	-rm -f master stringpiece_test any_test
+circle_test:
+	g++ -std=c++11 -Wall -Wextra -g -rdynamic -I. -Ithird_party/gtest -O2 -o$@ \
+			oak/common/circle_test.cc \
+			third_party/gtest/gtest_main.cc third_party/gtest/gmock-gtest-all.cc \
+			-lpthread
 
-.PHYONE: master stringpiece_test any_test
+clean:
+	-rm -f master stringpiece_test any_test circle_test
+
+.PHYONE: master stringpiece_test any_test circle_test
