@@ -148,7 +148,7 @@ struct oak_piece {
 #define OAK_MEMBER_SIZE(type, field) (sizeof(((type*) 0)->field))
 
 /* Create an referrence from the oak_buffer. */
-inline struct oak_piece oak_as_piece(const oak_buffer* buffer) {
+inline struct oak_piece oak_as_piece(oak_buffer* buffer) {
   assert(offsetof(struct oak_buffer, ptr) ==
          offsetof(struct oak_piece, ptr) &&
          OAK_MEMBER_SIZE(struct oak_buffer, ptr) ==
@@ -158,7 +158,20 @@ inline struct oak_piece oak_as_piece(const oak_buffer* buffer) {
          OAK_MEMBER_SIZE(struct oak_buffer, size) ==
          OAK_MEMBER_SIZE(struct oak_piece, size));
 
-  return *((struct oak_piece*) buffer);
+  return (struct oak_piece*) buffer;
+}
+
+inline const struct oak_piece* oak_as_const_piece(const oak_buffer* buffer) {
+  assert(offsetof(struct oak_buffer, ptr) ==
+         offsetof(struct oak_piece, ptr) &&
+         OAK_MEMBER_SIZE(struct oak_buffer, ptr) ==
+         OAK_MEMBER_SIZE(struct oak_piece, ptr));
+  assert(offsetof(struct oak_buffer, size) ==
+         offsetof(struct oak_piece, size) &&
+         OAK_MEMBER_SIZE(struct oak_buffer, size) ==
+         OAK_MEMBER_SIZE(struct oak_piece, size));
+
+  return (const struct oak_piece*) buffer;
 }
 
 /* Compare equal between @lhs and @rhs. */
