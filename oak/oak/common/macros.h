@@ -97,14 +97,14 @@ R ArraySizeHelper(const T (&)[N]);
 # define OAK_HAS_BUILTIN(x) 0
 #endif
 
-// OAK_EXPECT_TRUE(), OAK_EXPECT_FALSE()
+// OAK_LIKELY(), OAK_UNLIKELY()
 #if (defined(__GNUC__) && !defined(__clang__)) || \
     OAK_HAS_BUILTIN(__builtin_expect)
-# define OAK_EXPECT_TRUE(x) __builtin_expect(false || (x), true)
-# define OAK_EXPECT_FALSE(x) __builtin_expect(false || (x), false)
+# define OAK_LIKELY(x) __builtin_expect(false || (x), true)
+# define OAK_UNLIKELY(x) __builtin_expect(false || (x), false)
 #else
-# define OAK_EXPECT_TRUE(x) (x)
-# define OAK_EXPECT_FALSE(x) (x)
+# define OAK_LIKELY(x) (x)
+# define OAK_UNLIKELY(x) (x)
 #endif
 
 #include "oak/addons/internal/platform.h"
@@ -132,7 +132,7 @@ constexpr void IgnoreUnused() {}
 #else
 # include <assert.h>
 # define OAK_ASSERT(cond)                                 \
-    (OAK_EXPECT_TRUE(cond)                                \
+    (OAK_LIKELY(cond)                                \
         ? static_cast<void>(0)                            \
         : [] { assert(false && #cond); }())
 #endif

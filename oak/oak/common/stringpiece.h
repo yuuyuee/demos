@@ -151,7 +151,7 @@ class StringPieceImpl {
   // Copies the substring[pos, pos + rcount) to the character array pointed
   // to by dest, where rcount is the samller of count and size() - pos.
   size_type copy(Char* buf, size_type n, size_type pos = 0) const {
-    if (OAK_EXPECT_FALSE(pos > len_))
+    if (OAK_UNLIKELY(pos > len_))
       throw std::out_of_range("polly::string_view::copy");
 
     n = std::min(len_ - pos, n);
