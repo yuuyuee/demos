@@ -13,44 +13,79 @@
 #include <unordered_map>
 
 namespace oak {
+#define OAK_TASK_CHANNEL    ".oak_task_channel"
+#define OAK_CRASH_CHANNEL   ".oak_crash_channel"
+#define OAK_CONFIG_NAME     "etc/setup.json"
+#define OAK_LOG_DIR         "log"
+#define OAK_ADDONS_DIR      "addons"
+
+#define OAK_MASTER_NAME     "OAK Master"
+#define OAK_MASTER_ROLE     "master"
+#define OAK_MASTER_PIDNAME  (OAK_MASTER_ROLE ".pid")
+#define OAK_MASTER_LOGNAME  (OAK_MASTER_ROLE ".log")
+
+#define OAK_WORKER_NAME     "OAK Worker"
+#define OAK_WORKER_ROLE     "master"
+#define OAK_WORKER_PIDNAME  (OAK_WORKER_ROLE ".pid")
+#define OAK_WORKER_LOGNAME  (OAK_WORKER_ROLE ".log")
+
 struct ModuleConfig {
   // module name, e.g. kafka, streampipe
-  std::string module_name;
+  std::string name;
 
   // Checks module is enable
   bool enable{false};
 
-  // module address, e.g. kafka bootstrap, streampipe address
-  std::string address;
-
   // module parameter
-  std::unordered_map<std::string, std::string> parameter;
+  std::unordered_map<std::string, std::string> param;
 };
 
-#define OAK_RUNTIME_DIRECTORY "/var/run/oak"
-#define OAK_TASK_CHANNEL      (OAK_RUNTIME_DIRECTORY "/.oak_task_channel")
-#define OAK_CRASH_CHANNEL     (OAK_RUNTIME_DIRECTORY "/.oak_crash_channel")
+struct ProcessConfig {
+  std::string name;
+  std::string role;
+  std::string home;
+  std::string pid_name;
+  std::string log_name;
+  cpu_set_t available_cpu_set;
+};
 
 struct MasterConfig {
-  std::string process_name;
+  ProcessConfig process;
   std::string log_method;
-  std::string runtime_directory;
   std::string task_channel;
   std::string crash_channel;
-  std::vector<ModuleConfig> task_module;
-  cpu_set_t available_cpu_set;
+  std::vector<ModuleConfig> task_modules;
+};
+
+void LoadMasterConfig(MasterConfig* config, const char* fname);
+
+struct SourceConfig {
+  int num_threads;
+  std::vector<ModuleConfig> modules;
+};
+
+struct ParserConfig {
+  int num_threads;
+  std::vector<ModuleConfig> modules;
+};
+
+struct SinkConfig {
+  int num_threads;
+  std::vector<ModuleConfig> modules;
 };
 
 struct WorkerConfig {
-  std::string process_name;
+  ProcessConfig process;
   std::string log_method;
-  std::string runtime_directory;
   std::string task_channel;
   std::string crash_channel;
-  std::vector<ModuleConfig> source_module;
-  std::vector<ModuleConfig> sink_module;
-  cpu_set_t available_cpu_set;
+
+  SourceConfig source;
+  ParserConfig parser;
+  SinkConfig sink;
 };
+
+void LoadWorkerConfig(WorkerConfig* config, const char* fname);
 
 }  // namespace oak
 

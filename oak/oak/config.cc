@@ -3,9 +3,11 @@
 #include "oak/config.h"
 
 #include <assert.h>
+#include <limits.h>
+#include <stdlib.h>
+#include <string.h>
 #include <fstream>
 #include <utility>
-#include <unordered_map>
 
 #include "json/json.h"
 #include "oak/logging/logging.h"
@@ -13,119 +15,145 @@
 namespace oak {
 namespace {
 
-void ParseModule(const char* node,
-                 const Json2::Value& root,
-                 std::vector<Module>* modules) {
-  assert(root.isObject() && "Invalid module config");
+void LoadModuleConfig(const char* own,
+                      const Json2::Value& node,
+                      std::vector<ModuleConfig>* modules) {
+  assert(node.isObject() && "Invalid module config");
 
-  for (const auto& module_name : root.getMemberNames()) {
-    auto it = kModuleParsers.find(module_name);
-    if (it == kModuleParsers.cend()) {
-      OAK_ERROR("Unknown module \'%s.%s\' has been ignored.\n",
-          node, module_name.c_str());
+  for (const auto& name : node.getMemberNames()) {
+    ModuleConfig module;
+    module.name = name;
+    module.enable = false;
+
+    const auto& module_node = node[name];
+    for (const auto& key : module_node.getMemberNames()) {
+      if (key == "enable") {
+        module.enable = module_node[key].asBool();
+      } else {
+        module.param[key] = module_node[key].asString();
+      }
+    }
+
+    if (!module.enable) {
+      OAK_WARNING("%s.modules.%s will not be enabled.\n", own, name.c_str());
       continue;
     }
-    Module module;
-    if (it->second(node, root[module_name], &module)) {
-      assert(module.enable && module.type != Module::Type::UNKNOWN &&
-          "Invalid module config");
-      modules->push_back(std::move(module));
-    }
+
+    modules->push_back(std::move(module));
   }
 }
 
-void ParseSourceConfig(const Json2::Value& root, SourceConfig* config) {
-  config->num_threads = -1;
-  if (root.isMember("num_threads"))
-    config->num_threads = root["num_threads"].asUInt();
-
-  if (root.isMember("module"))
-    ParseModule("worker.source.module", root["module"], &config->modules);
-}
-
-void ParseParserConfig(const Json2::Value& root, SourceConfig* config) {
-  config->num_threads = -1;
-  if (root.isMember("num_threads"))
-    config->num_threads = root["num_threads"].asUInt();
-
-  if (root.isMember("module"))
-    ParseModule("worker.parser.module", root["module"], &config->modules);
-}
-
-void ParseSinkConfig(const Json2::Value& root, SourceConfig* config) {
-  config->num_threads = -1;
-  if (root.isMember("num_threads"))
-    config->num_threads = root["num_threads"].asUInt();
-
-  if (root.isMember("module"))
-    ParseModule("worker.sink.module", root["module"], &config->modules);
-}
-
-void ParseWorkerConfig(const Json2::Value& root, WorkerConfig* config) {
-  if (root.isMember("source"))
-    ParseSourceConfig(root["source"], &config->source_config);
-
-  if (root.isMember("parser"))
-    ParseParserConfig(root["parser"], &config->source_config);
-
-  if (root.isMember("sink"))
-    ParseSinkConfig(root["sink"], &config->source_config);
-}
 }  // anonymous namespace
 
-void InitMasterConfig(const char* fname, MasterConfig* config) {
+void LoadMasterConfig(MasterConfig* config, const char* fname) {
   std::ifstream in(fname);
   if (!in)
     OAK_FATAL("Read %s failed\n", fname);
 
+  config->process.name = OAK_MASTER_NAME;
+  config->process.role = OAK_MASTER_ROLE;
+  char home[PATH_MAX];
+  char* ptr = realpath(".", home);
+  if (!ptr)
+    OAK_FATAL("Unable to get home directory: %s\n", strerror(errno));
+  config->process.home = home;
+  memset(&config->process.available_cpu_set,
+         0,
+         sizeof(config->process.available_cpu_set));
+  config->process.pid_name = OAK_MASTER_PIDNAME;
+  config->process.log_name = OAK_MASTER_LOGNAME;
+
+  config->task_channel = OAK_TASK_CHANNEL;
+  config->crash_channel = OAK_CRASH_CHANNEL;
+
   auto features = Json2::Features::strictMode();
   Json2::Reader reader(features);
-  Json2::Value root;
+  Json2::Value node;
 
-  if (!reader.parse(in, root, false)) {
+  if (!reader.parse(in, node, false)) {
     OAK_FATAL("Read %s failed: %s\n",
         fname, reader.getFormattedErrorMessages().c_str());
   }
 
-  if (root.isMember("log_method"))
-    config->log_method = root["log_method"].asString();
-
-  if (!root.isMember("master"))
+  if (!node.isMember("master"))
     OAK_FATAL("Read %s failed: not found node \'master\'\n", fname);
 
-  const auto& master = root["master"];
+  const auto& master = node["master"];
 
   if (master.isMember("log_method"))
-    config->log_method = root["log_method"].asString();
+    config->log_method = master["log_method"].asString();
 
-  if (master.isMember("kafka"))
-    ParseWorkerConfig(root["worker"], &config->worker_config);
+  if (master.isMember("modules"))
+    LoadModuleConfig("master", master["modules"], &config->task_modules);
 }
 
-void InitWorkerConfig(const char* fname, WorkerConfig* config) {
+void LoadWorkerConfig(WorkerConfig* config, const char* fname) {
   std::ifstream in(fname);
-  if (!in) return;
+  if (!in)
+    OAK_FATAL("Read %s failed\n", fname);
+
+  config->process.name = OAK_WORKER_NAME;
+  config->process.role = OAK_WORKER_ROLE;
+  char home[PATH_MAX];
+  char* ptr = realpath("..", home);
+  if (!ptr)
+    OAK_FATAL("Unable to get home directory: %s\n", strerror(errno));
+  config->process.home = home;
+  config->process.pid_name = OAK_WORKER_PIDNAME;
+  config->process.log_name =  OAK_WORKER_LOGNAME;
+  memset(&config->process.available_cpu_set,
+         0,
+         sizeof(config->process.available_cpu_set));
+
+  config->task_channel = OAK_TASK_CHANNEL;
+  config->crash_channel = OAK_CRASH_CHANNEL;
 
   auto features = Json2::Features::strictMode();
   Json2::Reader reader(features);
-  Json2::Value root;
+  Json2::Value node;
 
-  if (!reader.parse(in, root, false)) {
+  if (!reader.parse(in, node, false)) {
     OAK_FATAL("Read %s failed: %s\n",
         fname, reader.getFormattedErrorMessages().c_str());
   }
 
-  if (root.isMember("log_method"))
-    config->log_method = root["log_method"].asString();
+  if (!node.isMember("worker"))
+    OAK_FATAL("Read %s failed: not found node \'worker\'\n", fname);
 
-  if (root.isMember("task")) {
-    const auto& node = root["task"];
-    if (node.isMember("module"))
-      ParseModule("task", node["module"], &config->task_config.modules);
+  const auto& worker = node["worker"];
+
+  if (worker.isMember("log_method"))
+    config->log_method = worker["log_method"].asString();
+
+  if (worker.isMember("source")) {
+    const auto& source = worker["source"];
+
+    if (source.isMember("num_threads"))
+      config->source.num_threads = source["num_threads"].asUInt();
+
+    if (source.isMember("modules"))
+      LoadModuleConfig("source", source["modules"], &config->source.modules);
   }
 
-  if (root.isMember("worker"))
-    ParseWorkerConfig(root["worker"], &config->worker_config);
+  if (worker.isMember("parser")) {
+    const auto& parser = worker["parser"];
+
+    if (parser.isMember("num_threads"))
+      config->parser.num_threads = parser["num_threads"].asUInt();
+
+    if (parser.isMember("modules"))
+      LoadModuleConfig("parser", parser["modules"], &config->parser.modules);
+  }
+
+  if (worker.isMember("sink")) {
+    const auto& sink = worker["sink"];
+
+    if (sink.isMember("num_threads"))
+      config->sink.num_threads = sink["num_threads"].asUInt();
+
+    if (sink.isMember("modules"))
+      LoadModuleConfig("sink", sink["modules"], &config->sink.modules);
+  }
 }
 
 }  // namespace oak
