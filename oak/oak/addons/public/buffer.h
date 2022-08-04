@@ -1,16 +1,17 @@
-// Copyright 2022 The Oak Authors.
+/* Copyright 2022 The Oak Authors. */
 
-#ifndef OAK_ADDONS_BUFFER_H_
-#define OAK_ADDONS_BUFFER_H_
+#ifndef OAK_ADDONS_PUBLIC_BUFFER_H_
+#define OAK_ADDONS_PUBLIC_BUFFER_H_
 
 #include <sys/types.h>
 #include <stdlib.h>
 #include <assert.h>
 #include <stddef.h>
 #include <string.h>
+#include <limits.h>
 
-#include "oak/addons/internal/compiler.h"
-#include "oak/addons/internal/platform.h"
+#include "oak/addons/public/compiler.h"
+#include "oak/addons/public/platform.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -20,20 +21,23 @@ extern "C" {
  *
  * Used to create a buffer object to represent raw memory.*/
 
+#define OAK_BUFFER_DFL_CAP 128
+
 struct oak_buffer {
   void* ptr;
   size_t size;
-  size_t capability;
+  size_t capacity;
+  void* reserve;
 };
 
 /* Initialize the object.
  * Note: which @buffer object must be an uninitialized object. */
-inline void oak_buffer_init(struct oak_buffer* buffer, size_t capability) {
+inline void oak_buffer_init(struct oak_buffer* buffer, size_t capacity) {
   buffer->size = 0;
-  buffer->capability = capability;
+  buffer->capacity = capacity;
   buffer->ptr = NULL;
-  if (buffer->capability > 0) {
-    buffer->ptr = malloc(buffer->capability);
+  if (buffer->capacity > 0) {
+    buffer->ptr = malloc(buffer->capacity);
     if (!buffer->ptr)
       abort();
   }
@@ -44,7 +48,7 @@ inline void oak_buffer_free(struct oak_buffer* buffer) {
   free(buffer->ptr);
   buffer->ptr = NULL;
   buffer->size = 0;
-  buffer->capability = 0;
+  buffer->capacity = 0;
 }
 
 /* Clear object. */
@@ -52,7 +56,7 @@ inline void oak_buffer_clear(struct oak_buffer* buffer) {
   buffer->size = 0;
 }
 
-/* Test whether it is empty. */
+/* Checks whether the buffer is empty. */
 inline int oak_buffer_empty(const struct oak_buffer* buffer) {
   return buffer->size == 0;
 }
@@ -68,9 +72,9 @@ inline void oak_buffer_move(struct oak_buffer* lhs,
 /* Copy buffer @rhs to @lhs. */
 inline void oak_buffer_assign(struct oak_buffer* lhs,
                               const struct oak_buffer* rhs) {
-  if (lhs->capability < rhs->size) {
-    lhs->capability = rhs->size;
-    lhs->ptr = realloc(lhs->ptr, lhs->capability);
+  if (lhs->capacity < rhs->size) {
+    lhs->capacity = rhs->size;
+    lhs->ptr = realloc(lhs->ptr, lhs->capacity);
     if (!lhs->ptr)
       abort();
   }
@@ -82,9 +86,9 @@ inline void oak_buffer_assign(struct oak_buffer* lhs,
 inline void oak_buffer_assign_str(struct oak_buffer* lhs,
                                   const void* str,
                                   size_t size) {
-  if (lhs->capability < size) {
-    lhs->capability = size;
-    lhs->ptr = realloc(lhs->ptr, lhs->capability);
+  if (lhs->capacity < size) {
+    lhs->capacity = size;
+    lhs->ptr = realloc(lhs->ptr, lhs->capacity);
     if (!lhs->ptr)
       abort();
   }
@@ -95,10 +99,10 @@ inline void oak_buffer_assign_str(struct oak_buffer* lhs,
 /* Append buffer @rhs to @rhs. */
 inline void oak_buffer_append(struct oak_buffer* lhs,
                               const struct oak_buffer* rhs) {
-  if (lhs->capability < lhs->size + rhs->size) {
-    lhs->capability = lhs->size + rhs->size;
-    lhs->capability = lhs->capability + lhs->capability / 2;
-    lhs->ptr = realloc(lhs->ptr, lhs->capability);
+  if (lhs->capacity < lhs->size + rhs->size) {
+    lhs->capacity = lhs->size + rhs->size;
+    lhs->capacity = lhs->capacity + lhs->capacity / 2;
+    lhs->ptr = realloc(lhs->ptr, lhs->capacity);
     if (lhs->ptr == NULL)
       abort();
   }
@@ -110,10 +114,10 @@ inline void oak_buffer_append(struct oak_buffer* lhs,
 inline void oak_buffer_append_str(struct oak_buffer* lhs,
                                   const void* str,
                                   size_t size) {
-  if (lhs->capability < lhs->size + size) {
-    lhs->capability = lhs->size + size;
-    lhs->capability = lhs->capability + lhs->capability / 2;
-    lhs->ptr = realloc(lhs->ptr, lhs->capability);
+  if (lhs->capacity < lhs->size + size) {
+    lhs->capacity = lhs->size + size;
+    lhs->capacity = lhs->capacity + lhs->capacity / 2;
+    lhs->ptr = realloc(lhs->ptr, lhs->capacity);
     if (lhs->ptr == NULL)
       abort();
   }
@@ -124,9 +128,11 @@ inline void oak_buffer_append_str(struct oak_buffer* lhs,
 /* Compare equal between @lhs and @rhs. */
 inline int oak_buffer_compare(const oak_buffer* lhs,
                               const oak_buffer* rhs) {
-  return (lhs->size == rhs->size &&
-          memcmp(lhs->ptr, rhs->ptr, lhs->size) == 0)
-            ? 0 : 1;
+  int r0 = memcmp(lhs->ptr, rhs->ptr, lhs->size);
+  long int r1 = lhs->size - rhs->size;
+  if (r1 > INT_MAX) r1 = INT_MAX;
+  else if (r1 < INT_MIN) r1 = INT_MIN;
+  return r0 != 0 ? r0 : r1 != 0 ? r1 : 0;
 }
 
 /* struct oak_piece, oak_const_piece
@@ -168,9 +174,11 @@ oak_as_piece_str(const char* str, size_t size) {
 /* Compare equal between @lhs and @rhs. */
 inline int oak_piece_compare(const oak_piece lhs,
                              const oak_piece rhs) {
-  return (lhs.size == rhs.size &&
-          memcmp(lhs.ptr, rhs.ptr, lhs.size) == 0)
-            ? 0 : 1;
+  int r0 = memcmp(lhs.ptr, rhs.ptr, lhs.size);
+  long int r1 = lhs.size - rhs.size;
+  if (r1 > INT_MAX) r1 = INT_MAX;
+  else if (r1 < INT_MIN) r1 = INT_MIN;
+  return r0 != 0 ? r0 : r1 != 0 ? r1 : 0;
 }
 
 /* Test whether it is empty. */
@@ -178,9 +186,8 @@ inline int oak_piece_empty(const struct oak_piece piece) {
   return piece.size == 0;
 }
 
-
 #ifdef __cplusplus
 }
 #endif
 
-#endif  /* OAK_ADDONS_BUFFER_H_ */
+#endif  /* OAK_ADDONS_PUBLIC_BUFFER_H_ */

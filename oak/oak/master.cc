@@ -15,7 +15,7 @@
 #include "oak/logging/logging.h"
 #include "oak/config.h"
 
-#define PROGRAM_NAME "master"
+#define PROGRAM_NAME "OAK"
 
 class Selector {
  public:

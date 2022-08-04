@@ -1,9 +1,11 @@
-// Copyright 2022 The Oak Authors.
+/* Copyright 2022 The Oak Authors. */
 
-#ifndef OAK_ADDONS_SOURCE_H_
-#define OAK_ADDONS_SOURCE_H_
+#ifndef OAK_ADDONS_PUBLIC_SOURCE_H_
+#define OAK_ADDONS_PUBLIC_SOURCE_H_
 
-#include "oak/addons/parameter.h"
+#include "oak/addons/public/compiler.h"
+#include "oak/addons/public/platform.h"
+#include "oak/addons/public/buffer.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -19,10 +21,11 @@ struct source_ops {
   int (*open)(source_context*);
   ssize_t (*read)(source_context*, oak_buffer* buffer);
   void (*close)(source_context*);
+  unsigned int (version)();
 };
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif  /* OAK_ADDONS_SOURCE_H_ */
+#endif  /* OAK_ADDONS_PUBLIC_SOURCE_H_ */

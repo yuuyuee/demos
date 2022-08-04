@@ -1,7 +1,7 @@
-// Copyright 2022 The Oak Authors.
+/* Copyright 2022 The Oak Authors. */
 
-#ifndef OAK_ADDONS_INTERNAL_COMPILER_H_
-#define OAK_ADDONS_INTERNAL_COMPILER_H_
+#ifndef OAK_ADDONS_PUBLIC_COMPILER_H_
+#define OAK_ADDONS_PUBLIC_COMPILER_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -42,4 +42,4 @@ extern "C" {
 }
 #endif
 
-#endif  /* OAK_ADDONS_INTERNAL_COMPILER_H_ */
+#endif  /* OAK_ADDONS_PUBLIC_COMPILER_H_ */

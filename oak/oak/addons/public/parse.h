@@ -1,21 +1,14 @@
-// Copyright 2022 The Oak Authors.
+/* Copyright 2022 The Oak Authors. */
 
-#ifndef OAK_ADDONS_PARSE_H_
-#define OAK_ADDONS_PARSE_H_
+#ifndef OAK_ADDONS_PUBLIC_PARSE_H_
+#define OAK_ADDONS_PUBLIC_PARSE_H_
 
-#include "oak/addons/parameter.h"
-#include "oak/addons/buffer.h"
+#include "oak/addons/public/compiler.h"
+#include "oak/addons/public/platform.h"
+#include "oak/addons/public/buffer.h"
 
 #ifdef __cplusplus
 extern "C" {
-#endif
-
-#ifndef NAME_MAX
-# define NAME_MAX 255
-#endif
-
-#ifndef PATH_MAX
-# define PATH_MAX 4096
 #endif
 
 struct oak_parse_context {
@@ -24,8 +17,8 @@ struct oak_parse_context {
   void* args;
 };
 
-typedef void (*oak_dict_set)(struct oak_buffer* key,
-                             struct oak_buffer* value);
+typedef void (*oak_dict_set)(struct oak_buffer_ref* key,
+                             struct oak_buffer_ref* value);
 
 struct oak_parse_ops {
   int (*open)(struct oak_parse_context* ctx);
@@ -34,10 +27,11 @@ struct oak_parse_ops {
                 const struct oak_buffer_ref* down_stream,
                 oak_dict_set set);
   void (*close)(struct parse_context* ctx);
+  unsigned int (version)();
 };
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif  /* OAK_ADDONS_PARSE_H_ */
+#endif  /* OAK_ADDONS_PUBLIC_PARSE_H_ */
