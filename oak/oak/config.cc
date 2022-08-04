@@ -13,77 +13,6 @@
 namespace oak {
 namespace {
 
-using ModuleParser = bool (*)(const char*, const Json2::Value&, Module*);
-
-// Kafka config parser
-bool KafkaModuleParser(const char* node,
-                       const Json2::Value& root,
-                       Module* module) {
-  module->type = Module::Type::KAFKA;
-
-  if (root.isMember("enable"))
-    module->enable = root["enable"].asBool();
-  if (!module->enable) {
-    OAK_INFO("%s.kafka.enable is not enabled.\n", node);
-    return false;
-  }
-
-  KafkaConfig config;
-
-  if (!root.isMember("bootstrap")) {
-    OAK_ERROR("%s.kafka.bootstrap is not found.\n", node);
-    return false;
-  }
-  config.bootstrap = root["bootstrap"].asString();
-
-  if (!root.isMember("topic")) {
-    OAK_ERROR("%s.kafka.topic is not found.\n", node);
-    return false;
-  }
-  config.topic = root["topic"].asString();
-
-  if (root.isMember("group"))
-    config.group = root["group"].asBool();
-
-  if (config.group) {
-    config.group_name.append("consumer_group_");
-    config.group_name.append(config.topic);
-  }
-
-  module->config = std::move(config);
-  return true;
-}
-
-// StreamPipe config parser
-bool StreamPipeModuleParser(const char* node,
-                            const Json2::Value& root,
-                            Module* module) {
-  module->type = Module::Type::STREAMPIPE;
-
-  if (root.isMember("enable"))
-    module->enable = root["enable"].asBool();
-  if (!module->enable) {
-    OAK_INFO("%s.streampipe.enable is not enabled.\n", node);
-    return false;
-  }
-
-  StreamPipeConfig config;
-
-  if (!root.isMember("address")) {
-    OAK_ERROR("%s.streampipe.address is not found.\n", node);
-    return false;
-  }
-  config.address = root["address"].asString();
-
-  module->config = std::move(config);
-  return true;
-}
-
-const std::unordered_map<std::string, ModuleParser> kModuleParsers{
-  {"kafka",         KafkaModuleParser},
-  {"streampipe",    StreamPipeModuleParser}
-};
-
 void ParseModule(const char* node,
                  const Json2::Value& root,
                  std::vector<Module>* modules) {
@@ -144,7 +73,36 @@ void ParseWorkerConfig(const Json2::Value& root, WorkerConfig* config) {
 }
 }  // anonymous namespace
 
-void LoadConfig(const char* fname, Config* config) {
+void InitMasterConfig(const char* fname, MasterConfig* config) {
+  std::ifstream in(fname);
+  if (!in)
+    OAK_FATAL("Read %s failed\n", fname);
+
+  auto features = Json2::Features::strictMode();
+  Json2::Reader reader(features);
+  Json2::Value root;
+
+  if (!reader.parse(in, root, false)) {
+    OAK_FATAL("Read %s failed: %s\n",
+        fname, reader.getFormattedErrorMessages().c_str());
+  }
+
+  if (root.isMember("log_method"))
+    config->log_method = root["log_method"].asString();
+
+  if (!root.isMember("master"))
+    OAK_FATAL("Read %s failed: not found node \'master\'\n", fname);
+
+  const auto& master = root["master"];
+
+  if (master.isMember("log_method"))
+    config->log_method = root["log_method"].asString();
+
+  if (master.isMember("kafka"))
+    ParseWorkerConfig(root["worker"], &config->worker_config);
+}
+
+void InitWorkerConfig(const char* fname, WorkerConfig* config) {
   std::ifstream in(fname);
   if (!in) return;
 

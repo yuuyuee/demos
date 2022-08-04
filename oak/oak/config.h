@@ -3,89 +3,54 @@
 #ifndef OAK_CONFIG_H_
 #define OAK_CONFIG_H_
 
+#ifndef _GUN_SOURCE
+# define _GUN_SOURCE
+#endif
+
+#include <sched.h>
 #include <vector>
 #include <string>
-
-#include "oak/common/any.h"
+#include <unordered_map>
 
 namespace oak {
-struct KafkaConfig {
-  // Kafka bootstrap
-  std::string bootstrap;
+struct ModuleConfig {
+  // module name, e.g. kafka, streampipe
+  std::string module_name;
 
-  // Kafka topic
-  std::string topic;
-
-  // If this config is used for consumers, indicates whether
-  // it belongs to the enabled consumer group
-  bool group;
-
-  // Consumer goup name when group is true
-  std::string group_name;
-
-  KafkaConfig(): bootstrap(), topic(), group(false), group_name() {}
-};
-
-struct StreamPipeConfig {
-  // StreamPipe address and port
-  std::string address;
-
-  StreamPipeConfig(): address() {}
-};
-
-struct Module {
-  enum Type {
-    KAFKA,
-    STREAMPIPE,
-    UNKNOWN
-  };
-
-  // Whether the module is enable
+  // Checks module is enable
   bool enable{false};
 
-  // module type
-  enum Type type{Type::UNKNOWN};
+  // module address, e.g. kafka bootstrap, streampipe address
+  std::string address;
 
-  // module config
-  Any config;
+  // module parameter
+  std::unordered_map<std::string, std::string> parameter;
 };
 
-struct TaskConfig {
-  std::vector<Module> modules;
-};
+#define OAK_RUNTIME_DIRECTORY "/var/run/oak"
+#define OAK_TASK_CHANNEL      (OAK_RUNTIME_DIRECTORY "/.oak_task_channel")
+#define OAK_CRASH_CHANNEL     (OAK_RUNTIME_DIRECTORY "/.oak_crash_channel")
 
-struct SourceConfig {
-  // The number of the threads of the source module
-  int num_threads;
-  std::vector<Module> modules;
-};
-
-struct ParseConfig {
-  // The number of the threads of the parser module
-  int num_threads;
-  std::vector<Module> modules;
-};
-
-struct SinkConfig {
-  // The number of the threads of the sink module
-  int num_threads;
-  std::vector<Module> modules;
+struct MasterConfig {
+  std::string process_name;
+  std::string log_method;
+  std::string runtime_directory;
+  std::string task_channel;
+  std::string crash_channel;
+  std::vector<ModuleConfig> task_module;
+  cpu_set_t available_cpu_set;
 };
 
 struct WorkerConfig {
+  std::string process_name;
   std::string log_method;
-  SourceConfig source_config;
-  ParseConfig parse_config;
-  SinkConfig sink_config;
+  std::string runtime_directory;
+  std::string task_channel;
+  std::string crash_channel;
+  std::vector<ModuleConfig> source_module;
+  std::vector<ModuleConfig> sink_module;
+  cpu_set_t available_cpu_set;
 };
-
-struct Config {
-  std::string log_method;
-  TaskConfig task_config;
-  WorkerConfig worker_config;
-};
-
-void LoadConfig(const char* fname, Config* config);
 
 }  // namespace oak
 
