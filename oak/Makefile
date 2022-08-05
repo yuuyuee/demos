@@ -2,7 +2,7 @@
 all: master stringpiece_test any_test;
 
 master:
-	g++ -std=c++11 -Wall -Wextra -g -rdynamic -I. -Ithird_party/jsoncpp-1.9.5 -o $@ \
+	g++ -std=c++11 -Wall -Wextra -g -O0 -rdynamic -I. -Ithird_party/jsoncpp-1.9.5 -o $@ \
 			oak/master.cc oak/common/trivial.cc oak/logging/logging.cc oak/config.cc \
 			third_party/jsoncpp-1.9.5/jsoncpp.cpp
 

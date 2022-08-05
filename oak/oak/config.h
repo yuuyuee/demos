@@ -3,21 +3,29 @@
 #ifndef OAK_CONFIG_H_
 #define OAK_CONFIG_H_
 
-#ifndef _GUN_SOURCE
-# define _GUN_SOURCE
-#endif
-
-#include <sched.h>
 #include <vector>
 #include <string>
 #include <unordered_map>
 
 namespace oak {
-#define OAK_TASK_CHANNEL    ".oak_task_channel"
-#define OAK_CRASH_CHANNEL   ".oak_crash_channel"
-#define OAK_CONFIG_NAME     "etc/setup.json"
+
+#define OAK_ETC_DIR         "etc"
 #define OAK_LOG_DIR         "log"
 #define OAK_ADDONS_DIR      "addons"
+#define OAK_TASK_CHANNEL    ".oak_task_channel"
+#define OAK_CRASH_CHANNEL   ".oak_crash_channel"
+
+struct ProcessConfig {
+  std::string home;
+  std::string bin_dir;
+  std::string etc_dir;
+  std::string log_dir;
+  std::string addons_dir;
+  std::string task_channel;
+  std::string crash_channel;
+};
+
+void InitProcessConfig(ProcessConfig* config);
 
 #define OAK_MASTER_NAME     "OAK Master"
 #define OAK_MASTER_ROLE     "master"
@@ -40,24 +48,16 @@ struct ModuleConfig {
   std::unordered_map<std::string, std::string> param;
 };
 
-struct ProcessConfig {
+struct MasterConfig {
   std::string name;
   std::string role;
-  std::string home;
   std::string pid_name;
   std::string log_name;
-  cpu_set_t available_cpu_set;
-};
-
-struct MasterConfig {
-  ProcessConfig process;
   std::string log_method;
-  std::string task_channel;
-  std::string crash_channel;
   std::vector<ModuleConfig> task_modules;
 };
 
-void LoadMasterConfig(MasterConfig* config, const char* fname);
+void InitMasterConfig(MasterConfig* config, const std::string& fname);
 
 struct SourceConfig {
   int num_threads;
@@ -75,17 +75,17 @@ struct SinkConfig {
 };
 
 struct WorkerConfig {
-  ProcessConfig process;
+  std::string name;
+  std::string role;
+  std::string pid_name;
+  std::string log_name;
   std::string log_method;
-  std::string task_channel;
-  std::string crash_channel;
-
   SourceConfig source;
   ParserConfig parser;
   SinkConfig sink;
 };
 
-void LoadWorkerConfig(WorkerConfig* config, const char* fname);
+void InitWorkerConfig(WorkerConfig* config, const std::string& fname);
 
 }  // namespace oak
 

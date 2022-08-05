@@ -7,11 +7,12 @@
 
 #include <stddef.h>  // size_t
 
-namespace oak::macros_internal {
+namespace oak {
+namespace macros_internal {
 template <typename T, size_t N, typename R = char (&)[N]>
 R ArraySizeHelper(const T (&)[N]);
-}  // namespace oak::macros_internal
-
+}  // namespace macros_internal
+}  // namespace oak
 #include "oak/addons/public/compiler.h"
 
 // OAK_HAS_ATTRIBUTE()
@@ -115,13 +116,15 @@ R ArraySizeHelper(const T (&)[N]);
 // IGNORE_UNUNSED()
 #define IGNORE_UNUESD(...) oak::macros_internal::IgnoreUnused(__VA_ARGS__)
 
-namespace oak::macros_internal {
+namespace oak {
+namespace macros_internal {
 template <typename... Args>
-constexpr void IgnoreUnused(Args const&...) {}
+constexpr int IgnoreUnused(Args const&...) { return 0; }
 
 template <typename...>
-constexpr void IgnoreUnused() {}
-}  // namespace oak::macros_internal
+constexpr int IgnoreUnused() { return 0; }
+}  // namespace macros_internal
+}  // namespace oak
 
 // OAK_ASSERT()
 // This is an runtime assert and that can be used portably within

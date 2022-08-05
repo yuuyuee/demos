@@ -7,38 +7,79 @@
 #include <sys/file.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <string.h>
 #include <stdio.h>
 #include <errno.h>
 #include <limits.h>
-#include <libgen.h>
-
-#include <string>
+#include <assert.h>
 
 #include "oak/logging/logging.h"
 
 namespace oak {
-void ChangeToBinDirectory(const char* argv0) {
-  const char* p = strrchr(argv0, '/');
-  std::string path = p ? std::string(argv0, p - argv0) : ".";
-  int ret = chdir(path.c_str());
-  if (!ret)
-    OAK_FATAL("Unable to change working directory: %s\n", strerror(errno));
+
+std::string DirectoryName(const char* path) {
+  std::string real_path = GetRealPath(path);
+  assert(!real_path.empty() && "Invalid path");
+  auto pos = real_path.rfind('/');
+  return pos == 0 ? "/" : real_path.substr(0, pos);
+}
+
+std::string GetCurrentDirectory() {
+  char path[PATH_MAX];
+  const char* p = getcwd(path, PATH_MAX);
+  if (!p)
+    OAK_FATAL("GetCurrentDirectory() failed: %s\n", strerror(errno));
+  return std::string(path);
+}
+
+std::string GetRealPath(const char* path) {
+  assert(path && "Invalid path");
+  assert(path && "Invalid real_path");
+  char real_path[PATH_MAX];
+  const char* p = realpath(path, real_path);
+  if (!p)
+    OAK_FATAL("Realpath() failed: %s\n", strerror(errno));
+  return std::string(real_path);
+}
+
+void CreateDirectoryRecursively(const char* dir_name) {
+  assert(dir_name && "Invalid directory name");
+  static unsigned int mode = S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH;
+  int ret = mkdir(dir_name, mode);
+  if (ret < 0) {
+    if (errno == EEXIST) {
+      // XXX: dir_name already exists but not necessarily as a directory.
+      return;
+    } else if (errno == ENOENT) {
+      std::string path = DirectoryName(dir_name);
+      CreateDirectoryRecursively(path.c_str());
+      ret = mkdir(dir_name, mode);
+      if (ret < 0)
+        OAK_FATAL("CreateDirectory() failed: %s\n", strerror(errno));
+    } else {
+      OAK_FATAL("CreateDirectory() failed: %s\n", strerror(errno));
+    }
+  }
+}
+
+void ChangeWorkDirectory(const char* path) {;
+  int ret = chdir(path);
+  if (ret < 0)
+    OAK_FATAL("ChangeWorkingDirectory() failed: %s\n", strerror(errno));
 }
 
 bool AlreadyRunning(const char* pid_name) {
   constexpr const int kSelfSize = 128;
   char self[kSelfSize];
-  int self_len = snprintf(self, kSelfSize, "%d", static_cast<int>(getpid()));
+  int self_len = snprintf(self, kSelfSize, "%d", getpid());
   mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH;
   int fd = open(pid_name, O_WRONLY | O_CREAT, mode);
   if (fd < 0)
-    OAK_FATAL("can't open file %s: %s\n", pid_name, strerror(errno));
+    OAK_FATAL("Can not open file %s: %s\n", pid_name, strerror(errno));
   int ret = flock(fd, LOCK_EX | LOCK_NB);
   if (ret < 0) {
     if (errno == EWOULDBLOCK)
       return true;
-    OAK_FATAL("can't lock file %s: %s\n", pid_name, strerror(errno));
+    OAK_FATAL("Can not lock file %s: %s\n", pid_name, strerror(errno));
   }
   ret = write(fd, self, self_len);
   if (ret != self_len) {

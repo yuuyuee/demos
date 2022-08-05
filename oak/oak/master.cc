@@ -9,26 +9,24 @@
 #include "oak/logging/logging.h"
 #include "oak/config.h"
 
-// can not creating multiple processes with boot many process, because
-// the number of processes is configured in configuration.
-
 int main(int argc, char* argv[]) {
+  assert(argc || true);
+  std::string self = oak::DirectoryName(argv[0]);
+  oak::ChangeWorkDirectory(self.c_str());
+  OAK_DEBUG("Change working directory to %s\n",
+            oak::GetCurrentDirectory().c_str());
+
   // if (oak::AlreadyRunning(PROGRAM_NAME)) {
   //   OAK_ERROR("Already running.\n");
   //   return 0;
   // }
 
-  if (argc != 2) {
-    OAK_ERROR("Usage: %s setup.json\n", argv[0]);
-    return -1;
-  }
+  oak::ProcessConfig proc_config;
+  oak::InitProcessConfig(&proc_config);
 
-  const char* fname = argv[1];
   oak::MasterConfig master_config;
-  oak::LoadMasterConfig(&master_config, fname);
-
-  // change workding directory
-  int ret = chdir()
+  std::string fname = proc_config.etc_dir + "/setup.json";
+  oak::InitMasterConfig(&master_config, fname);
 
   // Logger handler = {};
   // RegisterLogger(handler);
