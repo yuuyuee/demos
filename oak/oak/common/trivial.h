@@ -22,7 +22,7 @@ void CreateDirectoryRecursively(const char* dir_name);
 void ChangeWorkDirectory(const char* argv0);
 
 // Locks pid file to prevent process run again.
-bool AlreadyRunning(const char* pid_name);
+bool AlreadyRunning(const char* pid_fname);
 }  // namespace oak
 
 #endif  // OAK_COMMON_TRIVIAL_H_

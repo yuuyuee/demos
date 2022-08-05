@@ -9,11 +9,14 @@
 
 namespace oak {
 
-#define OAK_ETC_DIR         "etc"
-#define OAK_LOG_DIR         "log"
-#define OAK_ADDONS_DIR      "addons"
-#define OAK_TASK_CHANNEL    ".oak_task_channel"
-#define OAK_CRASH_CHANNEL   ".oak_crash_channel"
+// ProcessConfig
+
+#define OAK_ETC_DIR       "etc"
+#define OAK_LOG_DIR       "log"
+#define OAK_ADDONS_DIR    "addons"
+#define OAK_TASK_CHANNEL  ".oak_task_channel"
+#define OAK_CRASH_CHANNEL ".oak_crash_channel"
+#define OAK_CONFIG_FILE   "setup.json"
 
 struct ProcessConfig {
   std::string home;
@@ -23,6 +26,7 @@ struct ProcessConfig {
   std::string addons_dir;
   std::string task_channel;
   std::string crash_channel;
+  std::string config_file;
 };
 
 void InitProcessConfig(ProcessConfig* config);
@@ -33,7 +37,7 @@ void InitProcessConfig(ProcessConfig* config);
 #define OAK_MASTER_LOGNAME  (OAK_MASTER_ROLE ".log")
 
 #define OAK_WORKER_NAME     "OAK Worker"
-#define OAK_WORKER_ROLE     "master"
+#define OAK_WORKER_ROLE     "worker"
 #define OAK_WORKER_PIDNAME  (OAK_WORKER_ROLE ".pid")
 #define OAK_WORKER_LOGNAME  (OAK_WORKER_ROLE ".log")
 
@@ -48,6 +52,8 @@ struct ModuleConfig {
   std::unordered_map<std::string, std::string> param;
 };
 
+// MasterConfig
+
 struct MasterConfig {
   std::string name;
   std::string role;
@@ -58,6 +64,8 @@ struct MasterConfig {
 };
 
 void InitMasterConfig(MasterConfig* config, const std::string& fname);
+
+// WorkerConfig
 
 struct SourceConfig {
   int num_threads;

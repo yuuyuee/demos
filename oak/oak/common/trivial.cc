@@ -67,25 +67,25 @@ void ChangeWorkDirectory(const char* path) {;
     OAK_FATAL("ChangeWorkingDirectory() failed: %s\n", strerror(errno));
 }
 
-bool AlreadyRunning(const char* pid_name) {
+bool AlreadyRunning(const char* pid_fname) {
   constexpr const int kSelfSize = 128;
-  char self[kSelfSize];
-  int self_len = snprintf(self, kSelfSize, "%d", getpid());
+  char pid[kSelfSize];
+  int pid_len = snprintf(pid, kSelfSize, "%d", getpid());
   mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH;
-  int fd = open(pid_name, O_WRONLY | O_CREAT, mode);
+  int fd = open(pid_fname, O_WRONLY | O_CREAT, mode);
   if (fd < 0)
-    OAK_FATAL("Can not open file %s: %s\n", pid_name, strerror(errno));
+    OAK_FATAL("Can not open file %s: %s\n", pid_fname, strerror(errno));
   int ret = flock(fd, LOCK_EX | LOCK_NB);
   if (ret < 0) {
     if (errno == EWOULDBLOCK)
       return true;
-    OAK_FATAL("Can not lock file %s: %s\n", pid_name, strerror(errno));
+    OAK_FATAL("Can not lock file %s: %s\n", pid_fname, strerror(errno));
   }
-  ret = write(fd, self, self_len);
-  if (ret != self_len) {
+  ret = write(fd, pid, pid_len);
+  if (ret != pid_len) {
     const char* err = ret < 0 ? strerror(errno) : "unknown";
     OAK_FATAL("Write file %s expect written %d but written %d: %s\n",
-              pid_name, self_len, ret < 0 ? 0 : ret, err);
+              pid_fname, pid_len, ret < 0 ? 0 : ret, err);
   }
   return false;
 }

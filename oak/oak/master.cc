@@ -1,6 +1,5 @@
 // Copyright 2022 The Oak Authors.
 
-#include <sys/types.h>
 #include <unistd.h>
 
 #include "oak/addons/public/compiler.h"
@@ -10,31 +9,41 @@
 #include "oak/config.h"
 
 int main(int argc, char* argv[]) {
-  assert(argc || true);
+  IGNORE_UNUESD(argc);
+
+  // Changes workding directory
   std::string self = oak::DirectoryName(argv[0]);
   oak::ChangeWorkDirectory(self.c_str());
-  OAK_DEBUG("Change working directory to %s\n",
+  OAK_DEBUG("Master: Change working directory to %s\n",
             oak::GetCurrentDirectory().c_str());
 
-  // if (oak::AlreadyRunning(PROGRAM_NAME)) {
-  //   OAK_ERROR("Already running.\n");
-  //   return 0;
-  // }
-
-  oak::ProcessConfig proc_config;
-  oak::InitProcessConfig(&proc_config);
+  // Initialize process configuration
+  oak::ProcessConfig process_config;
+  oak::InitProcessConfig(&process_config);
 
   oak::MasterConfig master_config;
-  std::string fname = proc_config.etc_dir + "/setup.json";
-  oak::InitMasterConfig(&master_config, fname);
+  oak::InitMasterConfig(&master_config, process_config.config_file);
 
-  // Logger handler = {};
-  // RegisterLogger(handler);
+  // Locks pid file to checking whther process is running
+  std::string pid_file = process_config.bin_dir + "/" + master_config.pid_name;
+  if (oak::AlreadyRunning(pid_file.c_str())) {
+    OAK_ERROR("OAK process is already running.\n");
+    return 0;
+  }
 
-  // waitting for slaver is running
-  // entry event loop to waitting for task event
+  // Setup log config
+  oak::CreateDirectoryRecursively(process_config.log_dir.c_str());
+
+  // Initialize runtime environment, e.g. CPU, channel
+
+  // Startup worker process
+
+  // Waitting for response of the worker process
+
+  // Initialize event receiver and waiting for task event of the outside
 
   while (true)
     sleep(2);
+
   return 0;
 }

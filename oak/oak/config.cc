@@ -52,6 +52,7 @@ void InitProcessConfig(ProcessConfig* config) {
   config->addons_dir    = config->home + "/" OAK_ADDONS_DIR;
   config->task_channel  = config->bin_dir + "/" OAK_TASK_CHANNEL;
   config->crash_channel = config->bin_dir + "/" OAK_CRASH_CHANNEL;
+  config->config_file   = config->etc_dir + "/" OAK_CONFIG_FILE;
 }
 
 void InitMasterConfig(MasterConfig* config, const std::string& fname) {
