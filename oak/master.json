@@ -1,0 +1,10 @@
+{
+  "log_method": "debug:file",
+
+  "modules": {
+    "kafka": {
+      "enable": true,
+      "bootstrap": "master.get_task.kafka.bootstrap"
+    }
+  }
+}

@@ -5,6 +5,7 @@
 #include "oak/addons/public/compiler.h"
 #include "oak/addons/public/platform.h"
 #include "oak/common/trivial.h"
+#include "oak/common/fs.h"
 #include "oak/logging/logging.h"
 #include "oak/config.h"
 
@@ -12,27 +13,28 @@ int main(int argc, char* argv[]) {
   IGNORE_UNUESD(argc);
 
   // Changes workding directory
-  std::string self = oak::DirectoryName(argv[0]);
-  oak::ChangeWorkDirectory(self.c_str());
-  OAK_DEBUG("Master: Change working directory to %s\n",
-            oak::GetCurrentDirectory().c_str());
+  std::string path = oak::DirectoryName(argv[0]);
+  oak::ChangeWorkDirectory(path);
 
   // Initialize process configuration
-  oak::ProcessConfig process_config;
-  oak::InitProcessConfig(&process_config);
-
-  oak::MasterConfig master_config;
-  oak::InitMasterConfig(&master_config, process_config.config_file);
+  const oak::ProcessConfig& proc_config = oak::GetMasterProcessConfig();
 
   // Locks pid file to checking whther process is running
-  std::string pid_file = process_config.bin_dir + "/" + master_config.pid_name;
-  if (oak::AlreadyRunning(pid_file.c_str())) {
+  if (oak::AlreadyRunning(proc_config.pid_file.c_str())) {
     OAK_ERROR("OAK process is already running.\n");
     return 0;
   }
 
+  oak::MasterConfig master_config;
+  oak::ReadMasterConfig(&master_config, proc_config.conf_file);
+  OAK_INFO("%s: Change working directory to %s\n",
+           proc_config.proc_name.c_str(),
+           proc_config.bin_dir.c_str());
+
+  oak::WriteMasterConfig(master_config, "master.writeback.json");
+
   // Setup log config
-  oak::CreateDirectoryRecursively(process_config.log_dir.c_str());
+  oak::CreateDirectoryRecursively(proc_config.log_dir);
 
   // Initialize runtime environment, e.g. CPU, channel
 

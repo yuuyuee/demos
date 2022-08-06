@@ -4,7 +4,7 @@
 
 #include "oak/addons/public/compiler.h"
 #include "oak/addons/public/platform.h"
-#include "oak/common/trivial.h"
+#include "oak/common/fs.h"
 #include "oak/logging/logging.h"
 #include "oak/config.h"
 
