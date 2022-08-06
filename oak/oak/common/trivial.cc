@@ -8,7 +8,6 @@
 
 namespace oak {
 
-//
 bool AlreadyRunning(const std::string& lock_file) {
   char pid[32];
   int len = format(pid, sizeof(pid), "%d", getpid());
