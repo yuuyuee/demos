@@ -4,29 +4,44 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/file.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <assert.h>
+#include <string.h>
 
-#include "oak/logging/logging.h"
+#include "oak/common/format.h"
+#include "oak/common/throw_delegate.h"
 
 namespace oak {
+#define THROW_SYSTEM_ERROR(...) \
+    oak::ThrowStdSystemError(Format(__VA_ARGS__))
 
 std::string DirectoryName(const std::string& path) {
   assert(!path.empty() && "Invalid path");
-  std::string real_path = GetRealPath(path);
-  auto pos = real_path.rfind('/');
-  return pos == 0 ? "/" : real_path.substr(0, pos);
+  char real_path[PATH_MAX];
+  int count = 0, len = 0;
+  for (const auto& v : path) {
+    count = v == '/' ? count + 1 : 0;
+    if (count > 1)
+      continue;
+    real_path[len++] = v;
+  }
+  if (real_path[len - 1] == '/')
+    --len;
+  real_path[len] = '\0';
+  auto pos = strrchr(real_path, '/');
+  return pos ? std::string(real_path, pos - real_path) : ".";
 }
 
 std::string GetCurrentDirectory() {
   char path[PATH_MAX];
   const char* p = getcwd(path, PATH_MAX);
   if (!p)
-    OAK_FATAL("Get current directory failed: %s\n", strerror(errno));
+    THROW_SYSTEM_ERROR("GetCurrentDirectory() failed");
   return std::string(path);
 }
 
@@ -34,11 +49,17 @@ std::string GetRealPath(const std::string& path) {
   assert(!path.empty() && "Invalid path");
   char real_path[PATH_MAX];
   const char* p = realpath(path.c_str(), real_path);
-  if (!p) {
-    OAK_FATAL("Get real path from \'%s\'failed: %s\n",
-              path.c_str(), strerror(errno));
-  }
+  if (!p)
+    THROW_SYSTEM_ERROR("GetRealPath(%s) failed", path.c_str());
   return std::string(real_path);
+}
+
+void CreateDirectory(const std::string& directory) {
+  assert(!directory.empty() && "Invalid directory name");
+  static unsigned int mode = S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH;
+  int ret = mkdir(directory.c_str(), mode);
+  if (ret < 0 && errno != EEXIST)
+    THROW_SYSTEM_ERROR("CreateDirectory(%s) failed", directory.c_str());
 }
 
 void CreateDirectoryRecursively(const std::string& directory) {
@@ -53,83 +74,123 @@ void CreateDirectoryRecursively(const std::string& directory) {
       std::string path = DirectoryName(directory);
       CreateDirectoryRecursively(path);
       ret = mkdir(directory.c_str(), mode);
-      if (ret < 0) {
-        OAK_FATAL("Creates directory \'%s\' failed: %s\n",
-                  directory.c_str(), strerror(errno));
-      }
+      if (ret < 0)
+        THROW_SYSTEM_ERROR("CreateDirectoryRecursively(%s) failed", directory.c_str());
     } else {
-      OAK_FATAL("Creates directory \'%s\' failed: %s\n",
-                directory.c_str(), strerror(errno));
+      THROW_SYSTEM_ERROR("CreateDirectoryRecursively(%s) failed", directory.c_str());
     }
   }
 }
 
 void ChangeWorkDirectory(const std::string& directory) {;
   int ret = chdir(directory.c_str());
-  if (ret < 0) {
-    OAK_FATAL("Changes work directory to \'%s\'failed: %s\n",
-              directory.c_str(), strerror(errno));
-  }
+  if (ret < 0)
+    THROW_SYSTEM_ERROR("ChangeWorkDirectory(%s) failed", directory.c_str());
 }
 
-void ReadFile(const std::string& path, std::string* buffer) {
-  int fd = open(path.c_str(), O_RDONLY);
-  if (fd < 0) {
-    OAK_FATAL("Open file \'%s\' failed: %s\n",
-              path.c_str(), strerror(errno));
-  }
+// File
 
-  std::string result;
-  char tmp[1024];
-  ssize_t n = 0;
+const int File::kMode = (S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH);
 
-  while ((n = read(fd, tmp, 1024)) != 0) {
-    if (n < 0 && errno != EINTR) {
-      OAK_FATAL("Read file \'%s\' failed: %s\n",
-                path.c_str(), strerror(errno));
-    } else {
-      result.append(tmp, n);
-    }
-  }
-  buffer->swap(result);
+File File::MakeReadOnlyFile(const char* name) {
+  return File(name, O_RDONLY, 0);
 }
 
-namespace {
-void WriteFileImpl(const std::string& path, const std::string& buffer, int flag) {
-  mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH;
+File File::MakeWritableFile(const char* name) {
+  return File(name, O_WRONLY | O_CREAT | O_TRUNC, kMode);
+}
 
-  int fd = open(path.c_str(), flag, mode);
-  if (fd < 0) {
-    OAK_FATAL("Open file \'%s\' failed: %s\n",
-              path.c_str(), strerror(errno));
+File File::MakeAppendableFile(const char* name) {
+  return File(name, O_WRONLY | O_CREAT | O_APPEND, kMode);
+}
+
+File::File(int fd, bool owner) noexcept : fd_(fd), owner_(owner) {
+  if (fd_ < -1) ThrowStdLogicError("fd must be -1 or non-negative value");
+  if (fd_ == -1 && owner) ThrowStdLogicError("can not owned -1");
+}
+
+File::File(const char* name, int flags, int mode)
+    : fd_(open(name, flags, mode)), owner_(false) {
+  if (fd_ < 0)
+    THROW_SYSTEM_ERROR("open(%s, %04o, %04o) failed", name, flags, mode);
+  owner_ = true;
+}
+
+File::File(const std::string& name, int flags, int mode)
+    : File(name.c_str(), flags, mode) {}
+
+File::~File() {
+  Close();
+}
+
+File::File(File&& other) noexcept
+    : fd_(other.fd_), owner_(other.owner_) {
+  other.Release();
+}
+
+File& File::operator=(File&& other) {
+  if (this != &other) {
+    fd_ = other.fd_;
+    owner_ = other.owner_;
+    other.Release();
   }
+  return *this;
+}
 
-  ssize_t n = 0;
+void File::Close() {
+  if (fd_ != -1 && owner_) {
+    // XXX: all of error has been ignored
+    close(fd_);
+  }
+  Release();
+}
+
+size_t File::Read(char* buffer, size_t size) {
+  assert(size > 0 && "Invalid size");
+  ssize_t ret = 0;
   do {
-    n = write(fd, buffer.c_str(), buffer.size());
-  } while (n < 0 && errno == EINTR);
-
-  while (n < static_cast<ssize_t>(buffer.size())) {
-    ssize_t ret = write(fd, buffer.c_str() + n, buffer.size() - n);
-    if (ret < 0) {
-      if (errno != EINTR) {
-        OAK_FATAL("Read file \'%s\' failed: %s\n",
-                  path.c_str(), strerror(errno));
-      }
-      ret = 0;
-    }
-    n += ret;
-  }
+    ret = read(fd_, buffer, size);
+  } while (ret < 0 && errno == EINTR);
+  if (ret < 0)
+    THROW_SYSTEM_ERROR("read(%d, %p, %ld) failed", fd_, buffer, size);
+  return ret;
 }
 
-}  // anonymous namespace
-
-void WriteFile(const std::string& path, const std::string& buffer) {
-  WriteFileImpl(path, buffer, O_WRONLY | O_CREAT | O_TRUNC);
+size_t File::Write(const char* buffer, size_t size) {
+  assert(size > 0 && "Invalid size");
+  ssize_t ret = 0;
+  do {
+    ret = write(fd_, buffer, size);
+  } while (ret < 0 && errno == EINTR);
+  if (ret < 0)
+    THROW_SYSTEM_ERROR("write(%d, %p, %ld) failed", fd_, buffer, size);
+  return ret;
 }
 
-void AppendFile(const std::string& path, const std::string& buffer) {
-  WriteFileImpl(path, buffer, O_WRONLY | O_CREAT | O_APPEND);
+void File::Sync() {
+  int ret = fsync(fd_);
+  if (ret < 0)
+    THROW_SYSTEM_ERROR("fsync(%d) failed", fd_);
+}
+
+bool File::TryLock() {
+  int ret = flock(fd_, LOCK_EX | LOCK_NB);
+  if (ret < 0 && errno != EWOULDBLOCK)
+    THROW_SYSTEM_ERROR("flock(%d, LOCK_EX | LOCK_NB) failed", fd_);
+  return ret == 0;
+}
+
+void File::Unlock() {
+  int ret = flock(fd_, LOCK_UN);
+  if (ret < 0)
+    THROW_SYSTEM_ERROR("flock(%d, LOCK_UN) failed", fd_);
+}
+
+int File::Release() noexcept {
+  int fd = fd_;
+  fd_ = -1;
+  owner_ = false;
+  return fd;
 }
 
 }  // namespace oak

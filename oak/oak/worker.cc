@@ -11,9 +11,10 @@
 int main(int argc, char* argv[]) {
   IGNORE_UNUESD(argc, argv);
 
+  // Worker process inherit file lock of the pid_file of the master process
   // Setup a signal to sense what time master process is exited
 
-  OAK_DEBUG("Master: Change working directory to %s\n",
+  OAK_DEBUG("Worker: Change working directory to %s\n",
             oak::GetCurrentDirectory().c_str());
 
   // Initialize process configuration

@@ -20,12 +20,12 @@ namespace oak {
 #define OAK_CRASH_CHANNEL     ".oak_crash_channel"
 
 #define OAK_MASTER_PROC_NAME  "OAK Master"
-#define OAK_MASTER_PID_FILE   ".master.pid"
+#define OAK_MASTER_PID_FILE   "master.pid"
 #define OAK_MASTER_LOG_FILE   "master.log"
 #define OAK_MASTER_CONF_FILE  "master.json"
 
 #define OAK_WORKER_PROC_NAME  "OAK Worker"
-#define OAK_WORKER_PID_FILE   ".worker.pid"
+#define OAK_WORKER_PID_FILE   "worker.pid"
 #define OAK_WORKER_LOG_FILE   "worker.log"
 #define OAK_WORKER_CONF_FILE  "worker.json"
 
@@ -40,7 +40,7 @@ const ProcessConfig& GetMasterProcessConfig() {
     .cmd_channel   = config.bin_dir + "/" OAK_CMD_CHANNEL,
     .event_channel = config.bin_dir + "/" OAK_EVENT_CHANNEL,
     .crash_channel = config.bin_dir + "/" OAK_CRASH_CHANNEL,
-    .pid_file      = config.bin_dir + "/" OAK_MASTER_PID_FILE,
+    .pid_file      = "/tmp/oak/" OAK_MASTER_PID_FILE,
     .log_file      = config.bin_dir + "/" OAK_MASTER_LOG_FILE,
     .conf_file     = config.etc_dir + "/" OAK_MASTER_CONF_FILE,
   };
@@ -58,7 +58,7 @@ const ProcessConfig& GetWorkerProcessConfig() {
     .cmd_channel   = config.bin_dir + "/" OAK_CMD_CHANNEL,
     .event_channel = config.bin_dir + "/" OAK_EVENT_CHANNEL,
     .crash_channel = config.bin_dir + "/" OAK_CRASH_CHANNEL,
-    .pid_file      = config.bin_dir + "/" OAK_WORKER_PID_FILE,
+    .pid_file      = "/tmp/oak/" OAK_WORKER_PID_FILE,
     .log_file      = config.bin_dir + "/" OAK_WORKER_LOG_FILE,
     .conf_file     = config.etc_dir + "/" OAK_WORKER_CONF_FILE,
   };
@@ -102,16 +102,12 @@ void WriteModuleConfig(const std::vector<ModuleConfig>& modules,
 // MasterConfig
 
 void ReadMasterConfig(MasterConfig* config, const std::string& fname) {
-  std::string buffer;
-  ReadFile(fname, &buffer);
-  if (buffer.empty())
-    OAK_FATAL("Empty file \'%s\'\n", fname.c_str());
-
+  std::ifstream in(fname);
   auto features = Json2::Features::strictMode();
   Json2::Reader reader(features);
   Json2::Value node;
 
-  if (!reader.parse(buffer, node, false)) {
+  if (!reader.parse(in, node, false)) {
     OAK_FATAL("Parse json file \'%s\' failed: %s\n",
               fname.c_str(),
               reader.getFormattedErrorMessages().c_str());
@@ -133,7 +129,7 @@ void WriteMasterConfig(const MasterConfig& config, const std::string& fname) {
 
   Json2::StyledWriter writer;
   std::string buffer = writer.write(node);
-  WriteFile(fname, buffer);
+  File::MakeWritableFile(fname).Write(buffer);
 }
 
 // bool InitWorkerConfig(WorkerConfig* config, const Json2::Value& node) {

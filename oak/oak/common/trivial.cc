@@ -2,45 +2,25 @@
 
 #include "oak/common/trivial.h"
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/file.h>
-#include <fcntl.h>
 #include <unistd.h>
-#include <stdio.h>
-#include <errno.h>
-#include <limits.h>
-
-#include "oak/logging/logging.h"
+#include "oak/common/format.h"
+#include "oak/common/fs.h"
 
 namespace oak {
 
-bool AlreadyRunning(const char* pid_fname) {
-  constexpr const int kSelfSize = 128;
-  char pid[kSelfSize];
-
-  int pid_len = snprintf(pid, kSelfSize, "%d", getpid());
-  mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH;
-  int fd = open(pid_fname, O_WRONLY | O_CREAT, mode);
-  if (fd < 0)
-    OAK_FATAL("Open file %s: %s\n", pid_fname, strerror(errno));
-
-  int ret = flock(fd, LOCK_EX | LOCK_NB);
-  if (ret < 0) {
-    if (errno == EWOULDBLOCK)
-      return true;
-    OAK_FATAL("Lock file %s: %s\n", pid_fname, strerror(errno));
+//
+bool AlreadyRunning(const std::string& lock_file) {
+  char pid[32];
+  int len = format(pid, sizeof(pid), "%d", getpid());
+  File file = File::MakeWritableFile(lock_file);
+  if (!file.TryLock()) {
+    // Other process has already locked.
+    return true;
   }
-
-  ssize_t n = 0;
-  do {
-    n = write(fd, pid, pid_len);
-  } while (n < 0 && errno == EINTR);
-
-  if (n < 0) {
-    OAK_FATAL("Write file \'%s\' failed: %s\n",
-              pid_fname, strerror(errno));
-  }
+  file.Write(pid, len);
+  // Note: releases and no longger owned the file object because
+  // there should to keep locking.
+  file.Release();
   return false;
 }
 
