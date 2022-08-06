@@ -93,15 +93,15 @@ void ChangeWorkDirectory(const std::string& directory) {;
 const int File::kMode = (S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH);
 
 File File::MakeReadOnlyFile(const char* name) {
-  return File(name, O_RDONLY, 0);
+  return File(name, O_RDONLY | O_CLOEXEC, 0);
 }
 
 File File::MakeWritableFile(const char* name) {
-  return File(name, O_WRONLY | O_CREAT | O_TRUNC, kMode);
+  return File(name, O_WRONLY | O_CREAT | O_CLOEXEC | O_TRUNC, kMode);
 }
 
 File File::MakeAppendableFile(const char* name) {
-  return File(name, O_WRONLY | O_CREAT | O_APPEND, kMode);
+  return File(name, O_WRONLY | O_CREAT | O_CLOEXEC | O_APPEND, kMode);
 }
 
 File::File(int fd, bool owner) noexcept : fd_(fd), owner_(owner) {
