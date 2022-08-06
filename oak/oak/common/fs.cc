@@ -18,7 +18,7 @@
 
 namespace oak {
 #define THROW_SYSTEM_ERROR(...) \
-    oak::ThrowStdSystemError(Format(__VA_ARGS__))
+    oak::ThrowStdSystemError(oak::Format(__VA_ARGS__))
 
 std::string DirectoryName(const std::string& path) {
   assert(!path.empty() && "Invalid path");
