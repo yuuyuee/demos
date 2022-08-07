@@ -56,7 +56,7 @@ inline void oak_buffer_clear(struct oak_buffer* buffer) {
   buffer->size = 0;
 }
 
-/* Checks whether the buffer is empty. */
+/* Checks whether or not the buffer is empty. */
 inline int oak_buffer_empty(const struct oak_buffer* buffer) {
   return buffer->size == 0;
 }

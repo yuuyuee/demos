@@ -41,7 +41,7 @@ const ProcessConfig& GetWorkerProcessConfig();
 
 struct ModuleConfig {
   std::string name;     ///< module name
-  bool enable{false};   ///< whether module is enable
+  bool enable{false};   ///< whether or not the module is enable
   std::unordered_map<std::string, std::string> param;
                         ///< module parameters
 };

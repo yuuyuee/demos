@@ -21,7 +21,6 @@ bool CheckGuardFile(const std::string& guard_file) {
   file.Seek(SEEK_CUR, 0);
   char buffer[32];
   size_t size = file.Read(buffer, sizeof(buffer));
-
   return ppid.size() == size &&
          ppid.compare(0, size, buffer, size) == 0;
 }
@@ -40,7 +39,7 @@ int main(int argc, char* argv[]) {
   // Initialize process configuration
   const oak::ProcessConfig& proc_config = oak::GetWorkerProcessConfig();
 
-  // Cheaks whether the pid file has locked by parent process.
+  // Cheaks whether or not the pid file has locked by parent process.
   std::string ppid = oak::Format("%d", getppid());
 
   if (!CheckGuardFile(proc_config.guard_file)) {
@@ -48,7 +47,7 @@ int main(int argc, char* argv[]) {
     return -1;
   }
 
-  OAK_DEBUG("%s: Change working directory to %s\n",
+  OAK_INFO("%s: Change working directory to %s\n",
             proc_config.proc_name.c_str(),
             oak::GetCurrentDirectory().c_str());
   assert(proc_config.bin_dir == oak::GetCurrentDirectory());
