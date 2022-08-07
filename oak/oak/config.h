@@ -26,7 +26,7 @@ struct ProcessConfig {
   std::string event_channel;  ///< event message report
   std::string crash_channel;  ///< worker crash message report
 
-  std::string pid_file;       ///< absolute path of the process pid file
+  std::string guard_file;     ///< absolute path of the process pid file
   std::string log_file;       ///< absolute path of the process log file
   std::string conf_file;      ///< absolute path of the process config file
 };

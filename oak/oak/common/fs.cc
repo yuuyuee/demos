@@ -106,6 +106,10 @@ File File::MakeAppendableFile(const char* name) {
   return File(name, O_WRONLY | O_CREAT | O_CLOEXEC | O_APPEND, kMode);
 }
 
+File File::MakeRandomAccessFile(const char* name) {
+  return File(name, O_RDWR | O_CREAT | O_CLOEXEC, kMode);
+}
+
 File::File(int fd, bool owner) noexcept : fd_(fd), owner_(owner) {
   if (fd_ < -1) assert("fd must be -1 or non-negative value");
   if (fd_ == -1 && owner) assert("can not owned -1");
@@ -166,6 +170,13 @@ size_t File::Write(const void* buffer, size_t size) {
   } while (ret < 0 && errno == EINTR);
   if (ret < 0)
     THROW_SYSTEM_ERROR("write(%d, %p, %ld) failed", fd_, buffer, size);
+  return ret;
+}
+
+off_t File::Seek(off_t offset, int whence) {
+  off_t ret = lseek(fd_, offset, whence);
+  if (ret < 0)
+    THROW_SYSTEM_ERROR("lseek(%d, %ld, %d) failed", fd_, offset, whence);
   return ret;
 }
 

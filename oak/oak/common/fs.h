@@ -3,6 +3,7 @@
 #ifndef OAK_COMMON_FS_H_
 #define OAK_COMMON_FS_H_
 
+#include <sys/types.h>
 #include <string>
 
 namespace oak {
@@ -51,6 +52,12 @@ class File {
     return MakeAppendableFile(name.c_str());
   }
 
+  // Open and create a file object for random access.
+  static File MakeRandomAccessFile(const char* name);
+  static File MakeRandomAccessFile(const std::string& name) {
+    return MakeRandomAccessFile(name.c_str());
+  }
+
   // Create a file object form an existing file descriptor, takes ownership
   // of the file descriptor if @owner is true.
   explicit File(int fd, bool owner = false) noexcept;
@@ -72,6 +79,10 @@ class File {
   size_t Write(const std::string& buffer) {
     return Write(buffer.c_str(), buffer.size());
   }
+
+  // Reposition read/write offset, return offset location as measured in
+  // bytes from the beginning of the file object.
+  off_t Seek(off_t offset, int whence);
 
   // Synchronize state with storage device.
   // Note: A successful close does not guarantee that the data has been

@@ -2,12 +2,31 @@
 
 #include <unistd.h>
 #include <assert.h>
+#include <signal.h>
 
 #include "oak/addons/public/compiler.h"
 #include "oak/addons/public/platform.h"
 #include "oak/common/fs.h"
+#include "oak/common/format.h"
 #include "oak/logging/logging.h"
 #include "oak/config.h"
+
+namespace {
+bool CheckGuardFile(const std::string& guard_file) {
+  std::string ppid = oak::Format("%d", getppid());
+  oak::File file = oak::File::MakeRandomAccessFile(guard_file);
+  if (file.TryLock())
+    return false;
+
+  file.Seek(SEEK_CUR, 0);
+  char buffer[32];
+  size_t size = file.Read(buffer, sizeof(buffer));
+
+  return ppid.size() == size &&
+         ppid.compare(0, size, buffer, size) == 0;
+}
+
+}  // anonymous namespace
 
 int main(int argc, char* argv[]) {
   IGNORE_UNUESD(argc, argv);
@@ -21,24 +40,31 @@ int main(int argc, char* argv[]) {
   // Initialize process configuration
   const oak::ProcessConfig& proc_config = oak::GetWorkerProcessConfig();
 
+  // Cheaks whether the pid file has locked by parent process.
+  std::string ppid = oak::Format("%d", getppid());
+
+  if (!CheckGuardFile(proc_config.guard_file)) {
+    OAK_ERROR("Can not run OAK worker individually.\n");
+    return -1;
+  }
+
   OAK_DEBUG("%s: Change working directory to %s\n",
             proc_config.proc_name.c_str(),
             oak::GetCurrentDirectory().c_str());
   assert(proc_config.bin_dir == oak::GetCurrentDirectory());
 
-  // Master process is already locking the pid file and it is inherited
-  // to the worker process.
-
   oak::WorkerConfig worker_config;
   oak::ReadWorkerConfig(&worker_config, proc_config.conf_file);
 
-  oak::WriteWorkerConfig(worker_config, "worker.writeback.json");
   // Setup log config
-  // oak::CreateDirectoryRecursively(process_config.log_dir.c_str());
+  oak::CreateDirectoryRecursively(proc_config.log_dir);
+
+  // Initialize runtime environment, e.g. channel, exception handler.
 
   // Startup an channel to communicate with master process
+
   // When channel has established, acqurie the remaining CPU information
-  // and ues for allocate the work threads, eventually, respond a message
+  // and ues for allocate the worker threads, eventually, respond a message
   // to master process indicated that is done.
 
   while (true)

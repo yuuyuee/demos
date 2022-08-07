@@ -19,14 +19,13 @@ namespace oak {
 #define OAK_CMD_CHANNEL       ".oak_cmd_channel"
 #define OAK_EVENT_CHANNEL     ".oak_event_channel"
 #define OAK_CRASH_CHANNEL     ".oak_crash_channel"
+#define OAK_GUARD_FILE        "daemon.pid"
 
 #define OAK_MASTER_PROC_NAME  "OAK Master"
-#define OAK_MASTER_PID_FILE   "master.pid"
 #define OAK_MASTER_LOG_FILE   "master.log"
 #define OAK_MASTER_CONF_FILE  "master.json"
 
 #define OAK_WORKER_PROC_NAME  "OAK Worker"
-#define OAK_WORKER_PID_FILE   "worker.pid"
 #define OAK_WORKER_LOG_FILE   "worker.log"
 #define OAK_WORKER_CONF_FILE  "worker.json"
 
@@ -41,7 +40,7 @@ const ProcessConfig& GetMasterProcessConfig() {
     .cmd_channel   = config.bin_dir + "/" OAK_CMD_CHANNEL,
     .event_channel = config.bin_dir + "/" OAK_EVENT_CHANNEL,
     .crash_channel = config.bin_dir + "/" OAK_CRASH_CHANNEL,
-    .pid_file      = "/tmp/oak/" OAK_MASTER_PID_FILE,
+    .guard_file    = "/tmp/oak/" OAK_GUARD_FILE,
     .log_file      = config.bin_dir + "/" OAK_MASTER_LOG_FILE,
     .conf_file     = config.etc_dir + "/" OAK_MASTER_CONF_FILE,
   };
@@ -59,7 +58,7 @@ const ProcessConfig& GetWorkerProcessConfig() {
     .cmd_channel   = config.bin_dir + "/" OAK_CMD_CHANNEL,
     .event_channel = config.bin_dir + "/" OAK_EVENT_CHANNEL,
     .crash_channel = config.bin_dir + "/" OAK_CRASH_CHANNEL,
-    .pid_file      = "/tmp/oak/" OAK_WORKER_PID_FILE,
+    .guard_file      = "/tmp/oak/" OAK_GUARD_FILE,
     .log_file      = config.bin_dir + "/" OAK_WORKER_LOG_FILE,
     .conf_file     = config.etc_dir + "/" OAK_WORKER_CONF_FILE,
   };
