@@ -80,4 +80,5 @@ typedef void* Circle[2];
 #if defined(__cplusplus)
 }
 #endif
-#endif  // OAK_COMMON_OAK_CIRCLE_H_
+
+#endif  // OAK_COMMON_CIRCLE_H_

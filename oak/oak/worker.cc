@@ -1,6 +1,7 @@
 // Copyright 2022 The Oak Authors.
 
 #include <unistd.h>
+#include <assert.h>
 
 #include "oak/addons/public/compiler.h"
 #include "oak/addons/public/platform.h"
@@ -11,19 +12,27 @@
 int main(int argc, char* argv[]) {
   IGNORE_UNUESD(argc, argv);
 
-  // Worker process inherit file lock of the pid_file of the master process
-  // Setup a signal to sense what time master process is exited
+  // Setup a signal to sense what time master process is exited.
 
-  OAK_DEBUG("Worker: Change working directory to %s\n",
-            oak::GetCurrentDirectory().c_str());
+  // Changes working directory.
+  std::string path = oak::DirectoryName(argv[0]);
+  oak::ChangeWorkDirectory(path);
 
   // Initialize process configuration
-  oak::ProcessConfig process_config;
-  oak::InitProcessConfig(&process_config);
+  const oak::ProcessConfig& proc_config = oak::GetWorkerProcessConfig();
+
+  OAK_DEBUG("%s: Change working directory to %s\n",
+            proc_config.proc_name.c_str(),
+            oak::GetCurrentDirectory().c_str());
+  assert(proc_config.bin_dir == oak::GetCurrentDirectory());
+
+  // Master process is already locking the pid file and it is inherited
+  // to the worker process.
 
   oak::WorkerConfig worker_config;
-  oak::InitWorkerConfig(&worker_config, process_config.config_file);
+  oak::ReadWorkerConfig(&worker_config, proc_config.conf_file);
 
+  oak::WriteWorkerConfig(worker_config, "worker.writeback.json");
   // Setup log config
   // oak::CreateDirectoryRecursively(process_config.log_dir.c_str());
 

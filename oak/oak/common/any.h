@@ -1,7 +1,9 @@
 // Copyright 2022 The Oak Authors.
 
 #ifndef OAK_COMMON_ANY_H_
+#define OAK_COMMON_ANY_H_
 
+#include <stdlib.h>
 #include <initializer_list>
 #include <typeinfo>
 #include <type_traits>
@@ -24,7 +26,11 @@ class bad_any_cast: public std::bad_cast {
 
 // Throw delegate
 OAK_ATTR_NORETURN inline void ThrowBadAnyCast() {
+#if defined(__cpp_exceptions) || defined(__EXCEPTIONS)
   throw bad_any_cast{};
+#else
+  abort();
+#endif
 }
 
 class Any;
@@ -229,7 +235,9 @@ class Any {
   template <typename Tp, typename Up, typename... Args,
             typename Up2 = typename std::decay<Tp>::type,
             OAK_ANY_REQ_CTOR2(Up2, std::initializer_list<Up>, Args...)>
-  explicit Any(in_place_type_t<Tp>, std::initializer_list<Up> il, Args&&... args)
+  explicit Any(in_place_type_t<Tp>,
+               std::initializer_list<Up> il,
+               Args&&... args)
       : operator_(any_internal::Operators<Up2>::Operator) {
     any_internal::Operators<Up2>::Construct(
         &storage_, il, std::forward<Args>(args)...);
@@ -253,9 +261,9 @@ class Any {
 
   ~Any() { reset(); }
 
-  // Copies content of other into a new instance, so that any content is equivalent
-  // in both type and value to those of other prior to the constructor call,
-  // or empty if other is empty.
+  // Copies content of other into a new instance, so that any content
+  // is equivalent in both type and value to those of other prior
+  // to the constructor call or empty if other is empty.
   Any(const Any& other) {
     if (other.has_value()) {
       any_internal::Args args;
@@ -267,9 +275,9 @@ class Any {
     }
   }
 
-  // Moves content of other into a new instance, so that any content is equivalent
-  // in both type and value to those of other prior to the constructor call,
-  // or empty if other is empty.
+  // Moves content of other into a new instance, so that any conten
+  // is equivalent in both type and value to those of other prior
+  // to the constructor call or empty if other is empty.
   Any(Any&& other) noexcept {
     if (other.has_value()) {
       any_internal::Args args;
@@ -382,8 +390,9 @@ class Any {
  private:
   template <typename>
   friend void* any_internal::AnyCastHelper(const Any*) noexcept;
-  using operator_fn =
-      void (*)(any_internal::Ops, const any_internal::Storage*, any_internal::Args*);
+  using operator_fn = void (*)(any_internal::Ops,
+                               const any_internal::Storage*,
+                               any_internal::Args*);
   operator_fn operator_;
   any_internal::Storage storage_;
 };

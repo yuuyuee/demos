@@ -9,7 +9,8 @@ master:
 
 worker:
 	g++ -std=c++11 -Wall -Wextra -g -O0 -rdynamic -I. -Ithird_party/jsoncpp-1.9.5 -o $@ \
-			oak/worker.cc oak/common/trivial.cc oak/common/fs.cc oak/logging/logging.cc oak/config.cc \
+			oak/worker.cc oak/common/trivial.cc oak/common/fs.cc oak/common/format.cc \
+			oak/common/throw_delegate.cc oak/logging/logging.cc oak/config.cc \
 			third_party/jsoncpp-1.9.5/jsoncpp.cpp
 
 stringpiece_test:

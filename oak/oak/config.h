@@ -49,6 +49,7 @@ struct ModuleConfig {
 // MasterConfig
 
 struct MasterConfig {
+  std::string comment;
   std::string log_method;
   std::vector<ModuleConfig> modules;
 };
@@ -59,28 +60,33 @@ void WriteMasterConfig(const MasterConfig& config, const std::string& fname);
 // WorkerConfig
 
 struct SourceConfig {
+  std::string comment;
   int num_threads{-1};
   std::vector<ModuleConfig> modules;
 };
 
 struct ParserConfig {
+  std::string comment;
   int num_threads{-1};
   std::vector<ModuleConfig> modules;
 };
 
 struct SinkConfig {
+  std::string comment;
   int num_threads{-1};
   std::vector<ModuleConfig> modules;
 };
 
 struct WorkerConfig {
-  std::string name;
-  std::string role;
+  std::string comment;
   std::string log_method;
   SourceConfig source;
   ParserConfig parser;
   SinkConfig sink;
 };
+
+void ReadWorkerConfig(WorkerConfig* config, const std::string& fname);
+void WriteWorkerConfig(const WorkerConfig& config, const std::string& fname);
 
 }  // namespace oak
 

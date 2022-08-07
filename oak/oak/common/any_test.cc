@@ -1,5 +1,6 @@
 // Copyright 2022 The Oak Authors.
 
+#include <vector>
 #include "oak/common/any.h"
 #include "gtest/gtest.h"
 
@@ -39,7 +40,8 @@ struct MoveOnlyWithListConstructor {
   explicit MoveOnlyWithListConstructor(std::initializer_list<int>, int value)
       : value(value) {}
   MoveOnlyWithListConstructor(MoveOnlyWithListConstructor&&) = default;
-  MoveOnlyWithListConstructor& operator=(MoveOnlyWithListConstructor&&) = default;
+  MoveOnlyWithListConstructor& operator=(
+      MoveOnlyWithListConstructor&&) = default;
 
   int value = 0;
 };
@@ -139,14 +141,16 @@ TEST(AnyTest, InPlaceConstructionVariableTemplate) {
 
 TEST(AnyTest, InPlaceConstructionWithCV) {
   const CopyOnly copy_only{};
-  Any o(in_place_type_t<const volatile IntMoveOnlyCopyOnly>(), 5, MoveOnly(), copy_only);
+  Any o(in_place_type_t<const volatile IntMoveOnlyCopyOnly>(),
+                        5, MoveOnly(), copy_only);
   IntMoveOnlyCopyOnly& v = any_cast<IntMoveOnlyCopyOnly&>(o);
   EXPECT_EQ(5, v.value);
 }
 
 TEST(AnyTest, InPlaceConstructionWithCVVariableTemplate) {
   const CopyOnly copy_only{};
-  Any o(in_place_type<const volatile IntMoveOnlyCopyOnly>, 5, MoveOnly(), copy_only);
+  Any o(in_place_type<const volatile IntMoveOnlyCopyOnly>,
+                      5, MoveOnly(), copy_only);
   auto& v = any_cast<IntMoveOnlyCopyOnly&>(o);
   EXPECT_EQ(5, v.value);
 }
@@ -179,7 +183,8 @@ TEST(AnyTest, InPlaceConstructionWithArrayVariableTemplate) {
 
 TEST(AnyTest, InPlaceConstructionIlist) {
   const CopyOnly copy_only{};
-  Any o(in_place_type_t<ListMoveOnlyCopyOnly>(), {1, 2, 3, 4}, MoveOnly(), copy_only);
+  Any o(in_place_type_t<ListMoveOnlyCopyOnly>(),
+                        {1, 2, 3, 4}, MoveOnly(), copy_only);
   ListMoveOnlyCopyOnly& v = any_cast<ListMoveOnlyCopyOnly&>(o);
   std::vector<int> expected_values = {1, 2, 3, 4};
   EXPECT_EQ(expected_values, v.values);
@@ -187,7 +192,8 @@ TEST(AnyTest, InPlaceConstructionIlist) {
 
 TEST(AnyTest, InPlaceConstructionIlistVariableTemplate) {
   const CopyOnly copy_only{};
-  Any o(in_place_type<ListMoveOnlyCopyOnly>, {1, 2, 3, 4}, MoveOnly(), copy_only);
+  Any o(in_place_type<ListMoveOnlyCopyOnly>,
+                      {1, 2, 3, 4}, MoveOnly(), copy_only);
   auto& v = any_cast<ListMoveOnlyCopyOnly&>(o);
   std::vector<int> expected_values = {1, 2, 3, 4};
   EXPECT_EQ(expected_values, v.values);
@@ -204,7 +210,8 @@ TEST(AnyTest, InPlaceConstructionIlistWithCV) {
 
 TEST(AnyTest, InPlaceConstructionIlistWithCVVariableTemplate) {
   const CopyOnly copy_only{};
-  Any o(in_place_type<const volatile ListMoveOnlyCopyOnly>, {1, 2, 3, 4}, MoveOnly(), copy_only);
+  Any o(in_place_type<const volatile ListMoveOnlyCopyOnly>,
+                      {1, 2, 3, 4}, MoveOnly(), copy_only);
   auto& v = any_cast<ListMoveOnlyCopyOnly&>(o);
   std::vector<int> expected_values = {1, 2, 3, 4};
   EXPECT_EQ(expected_values, v.values);
@@ -221,7 +228,9 @@ TEST(AnyTest, InPlaceNoArgsVariableTemplate) {
 }
 
 template <typename...>
-struct Void { using type = void; };
+struct Void {
+  using type = void;
+};
 
 template <typename... Args>
 using void_t = typename Void<Args...>::type;
@@ -258,8 +267,11 @@ TEST(AnyTest, Emplace) {
 TEST(AnyTest, EmplaceWithCV) {
   const CopyOnly copy_only{};
   Any o;
-  EXPECT_TRUE((std::is_same<decltype(o.emplace<const volatile IntMoveOnlyCopyOnly>(
-      5, MoveOnly(), copy_only)), IntMoveOnlyCopyOnly&>::value));
+  EXPECT_TRUE((
+      std::is_same<
+          decltype(
+              o.emplace<const volatile IntMoveOnlyCopyOnly>(
+                  5, MoveOnly(), copy_only)), IntMoveOnlyCopyOnly&>::value));
   IntMoveOnlyCopyOnly& emplace_result =
       o.emplace<const volatile IntMoveOnlyCopyOnly>(5, MoveOnly(), copy_only);
   EXPECT_EQ(5, emplace_result.value);
@@ -270,8 +282,9 @@ TEST(AnyTest, EmplaceWithCV) {
 
 TEST(AnyTest, EmplaceWithFunction) {
   Any o;
-  EXPECT_TRUE((std::is_same<decltype(o.emplace<FunctionType>(FunctionToEmplace)),
-      FunctionType*&>::value));
+  EXPECT_TRUE(
+      (std::is_same<decltype(o.emplace<FunctionType>(FunctionToEmplace)),
+          FunctionType*&>::value));
   FunctionType*& emplace_result = o.emplace<FunctionType>(FunctionToEmplace);
   EXPECT_EQ(&FunctionToEmplace, emplace_result);
 }
@@ -279,7 +292,9 @@ TEST(AnyTest, EmplaceWithFunction) {
 TEST(AnyTest, EmplaceWithArray) {
   Any o;
   ArrayType ar = {5, 42};
-  EXPECT_TRUE((std::is_same<decltype(o.emplace<ArrayType>(ar)), DecayedArray&>::value));
+  EXPECT_TRUE(
+      (std::is_same<decltype(o.emplace<ArrayType>(ar)),
+                             DecayedArray&>::value));
   DecayedArray& emplace_result = o.emplace<ArrayType>(ar);
   EXPECT_EQ(&ar[0], emplace_result);
 }
@@ -304,10 +319,13 @@ TEST(AnyTest, EmplaceIlist) {
 TEST(AnyTest, EmplaceIlistWithCV) {
   const CopyOnly copy_only{};
   Any o;
-  EXPECT_TRUE((std::is_same<decltype(o.emplace<const volatile ListMoveOnlyCopyOnly>(
-      {1, 2, 3, 4}, MoveOnly(), copy_only)), ListMoveOnlyCopyOnly&>::value));
+  EXPECT_TRUE((
+      std::is_same<decltype(o.emplace<const volatile ListMoveOnlyCopyOnly>(
+          {1, 2, 3, 4}, MoveOnly(), copy_only))
+          , ListMoveOnlyCopyOnly&>::value));
   ListMoveOnlyCopyOnly& emplace_result =
-      o.emplace<const volatile ListMoveOnlyCopyOnly>({1, 2, 3, 4}, MoveOnly(), copy_only);
+      o.emplace<const volatile ListMoveOnlyCopyOnly>(
+          {1, 2, 3, 4}, MoveOnly(), copy_only);
   ListMoveOnlyCopyOnly& v = any_cast<ListMoveOnlyCopyOnly&>(o);
   EXPECT_EQ(&v, &emplace_result);
   std::vector<int> expected_values = {1, 2, 3, 4};
@@ -422,7 +440,8 @@ TEST(AnyTest, AnyCastValue) {
     o.emplace<int>(5);
     EXPECT_EQ(5, any_cast<const int>(o));
     EXPECT_EQ(5, any_cast<const int>(AsConst(o)));
-    static_assert(std::is_same<decltype(any_cast<const Value>(o)), const Value>::value,  "");
+    static_assert(std::is_same<decltype(any_cast<const Value>(o)),
+                  const Value>::value,  "");
   }
 }
 
@@ -432,7 +451,8 @@ TEST(AnyTest, AnyCastReference) {
     o.emplace<int>(5);
     EXPECT_EQ(5, any_cast<int&>(o));
     EXPECT_EQ(5, any_cast<const int&>(AsConst(o)));
-    static_assert(std::is_same<decltype(any_cast<Value&>(o)), Value&>::value, "");
+    static_assert(std::is_same<decltype(any_cast<Value&>(o)),
+                  Value&>::value, "");
   }
 
   {
@@ -440,21 +460,24 @@ TEST(AnyTest, AnyCastReference) {
     o.emplace<int>(5);
     EXPECT_EQ(5, any_cast<const int>(o));
     EXPECT_EQ(5, any_cast<const int>(AsConst(o)));
-    static_assert(std::is_same<decltype(any_cast<const Value&>(o)), const Value&>::value, "");
+    static_assert(std::is_same<decltype(any_cast<const Value&>(o)),
+                  const Value&>::value, "");
   }
 
   {
     Any o;
     o.emplace<int>(5);
     EXPECT_EQ(5, any_cast<int&&>(std::move(o)));
-    static_assert(std::is_same<decltype(any_cast<Value&&>(std::move(o))), Value&&>::value, "");
+    static_assert(std::is_same<decltype(any_cast<Value&&>(std::move(o))),
+                  Value&&>::value, "");
   }
 
   {
     Any o;
     o.emplace<int>(5);
     EXPECT_EQ(5, any_cast<const int>(std::move(o)));
-    static_assert(std::is_same<decltype(any_cast<const Value&&>(std::move(o))), const Value&&>::value, "");
+    static_assert(std::is_same<decltype(any_cast<const Value&&>(std::move(o))),
+                  const Value&&>::value, "");
   }
 }
 
@@ -466,7 +489,8 @@ TEST(AnyTest, AnyCastPointer) {
     EXPECT_EQ(nullptr, any_cast<char>(&o));
     o.emplace<char>('a');
     EXPECT_EQ('a', *any_cast<char>(&o));
-    static_assert(std::is_same<decltype(any_cast<Value>(&o)), Value*>::value, "");
+    static_assert(std::is_same<decltype(any_cast<Value>(&o)),
+                  Value*>::value, "");
   }
 
   {
@@ -476,7 +500,8 @@ TEST(AnyTest, AnyCastPointer) {
     EXPECT_EQ(nullptr, any_cast<const char>(&o));
     o.emplace<char>('a');
     EXPECT_EQ('a', *any_cast<const char>(&o));
-    static_assert(std::is_same<decltype(any_cast<const Value>(&o)), const Value*>::value, "");
+    static_assert(std::is_same<decltype(any_cast<const Value>(&o)),
+                  const Value*>::value, "");
   }
 }
 
@@ -493,7 +518,7 @@ TEST(AnyTest, MakeAnyIList) {
       oak::make_any<ListMoveOnlyCopyOnly>({1, 2, 3}, MoveOnly(), copy_only);
   static_assert(std::is_same<decltype(o), Any>::value, "");
   ListMoveOnlyCopyOnly& v = any_cast<ListMoveOnlyCopyOnly&>(o);
-  std::vector<int> expected_values = {1, 2, 3};
+  std::vector<int> expected_values{1, 2, 3};
   EXPECT_EQ(expected_values, v.values);
 }
 
@@ -554,10 +579,12 @@ TEST(AnyTest, Reset) {
 }
 
 // If using the `Any` implementation, we can rely on a specific message.
-#define OAK_ANY_TEST_EXPECT_BAD_ANY_CAST(expr) do {             \
-  bool flags = false;                                           \
-  try { expr; } catch (oak::bad_any_cast& e) { flags = true; }  \
-  EXPECT_TRUE(flags);                                           \
+#define OAK_ANY_TEST_EXPECT_BAD_ANY_CAST(expr) do {   \
+  bool flags = false;                                 \
+  try { expr; } catch (oak::bad_any_cast& e) {        \
+    flags = true;                                     \
+  }                                                   \
+  EXPECT_TRUE(flags);                                 \
 } while (0)
 
 TEST(AnyTest, ThrowBadAlloc) {

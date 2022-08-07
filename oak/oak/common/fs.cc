@@ -75,9 +75,11 @@ void CreateDirectoryRecursively(const std::string& directory) {
       CreateDirectoryRecursively(path);
       ret = mkdir(directory.c_str(), mode);
       if (ret < 0)
-        THROW_SYSTEM_ERROR("CreateDirectoryRecursively(%s) failed", directory.c_str());
+        THROW_SYSTEM_ERROR("CreateDirectoryRecursively(%s) failed",
+                           directory.c_str());
     } else {
-      THROW_SYSTEM_ERROR("CreateDirectoryRecursively(%s) failed", directory.c_str());
+      THROW_SYSTEM_ERROR("CreateDirectoryRecursively(%s) failed",
+                         directory.c_str());
     }
   }
 }
@@ -105,8 +107,8 @@ File File::MakeAppendableFile(const char* name) {
 }
 
 File::File(int fd, bool owner) noexcept : fd_(fd), owner_(owner) {
-  if (fd_ < -1) ThrowStdLogicError("fd must be -1 or non-negative value");
-  if (fd_ == -1 && owner) ThrowStdLogicError("can not owned -1");
+  if (fd_ < -1) assert("fd must be -1 or non-negative value");
+  if (fd_ == -1 && owner) assert("can not owned -1");
 }
 
 File::File(const char* name, int flags, int mode)
@@ -145,7 +147,7 @@ void File::Close() {
   Release();
 }
 
-size_t File::Read(char* buffer, size_t size) {
+size_t File::Read(void* buffer, size_t size) {
   assert(size > 0 && "Invalid size");
   ssize_t ret = 0;
   do {
@@ -156,7 +158,7 @@ size_t File::Read(char* buffer, size_t size) {
   return ret;
 }
 
-size_t File::Write(const char* buffer, size_t size) {
+size_t File::Write(const void* buffer, size_t size) {
   assert(size > 0 && "Invalid size");
   ssize_t ret = 0;
   do {

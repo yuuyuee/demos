@@ -8,7 +8,6 @@
 namespace oak {
 
 // Return directory name of the path.
-// Note: require the @path named file does exist.
 std::string DirectoryName(const std::string& path);
 
 // Return current working directory.
@@ -66,10 +65,10 @@ class File {
 
   // Read up to @size bytes to @buffer from file object, the number of the
   // bytes read is returned, zero bytes indicates end of file.
-  size_t Read(char* buffer, size_t size);
+  size_t Read(void* buffer, size_t size);
 
   // Writes up to @size bytes to file object from @buffer.
-  size_t Write(const char* buffer, size_t size);
+  size_t Write(const void* buffer, size_t size);
   size_t Write(const std::string& buffer) {
     return Write(buffer.c_str(), buffer.size());
   }

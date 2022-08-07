@@ -6,7 +6,8 @@
 #include <fstream>
 
 #include "json/json.h"
-#include "oak/logging/logging.h"
+#include "oak/common/format.h"
+#include "oak/common/throw_delegate.h"
 #include "oak/common/fs.h"
 
 namespace oak {
@@ -102,16 +103,26 @@ void WriteModuleConfig(const std::vector<ModuleConfig>& modules,
 // MasterConfig
 
 void ReadMasterConfig(MasterConfig* config, const std::string& fname) {
-  std::ifstream in(fname);
+  File file = File::MakeReadOnlyFile(fname);
+  std::string buffer;
+  char tmp[1024];
+  size_t n;
+  while ((n = file.Read(tmp, 1024)) > 0)
+    buffer.append(tmp, n);
+
   auto features = Json2::Features::strictMode();
   Json2::Reader reader(features);
   Json2::Value node;
 
-  if (!reader.parse(in, node, false)) {
-    OAK_FATAL("Parse json file \'%s\' failed: %s\n",
-              fname.c_str(),
-              reader.getFormattedErrorMessages().c_str());
+  if (!reader.parse(buffer, node, false)) {
+    ThrowStdInvalidArgument(
+        Format("Parse json \'%s\' failed: %s\n",
+               fname.c_str(),
+               reader.getFormattedErrorMessages().c_str()));
   }
+
+  if (node.isMember("comment"))
+    config->comment = node["comment"].asString();
 
   if (node.isMember("log_method"))
     config->log_method = node["log_method"].asString();
@@ -132,53 +143,106 @@ void WriteMasterConfig(const MasterConfig& config, const std::string& fname) {
   File::MakeWritableFile(fname).Write(buffer);
 }
 
-// bool InitWorkerConfig(WorkerConfig* config, const Json2::Value& node) {
-//   config->name = OAK_WORKER_NAME;
-//   config->role = OAK_WORKER_ROLE;
+void ReadWorkerConfig(WorkerConfig* config, const std::string& fname) {
+  File file = File::MakeReadOnlyFile(fname);
+  std::string buffer;
+  char tmp[1024];
+  size_t n;
+  while ((n = file.Read(tmp, 1024)) > 0)
+    buffer.append(tmp, n);
 
-//   if (node.isMember("log_method"))
-//     config->log_method = node["log_method"].asString();
+  auto features = Json2::Features::strictMode();
+  Json2::Reader reader(features);
+  Json2::Value node;
 
-//   if (!node.isMember("source")) {
-//     const auto& source = node["source"];
+  if (!reader.parse(buffer, node, false)) {
+    ThrowStdInvalidArgument(
+        Format("Parse json \'%s\' failed: %s\n",
+               fname.c_str(),
+               reader.getFormattedErrorMessages().c_str()));
+  }
 
-//     if (source.isMember("num_threads"))
-//       config->source.num_threads = source["num_threads"].asUInt();
+  if (node.isMember("comment"))
+    config->comment = node["comment"].asString();
 
-//     if (source.isMember("modules")) {
-//       LoadModuleConfig(config->role + ".source",
-//                        source["modules"],
-//                        &config->source.modules);
-//     }
-//   }
+  if (node.isMember("log_method"))
+    config->log_method = node["log_method"].asString();
 
-//   if (node.isMember("parser")) {
-//     const auto& parser = node["parser"];
+  // Read source configuration
+  if (node.isMember("source")) {
+    const auto& source = node["source"];
 
-//     if (parser.isMember("num_threads"))
-//       config->parser.num_threads = parser["num_threads"].asUInt();
+    if (source.isMember("comment"))
+      config->source.comment = source["comment"].asString();
 
-//     if (parser.isMember("modules")) {
-//       LoadModuleConfig(config->role + ".parser",
-//                        parser["modules"],
-//                        &config->parser.modules);
-//     }
-//   }
+    if (source.isMember("num_threads"))
+      config->source.num_threads = source["num_threads"].asUInt();
 
-//   if (node.isMember("sink")) {
-//     const auto& sink = node["sink"];
+    if (source.isMember("modules")) {
+      ReadModuleConfig(&config->source.modules, source["modules"]);
+    }
+  }
 
-//     if (sink.isMember("num_threads"))
-//       config->sink.num_threads = sink["num_threads"].asUInt();
+  // Read parser configuration
+  if (node.isMember("parser")) {
+    const auto& parser = node["parser"];
 
-//     if (sink.isMember("modules")) {
-//       LoadModuleConfig(config->role + ".sink",
-//                        sink["modules"],
-//                        &config->sink.modules);
-//     }
-//   }
+    if (parser.isMember("parser"))
+      config->parser.comment = parser["comment"].asString();
 
-//   return true;
-// }
+    if (parser.isMember("num_threads"))
+      config->parser.num_threads = parser["num_threads"].asUInt();
+
+    if (parser.isMember("modules")) {
+      ReadModuleConfig(&config->parser.modules, parser["modules"]);
+    }
+  }
+
+  // Read sink configuration
+  if (node.isMember("sink")) {
+    const auto& sink = node["sink"];
+
+    if (sink.isMember("comment"))
+      config->sink.comment = sink["comment"].asString();
+
+    if (sink.isMember("num_threads"))
+      config->sink.num_threads = sink["num_threads"].asUInt();
+
+    if (sink.isMember("modules")) {
+      ReadModuleConfig(&config->sink.modules, sink["modules"]);
+    }
+  }
+}
+
+void WriteWorkerConfig(const WorkerConfig& config, const std::string& fname) {
+  Json2::Value node(Json2::objectValue);
+  node["comment"] = config.comment;
+  node["log_method"] = config.log_method;
+
+  // write source configuration
+  node["source"] = Json2::Value(Json2::objectValue);
+  auto& source = node["source"];
+  source["comment"] = config.source.comment;
+  source["num_threads"] = config.source.num_threads;
+  WriteModuleConfig(config.source.modules, &(source["modules"]));
+
+  // write parser configuration
+  node["parser"] = Json2::Value(Json2::objectValue);
+  auto& parser = node["parser"];
+  parser["comment"] = config.parser.comment;
+  parser["num_threads"] = config.parser.num_threads;
+  WriteModuleConfig(config.parser.modules, &(parser["modules"]));
+
+  // write sink configuration
+  node["sink"] = Json2::Value(Json2::objectValue);
+  auto& sink = node["sink"];
+  sink["comment"] = config.sink.comment;
+  sink["num_threads"] = config.sink.num_threads;
+  WriteModuleConfig(config.sink.modules, &(sink["modules"]));
+
+  Json2::StyledWriter writer;
+  std::string buffer = writer.write(node);
+  File::MakeWritableFile(fname).Write(buffer);
+}
 
 }  // namespace oak

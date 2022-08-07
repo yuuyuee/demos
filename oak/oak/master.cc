@@ -1,6 +1,7 @@
 // Copyright 2022 The Oak Authors.
 
 #include <unistd.h>
+#include <assert.h>
 
 #include "oak/addons/public/compiler.h"
 #include "oak/addons/public/platform.h"
@@ -12,15 +13,17 @@
 int main(int argc, char* argv[]) {
   IGNORE_UNUESD(argc);
 
-  // Changes workding directory.
+  // Changes working directory.
   std::string path = oak::DirectoryName(argv[0]);
   oak::ChangeWorkDirectory(path);
 
   // Initialize process configuration.
   const oak::ProcessConfig& proc_config = oak::GetMasterProcessConfig();
+
   OAK_INFO("%s: Change working directory to %s\n",
            proc_config.proc_name.c_str(),
-           proc_config.bin_dir.c_str());
+           oak::GetCurrentDirectory().c_str());
+  assert(proc_config.bin_dir == oak::GetCurrentDirectory());
 
   // Locks pid file to checking whther process is running.
   oak::CreateDirectory(oak::DirectoryName(proc_config.pid_file));
@@ -42,7 +45,7 @@ int main(int argc, char* argv[]) {
 
   // Startup worker process.
 
-  // Waitting for response of the worker process.
+  // Waiting for response of the worker process.
 
   // Initialize event receiver and waiting for task event of the outside.
 
