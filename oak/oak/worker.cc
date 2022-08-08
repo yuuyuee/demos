@@ -8,6 +8,7 @@
 #include "oak/addons/public/platform.h"
 #include "oak/common/fs.h"
 #include "oak/common/format.h"
+#include "oak/common/debug.h"
 #include "oak/logging/logging.h"
 #include "oak/config.h"
 
@@ -59,6 +60,8 @@ int main(int argc, char* argv[]) {
   oak::CreateDirectoryRecursively(proc_config.log_dir);
 
   // Initialize runtime environment, e.g. channel, exception handler.
+  oak::SetupSignalAltStack();
+  oak::RegisterFailureSignalHandler();
 
   // Startup an channel to communicate with master process
 

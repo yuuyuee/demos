@@ -7,6 +7,7 @@
 #include "oak/addons/public/platform.h"
 #include "oak/common/format.h"
 #include "oak/common/fs.h"
+#include "oak/common/debug.h"
 #include "oak/logging/logging.h"
 #include "oak/config.h"
 
@@ -56,8 +57,11 @@ int main(int argc, char* argv[]) {
 
   // Setup log config.
   oak::CreateDirectory(proc_config.log_dir);
+  // TODO(YUYUE): setup logger
 
   // Initialize runtime environment, e.g. CPU, channel, exception handler.
+  oak::SetupSignalAltStack();
+  oak::RegisterFailureSignalHandler();
 
   // Startup worker process.
 

@@ -11,7 +11,7 @@
 #include "oak/common/fs.h"
 
 namespace oak {
-// ProcessConfig
+// GetMasterProcessConfig(), GetWorkerProcessConfig()
 
 #define OAK_ETC_DIR           "etc"
 #define OAK_LOG_DIR           "log"
@@ -67,6 +67,8 @@ const ProcessConfig& GetWorkerProcessConfig() {
 
 namespace {
 
+// ReadModuleConfig(), WriteModuleConfig
+
 void ReadModuleConfig(std::vector<ModuleConfig>* modules,
                       const Json2::Value& node) {
   for (const auto& name : node.getMemberNames()) {
@@ -99,7 +101,7 @@ void WriteModuleConfig(const std::vector<ModuleConfig>& modules,
 
 }  // anonymous namespace
 
-// MasterConfig
+// ReadMasterConfig(), WriteMasterConfig()
 
 void ReadMasterConfig(MasterConfig* config, const std::string& fname) {
   File file = File::MakeReadOnlyFile(fname);
@@ -142,6 +144,63 @@ void WriteMasterConfig(const MasterConfig& config, const std::string& fname) {
   File::MakeWritableFile(fname).Write(buffer);
 }
 
+// ReadWorkerConfig(), WriteWorkerConfig
+
+namespace {
+
+void ReadSourceConfig(SourceConfig* config, const Json2::Value& node) {
+  if (node.isMember("comment"))
+    config->comment = node["comment"].asString();
+
+  if (node.isMember("num_threads"))
+    config->num_threads = node["num_threads"].asUInt();
+
+  if (node.isMember("modules"))
+    ReadModuleConfig(&config->modules, node["modules"]);
+}
+
+void WriteSourceConfig(const SourceConfig& config, Json2::Value* node) {
+  (*node)["comment"] = config.comment;
+  (*node)["num_threads"] = config.num_threads;
+  WriteModuleConfig(config.modules, &((*node)["modules"]));
+}
+
+void ReadParserConfig(ParserConfig* config, const Json2::Value& node) {
+  if (node.isMember("comment"))
+    config->comment = node["comment"].asString();
+
+  if (node.isMember("num_threads"))
+    config->num_threads = node["num_threads"].asUInt();
+
+  if (node.isMember("modules"))
+    ReadModuleConfig(&config->modules, node["modules"]);
+}
+
+void WriteParserConfig(const ParserConfig& config, Json2::Value* node) {
+  (*node)["comment"] = config.comment;
+  (*node)["num_threads"] = config.num_threads;
+  WriteModuleConfig(config.modules, &((*node)["modules"]));
+}
+
+void ReadSinkConfig(SinkConfig* config, const Json2::Value& node) {
+  if (node.isMember("comment"))
+    config->comment = node["comment"].asString();
+
+  if (node.isMember("num_threads"))
+    config->num_threads = node["num_threads"].asUInt();
+
+  if (node.isMember("modules"))
+    ReadModuleConfig(&config->modules, node["modules"]);
+}
+
+void WriteSinkConfig(const SinkConfig& config, Json2::Value* node) {
+  (*node)["comment"] = config.comment;
+  (*node)["num_threads"] = config.num_threads;
+  WriteModuleConfig(config.modules, &((*node)["modules"]));
+}
+
+}  // anonymous namespace
+
 void ReadWorkerConfig(WorkerConfig* config, const std::string& fname) {
   File file = File::MakeReadOnlyFile(fname);
   std::string buffer;
@@ -168,49 +227,16 @@ void ReadWorkerConfig(WorkerConfig* config, const std::string& fname) {
     config->log_method = node["log_method"].asString();
 
   // Read source configuration
-  if (node.isMember("source")) {
-    const auto& source = node["source"];
-
-    if (source.isMember("comment"))
-      config->source.comment = source["comment"].asString();
-
-    if (source.isMember("num_threads"))
-      config->source.num_threads = source["num_threads"].asUInt();
-
-    if (source.isMember("modules")) {
-      ReadModuleConfig(&config->source.modules, source["modules"]);
-    }
-  }
+  if (node.isMember("source"))
+    ReadSourceConfig(&config->source, node["source"]);
 
   // Read parser configuration
-  if (node.isMember("parser")) {
-    const auto& parser = node["parser"];
-
-    if (parser.isMember("parser"))
-      config->parser.comment = parser["comment"].asString();
-
-    if (parser.isMember("num_threads"))
-      config->parser.num_threads = parser["num_threads"].asUInt();
-
-    if (parser.isMember("modules")) {
-      ReadModuleConfig(&config->parser.modules, parser["modules"]);
-    }
-  }
+  if (node.isMember("parser"))
+    ReadParserConfig(&config->parser, node["parser"]);
 
   // Read sink configuration
-  if (node.isMember("sink")) {
-    const auto& sink = node["sink"];
-
-    if (sink.isMember("comment"))
-      config->sink.comment = sink["comment"].asString();
-
-    if (sink.isMember("num_threads"))
-      config->sink.num_threads = sink["num_threads"].asUInt();
-
-    if (sink.isMember("modules")) {
-      ReadModuleConfig(&config->sink.modules, sink["modules"]);
-    }
-  }
+  if (node.isMember("sink"))
+    ReadSinkConfig(&config->sink, node["sink"]);
 }
 
 void WriteWorkerConfig(const WorkerConfig& config, const std::string& fname) {
@@ -218,27 +244,19 @@ void WriteWorkerConfig(const WorkerConfig& config, const std::string& fname) {
   node["comment"] = config.comment;
   node["log_method"] = config.log_method;
 
-  // write source configuration
+  // Write source configuration
   node["source"] = Json2::Value(Json2::objectValue);
-  auto& source = node["source"];
-  source["comment"] = config.source.comment;
-  source["num_threads"] = config.source.num_threads;
-  WriteModuleConfig(config.source.modules, &(source["modules"]));
+  WriteSourceConfig(config.source, &(node["source"]));
 
-  // write parser configuration
+  // Write parser configuration
   node["parser"] = Json2::Value(Json2::objectValue);
-  auto& parser = node["parser"];
-  parser["comment"] = config.parser.comment;
-  parser["num_threads"] = config.parser.num_threads;
-  WriteModuleConfig(config.parser.modules, &(parser["modules"]));
+  WriteParserConfig(config.parser, &(node["parser"]));
 
-  // write sink configuration
+  // Write sink configuration
   node["sink"] = Json2::Value(Json2::objectValue);
-  auto& sink = node["sink"];
-  sink["comment"] = config.sink.comment;
-  sink["num_threads"] = config.sink.num_threads;
-  WriteModuleConfig(config.sink.modules, &(sink["modules"]));
+  WriteSinkConfig(config.sink, &(node["sink"]));
 
+  // Write back to file object
   Json2::StyledWriter writer;
   std::string buffer = writer.write(node);
   File::MakeWritableFile(fname).Write(buffer);

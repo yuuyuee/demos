@@ -115,15 +115,6 @@ class File {
   bool owner_;
 };
 
-// Read the documents from a file.
-void ReadFile(const std::string& path, std::string* buffer);
-
-// Write the documents to a file.
-void WriteFile(const std::string& path, const std::string& buffer);
-
-// Append the documents to a file.
-void AppendFile(const std::string& path, const std::string& buffer);
-
 }  // namespace oak
 
 #endif  // OAK_COMMON_FS_H_

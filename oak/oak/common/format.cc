@@ -6,7 +6,7 @@
 namespace oak {
 
 // This is an simple wrapper for snprintf and vsnprintf.
-int format(char* buffer, size_t size, const char* fmt, ...) {
+size_t format(char* buffer, size_t size, const char* fmt, ...) {
   va_list ap;
   va_start(ap, fmt);
   int ret = format(buffer, size, fmt, ap);
@@ -18,7 +18,7 @@ int format(char* buffer, size_t size, const char* fmt, ...) {
   return ret;
 }
 
-int format(char* buffer, size_t size, const char* fmt, va_list ap) {
+size_t format(char* buffer, size_t size, const char* fmt, va_list ap) {
   return vsnprintf(buffer, size, fmt, ap);
 }
 

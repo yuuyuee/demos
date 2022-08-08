@@ -10,9 +10,9 @@
 namespace oak {
 
 // This is an simple wrapper for snprintf and vsnprintf.
-int format(char* buffer, size_t size, const char* fmt, ...)
+size_t format(char* buffer, size_t size, const char* fmt, ...)
     OAK_ATTR_PRINTF(3, 4);
-int format(char* buffer, size_t size, const char* fmt, va_list ap);
+size_t format(char* buffer, size_t size, const char* fmt, va_list ap);
 
 // Formatted output to string.
 std::string Format(const char* fmt, ...) OAK_ATTR_PRINTF(1, 2);
