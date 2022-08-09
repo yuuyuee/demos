@@ -25,6 +25,9 @@ struct System {
 
   // Yield the calling thread to relinquish the CPU.
   static void ThreadYield();
+
+  // Setup the parent process death signal of the calling process.
+  static void SetupParentDeathSignal(int signo);
 };
 
 }  // namespace oak

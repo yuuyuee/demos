@@ -136,6 +136,7 @@ File::File(File&& other) noexcept
 
 File& File::operator=(File&& other) {
   if (this != &other) {
+    this->Close();
     fd_ = other.fd_;
     owner_ = other.owner_;
     other.Release();

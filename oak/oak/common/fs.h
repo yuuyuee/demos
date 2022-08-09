@@ -62,6 +62,10 @@ class File {
   // of the file descriptor if @owner is true.
   explicit File(int fd, bool owner = false) noexcept;
 
+  // Create a file object by opening an file name.
+  explicit File(const char* name, int flags, int mode = kMode);
+  explicit File(const std::string& name, int flags, int mode = kMode);
+
   ~File();
 
   File(File&& other) noexcept;
@@ -104,10 +108,6 @@ class File {
   int fd() const { return fd_; }
 
  private:
-  // Create a file object by opening an file name.
-  explicit File(const char* name, int flags, int mode = kMode);
-  explicit File(const std::string& name, int flags, int mode = kMode);
-
   File(File&) = delete;
   File& operator=(File const&) = delete;
 

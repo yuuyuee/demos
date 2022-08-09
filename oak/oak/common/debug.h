@@ -3,7 +3,7 @@
 #ifndef OAK_COMMON_DEBUG_H_
 #define OAK_COMMON_DEBUG_H_
 
-#include <stddef.h>
+#include <string>
 
 namespace oak {
 // Signale alternate stack.
@@ -14,27 +14,16 @@ bool SignalAltStackEnabled();
 // Setup signal alternate stack, there is safety for multiple calls.
 bool SetupSignalAltStack();
 
-// FailureSignalLogger
+// Register failure message handler.
+void RegisterFailureMessageHandler(int fd);
+void RegisterFailureMessageHandler(const char* fname);
+void RegisterFailureMessageHandler(const std::string& fname);
 
-// This class will be called upon failure with a string argument
-// containing failure message and the number of bytes. This class
-// may used write failure message to a secondary location, such as
-// log file. The FailureSignalLogger.Log function runs within signal
-// handler, it should be async signal safety.
-class FailureMessageWriter {
- public:
-  FailureMessageWriter();
-  virtual ~FailureMessageWriter();
-
-  virtual void Write(const char* msg, size_t size) = 0;
-};
-
-void RegisterFailureMessageWriter(FailureMessageWriter* writer);
-
-// Register a failure signal message logger for common failure signal
-// SIGSEGV, SIGILL, SIGFPE, SIGBUS, SIGABRT. The failure signal writes
-// process failure message useful for debugging, if unspecified writer,
-// the failure message will be emitted to the STDERR.
+// Register a failure signal message writer for common failure signal
+// such as below:
+//    SIGSEGV, SIGILL, SIGFPE, SIGBUS, SIGABRT
+// Wites failure message useful for debugging, if unspecified writer,
+// the failure message will be emitted to the standard error output.
 void RegisterFailureSignalHandler();
 }  // namespace oak
 

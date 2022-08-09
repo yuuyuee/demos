@@ -2,9 +2,15 @@
 
 #include "oak/common/trivial.h"
 
-#include <sys/syscall.h>
 #include <sched.h>
+#include <sys/syscall.h>
+#include <sys/prctl.h>
+#include <string.h>
+#include <signal.h>
+#include <errno.h>
 #include <atomic>
+#include "oak/common/format.h"
+#include "oak/common/throw_delegate.h"
 
 namespace oak {
 
@@ -35,12 +41,21 @@ pid_t System::GetLogicThreadId() {
   return thread_id;
 }
 
-int GeCurrenttCpu() {
+int System::GeCurrenttCpu() {
   return sched_getcpu();
 }
 
-void ThreadYield() {
+void System::ThreadYield() {
   sched_yield();
+}
+
+void System::SetupParentDeathSignal(int signo) {
+  int ret = prctl(PR_SET_PDEATHSIG, signo);
+  if (ret < 0) {
+    ThrowStdSystemError(
+        Format("prctl(PR_SET_PDEATHSIG, %d) failed: signo, %s",
+               signo, strerror(errno)));
+  }
 }
 
 }  // namespace oak

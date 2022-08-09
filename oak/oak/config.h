@@ -29,6 +29,7 @@ struct ProcessConfig {
   std::string guard_file;     ///< absolute path of the process pid file
   std::string log_file;       ///< absolute path of the process log file
   std::string conf_file;      ///< absolute path of the process config file
+  std::string crash_file;     ///< absolute path of the both process crash file
 };
 
 // Built-in master process configuration.

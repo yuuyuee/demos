@@ -7,46 +7,25 @@
 #include <signal.h>
 #include <errno.h>
 #include <time.h>
+#include <execinfo.h>
+#include <fcntl.h>
 #include <sys/mman.h>
 #include <atomic>
+#include <memory>
 
 #include "oak/common/trivial.h"
 #include "oak/common/format.h"
+#include "oak/common/fs.h"
 #include "oak/common/throw_delegate.h"
 
 namespace oak {
-FailureMessageWriter::FailureMessageWriter() {}
-FailureMessageWriter::~FailureMessageWriter() {}
-
 namespace {
-// Default failure message writer
-class AsyncSignalSafeWriter: public FailureMessageWriter {
- public:
-  AsyncSignalSafeWriter(): FailureMessageWriter() {}
-  virtual ~AsyncSignalSafeWriter() {}
-
-  virtual void Write(const char* msg, size_t size);
-};
-
-void AsyncSignalSafeWriter::Write(const char* msg, size_t size) {
-  if (msg && size > 0)
-    write(STDERR_FILENO, msg, size);
-}
-
-AsyncSignalSafeWriter default_writer;
-std::atomic<FailureMessageWriter*> failed_msg_writer(&default_writer);
 
 bool SetupSignalAltStackImpl() {
   stack_t ss;
-  memset(&ss, 0, sizeof(ss));
-  ss.ss_size = SIGSTKSZ;
-
-// sanitizer instrumention require additional stack space.
-#if defined(__SANITIZE_ADDRESS__) || \
-    defined(__SANITIZE_THREAD__)  || \
-    defined(__SANITIZE_MEMORY__)
-  ss.ss_size *= 5;
-#endif
+  ss.ss_flags = 0;
+  // There additional stack space has required.
+  ss.ss_size = 8 * SIGSTKSZ;
   ss.ss_sp = mmap(nullptr, ss.ss_size,
                   PROT_READ | PROT_WRITE,
                   MAP_PRIVATE | MAP_ANONYMOUS | MAP_STACK,
@@ -76,21 +55,15 @@ const char* StrSignal(int signo) {
        : "UNKNOWN";
 }
 
-class PipeToBuffer {
- public:
-  PipeToBuffer(char* buffer, size_t size);
-
- private:
-  int fd[2];
-  char* buffer_;
-  size_t size_;
-};
+// Failure message writer.
+std::unique_ptr<File> writer;
 
 void ResetSignalHandlerAndRaise(int signo) {
   signal(signo, SIG_DFL);
   raise(signo);
 }
 
+// Current thread ID.
 std::atomic<pid_t> failed_tid(0);
 
 void FailureSignalHandler(int signo, siginfo_t* info, void*) {
@@ -103,15 +76,30 @@ void FailureSignalHandler(int signo, siginfo_t* info, void*) {
       return;
   }
 
-  char msg[128];
-  size_t len = format(msg, sizeof(msg),
+  if (!writer) {
+    ResetSignalHandlerAndRaise(signo);
+    return;
+  }
+
+  // Write title
+  char title[128];
+  size_t len = format(title, sizeof(title),
                       "*** %s received at %ld, pid = %d, uid = %d ***\n",
                       StrSignal(signo),
                       static_cast<long int>(time(0)),  // NOLINT
                       info->si_pid, info->si_uid);
-  FailureMessageWriter* writer =
-      failed_msg_writer.load(std::memory_order_acquire);
-  writer->Write(msg, len);
+  writer->Write(title, len);
+
+  // Write stack frames
+  void* frame[32];
+  int num_frame = backtrace(frame, 32);
+  // TODO(YUYUE): demangling for symbols
+  backtrace_symbols_fd(frame, num_frame, writer->fd());
+
+  // Write ends
+  static const char ends[] = "*** ends ***\n";
+  writer->Write(ends, sizeof(ends) - 1);
+
   ResetSignalHandlerAndRaise(signo);
 }
 
@@ -143,9 +131,16 @@ bool SetupSignalAltStack() {
   return enable;
 }
 
-void RegisterFailureMessageWriter(FailureMessageWriter* writer) {
-  if (writer)
-    failed_msg_writer.store(writer, std::memory_order_release);
+void RegisterFailureMessageHandler(int fd) {
+  writer.reset(new File(fd));
+}
+
+void RegisterFailureMessageHandler(const char* fname) {
+  writer.reset(new File(fname, O_WRONLY | O_APPEND | O_CREAT | O_CLOEXEC));
+}
+
+void RegisterFailureMessageHandler(const std::string& fname) {
+  RegisterFailureMessageHandler(fname.c_str());
 }
 
 void RegisterFailureSignalHandler() {

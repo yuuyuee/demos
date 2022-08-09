@@ -32,6 +32,11 @@ bool CreateGuardFile(const std::string& guard_file) {
 int main(int argc, char* argv[]) {
   IGNORE_UNUESD(argc);
 
+  // Setup exception handler.
+  oak::SetupSignalAltStack();
+  oak::RegisterFailureSignalHandler();
+  oak::RegisterFailureMessageHandler(STDERR_FILENO);
+
   // Changes working directory.
   std::string path = oak::DirectoryName(argv[0]);
   oak::ChangeWorkDirectory(path);
@@ -39,11 +44,16 @@ int main(int argc, char* argv[]) {
   // Initialize process configuration.
   const oak::ProcessConfig& proc_config = oak::GetMasterProcessConfig();
 
+  // Setup crash handler.
+  oak::CreateDirectory(proc_config.log_dir);
+  oak::RegisterFailureMessageHandler(proc_config.crash_file);
+
   // Locks pid file to checking whther process is running.
   oak::CreateDirectory(oak::DirectoryName(proc_config.guard_file));
   if (!CreateGuardFile(proc_config.guard_file)) {
     // Other process has already locked.
-    OAK_ERROR("OAK master process is already running.\n");
+    OAK_ERROR("%s: Process is already running.\n",
+              proc_config.proc_name.c_str());
     return -1;
   }
 
@@ -55,20 +65,17 @@ int main(int argc, char* argv[]) {
   oak::MasterConfig master_config;
   oak::ReadMasterConfig(&master_config, proc_config.conf_file);
 
-  // Setup log config.
-  oak::CreateDirectory(proc_config.log_dir);
-  // TODO(YUYUE): setup logger
+  // Setup runtime logging and business logging.
+  // TODO(YUYUE):
 
-  // Initialize runtime environment, e.g. CPU, channel, exception handler.
-  oak::SetupSignalAltStack();
-  oak::RegisterFailureSignalHandler();
+  // Initialize runtime environment, e.g. CPU, channel.
 
   // Startup worker process.
 
   // Waiting for response of the worker process.
 
   // Initialize event receiver and waiting for task event of the outside.
-
+abort();
   while (true)
     sleep(2);
 

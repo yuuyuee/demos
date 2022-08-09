@@ -9,6 +9,7 @@
 #include "oak/common/fs.h"
 #include "oak/common/format.h"
 #include "oak/common/debug.h"
+#include "oak/common/trivial.h"
 #include "oak/logging/logging.h"
 #include "oak/config.h"
 
@@ -19,7 +20,7 @@ bool CheckGuardFile(const std::string& guard_file) {
   if (file.TryLock())
     return false;
 
-  file.Seek(SEEK_CUR, 0);
+  file.Seek(SEEK_SET, 0);
   char buffer[32];
   size_t size = file.Read(buffer, sizeof(buffer));
   return ppid.size() == size &&
@@ -31,7 +32,11 @@ bool CheckGuardFile(const std::string& guard_file) {
 int main(int argc, char* argv[]) {
   IGNORE_UNUESD(argc, argv);
 
-  // Setup a signal to sense what time master process is exited.
+  // Setup exception handler.
+  oak::System::SetupParentDeathSignal(SIGTERM);
+  oak::SetupSignalAltStack();
+  oak::RegisterFailureSignalHandler();
+  oak::RegisterFailureMessageHandler(STDERR_FILENO);
 
   // Changes working directory.
   std::string path = oak::DirectoryName(argv[0]);
@@ -40,11 +45,14 @@ int main(int argc, char* argv[]) {
   // Initialize process configuration
   const oak::ProcessConfig& proc_config = oak::GetWorkerProcessConfig();
 
-  // Cheaks whether or not the pid file has locked by parent process.
-  std::string ppid = oak::Format("%d", getppid());
+  // Setup crash handler.
+  oak::CreateDirectoryRecursively(proc_config.log_dir);
+  oak::RegisterFailureMessageHandler(proc_config.crash_file);
 
+  // Cheaks whether or not the pid file has locked by parent process.
   if (!CheckGuardFile(proc_config.guard_file)) {
-    OAK_ERROR("Can not run OAK worker individually.\n");
+    OAK_ERROR("%s: Can not run individually.\n",
+              proc_config.proc_name.c_str());
     return -1;
   }
 
@@ -56,12 +64,10 @@ int main(int argc, char* argv[]) {
   oak::WorkerConfig worker_config;
   oak::ReadWorkerConfig(&worker_config, proc_config.conf_file);
 
-  // Setup log config
-  oak::CreateDirectoryRecursively(proc_config.log_dir);
+  // Setup runtime logging and business logging.'
+  // TODO(YUYUE):
 
-  // Initialize runtime environment, e.g. channel, exception handler.
-  oak::SetupSignalAltStack();
-  oak::RegisterFailureSignalHandler();
+  // Initialize runtime environment, e.g. channel.
 
   // Startup an channel to communicate with master process
 

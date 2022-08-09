@@ -24,44 +24,64 @@ namespace oak {
 #define OAK_MASTER_PROC_NAME  "OAK Master"
 #define OAK_MASTER_LOG_FILE   "master.log"
 #define OAK_MASTER_CONF_FILE  "master.json"
+#define OAK_MASTER_CRASH_FILE "master.crash.log"
 
 #define OAK_WORKER_PROC_NAME  "OAK Worker"
 #define OAK_WORKER_LOG_FILE   "worker.log"
 #define OAK_WORKER_CONF_FILE  "worker.json"
+#define OAK_WORKER_CRASH_FILE "worker.crash.log"
+
+namespace {
+
+void InitProcessPublicConfig(ProcessConfig* config) {
+  config->home          = GetRealPath("..");
+  config->bin_dir       = GetCurrentDirectory();
+  config->etc_dir       = config->home + "/" OAK_ETC_DIR;
+  config->log_dir       = config->home + "/" OAK_LOG_DIR;
+  config->addons_dir    = config->home + "/" OAK_ADDONS_DIR;
+  config->cmd_channel   = config->bin_dir + "/" OAK_CMD_CHANNEL;
+  config->event_channel = config->bin_dir + "/" OAK_EVENT_CHANNEL;
+  config->crash_channel = config->bin_dir + "/" OAK_CRASH_CHANNEL;
+  config->guard_file    = "/tmp/oak/" OAK_GUARD_FILE;
+}
+
+const ProcessConfig GetMasterProcessConfigImpl() {
+  ProcessConfig config;
+
+  // Process public attributes
+  InitProcessPublicConfig(&config);
+
+  // Master process private attribute
+  config.proc_name  = OAK_MASTER_PROC_NAME;
+  config.log_file   = config.log_dir + "/" OAK_MASTER_LOG_FILE;
+  config.conf_file  = config.etc_dir + "/" OAK_MASTER_CONF_FILE;
+  config.crash_file = config.log_dir + "/" OAK_MASTER_CRASH_FILE;
+  return config;
+}
+
+const ProcessConfig GetWorkerProcessConfigImpl() {
+  ProcessConfig config;
+
+  // Process public attributes
+  InitProcessPublicConfig(&config);
+
+  // Master process private attribute
+  config.proc_name  = OAK_WORKER_PROC_NAME;
+  config.log_file   = config.log_dir + "/" OAK_WORKER_LOG_FILE;
+  config.conf_file  = config.etc_dir + "/" OAK_WORKER_CONF_FILE;
+  config.crash_file = config.log_dir + "/" OAK_WORKER_CRASH_FILE;
+  return config;
+}
+
+}  // anonymous namespace
 
 const ProcessConfig& GetMasterProcessConfig() {
-  static const ProcessConfig config = {
-    .proc_name     = OAK_MASTER_PROC_NAME,
-    .home          = GetRealPath(".."),
-    .bin_dir       = GetCurrentDirectory(),
-    .etc_dir       = config.home + "/" OAK_ETC_DIR,
-    .log_dir       = config.home + "/" OAK_LOG_DIR,
-    .addons_dir    = config.home + "/" OAK_ADDONS_DIR,
-    .cmd_channel   = config.bin_dir + "/" OAK_CMD_CHANNEL,
-    .event_channel = config.bin_dir + "/" OAK_EVENT_CHANNEL,
-    .crash_channel = config.bin_dir + "/" OAK_CRASH_CHANNEL,
-    .guard_file    = "/tmp/oak/" OAK_GUARD_FILE,
-    .log_file      = config.bin_dir + "/" OAK_MASTER_LOG_FILE,
-    .conf_file     = config.etc_dir + "/" OAK_MASTER_CONF_FILE,
-  };
+  static const ProcessConfig config = GetMasterProcessConfigImpl();
   return config;
 }
 
 const ProcessConfig& GetWorkerProcessConfig() {
-  static const ProcessConfig config = {
-    .proc_name     = OAK_WORKER_PROC_NAME,
-    .home          = GetRealPath(".."),
-    .bin_dir       = GetCurrentDirectory(),
-    .etc_dir       = config.home + "/" OAK_ETC_DIR,
-    .log_dir       = config.home + "/" OAK_LOG_DIR,
-    .addons_dir    = config.home + "/" OAK_ADDONS_DIR,
-    .cmd_channel   = config.bin_dir + "/" OAK_CMD_CHANNEL,
-    .event_channel = config.bin_dir + "/" OAK_EVENT_CHANNEL,
-    .crash_channel = config.bin_dir + "/" OAK_CRASH_CHANNEL,
-    .guard_file      = "/tmp/oak/" OAK_GUARD_FILE,
-    .log_file      = config.bin_dir + "/" OAK_WORKER_LOG_FILE,
-    .conf_file     = config.etc_dir + "/" OAK_WORKER_CONF_FILE,
-  };
+  static const ProcessConfig config = GetWorkerProcessConfigImpl();
   return config;
 }
 
