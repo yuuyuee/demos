@@ -73,12 +73,6 @@ int main(int argc, char* argv[]) {
   oak::CpuLayout cpu_layout;
   oak::System::InitCpuLayout(&cpu_layout);
 
-  oak::ThreadArgs args;
-  CPU_ZERO(&args.favor);
-  CPU_SET(3, &args.favor);
-  args.routine = []() { while (true) sleep(2); };
-  oak::System::CreateThread(args);
-
   // Startup worker process.
 
   // Waiting for response of the worker process.

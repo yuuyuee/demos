@@ -185,20 +185,24 @@ void System::CreateThread(const ThreadArgs& thread_args) {
   PTHREAD_ERROR(err, "pthread_create() failed");
 }
 
-void System::SetPthreadAffinity(pthread_t id, const cpu_set_t& mask) {
+void System::SetThreadAffinity(pthread_t id, const cpu_set_t& mask) {
   int err = pthread_setaffinity_np(id, sizeof(cpu_set_t), &mask);
   PTHREAD_ERROR(err, "pthread_setaffinity_np() failed");
 }
 
-void System::SetThreadAffinity(pid_t id, const cpu_set_t& mask) {
-  int ret = sched_setaffinity(id, sizeof(cpu_set_t), &mask);
-    if (ret < 0) {
-      ThrowStdSystemError(
-          Format("pthread_setaffinity_np() failed: %s", Strerror(errno)));
-    }
+void System::SetThreadName(pthread_t id, const std::string& name) {
+  // The name can be up to 16 bytes long, including the terminating null
+  // byte, if the length of the string exceed 16 bytes, the string is
+  // silently truncated.
+  size_t size = name.size() < 15 ? name.size() : 15;
+  char buffer[16];
+  memcpy(buffer, name.c_str(), size);
+  buffer[size + 1] = '\0';
+  int err = pthread_setname_np(id, buffer);
+  PTHREAD_ERROR(err, "pthread_setname_np() failed");
 }
 
-void System::SaveArgument(int , char* []) {
+void System::SaveArgument(int, char* []) {
   // TODO(YUYUE):
 }
 
@@ -206,8 +210,6 @@ void System::SetProcessName(const std::string&) {
   // TODO(YUYUE):
 }
 
-void System::SetThreadName(const std::string&) {
-  // TODO(YUYUE):
-}
+
 
 }  // namespace oak
