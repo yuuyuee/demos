@@ -11,8 +11,8 @@
 
 namespace oak {
 
-#define OAK_MAX_NUMA_NODES 2  // (8)
-#define OAK_MAX_LOGIC_CORES 8 // (128)
+#define OAK_MAX_NUMA_NODES (8)
+#define OAK_MAX_LOGIC_CORES (128)
 
 struct SocketNode {
   int enable;
