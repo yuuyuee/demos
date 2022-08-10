@@ -36,7 +36,7 @@ struct CpuLayout {
 
 
 struct ThreadArgs {
-  std::string& name;
+  std::string name;
   cpu_set_t favor;
   std::function<void()> routine;
 };
@@ -71,11 +71,16 @@ struct System {
   // @routine running in core @favor. if @name is empty meaning that
   // do not setting the name for the new thread. if @favor is empty
   // meaning that do not setting the CPU affinity for the new thread.
-  static void CreateThread(const ThreadArgs& param);
+  static void CreateThread(const ThreadArgs& thread_args);
 
   // Setup the thread affinity of the CPU.
   static void SetPthreadAffinity(pthread_t id, const cpu_set_t& mask);
   static void SetThreadAffinity(pid_t id, const cpu_set_t& mask);
+
+  // Setup the process/thread name.
+  static void SaveArgument(int argc, char* argv[]);
+  static void SetProcessName(const std::string& proc_name);
+  static void SetThreadName(const std::string& thread_name);
 };
 
 }  // namespace oak

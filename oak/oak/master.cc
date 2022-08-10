@@ -47,7 +47,7 @@ int main(int argc, char* argv[]) {
 
   // Setup crash handler.
   oak::CreateDirectory(proc_config.log_dir);
-  oak::RegisterFailureMessageHandler(proc_config.crash_file);
+  // oak::RegisterFailureMessageHandler(proc_config.crash_file);
 
   // Locks pid file to checking whther process is running.
   oak::CreateDirectory(oak::DirectoryName(proc_config.guard_file));
@@ -72,6 +72,12 @@ int main(int argc, char* argv[]) {
   // Initialize runtime environment, e.g. CPU, channel.
   oak::CpuLayout cpu_layout;
   oak::System::InitCpuLayout(&cpu_layout);
+
+  oak::ThreadArgs args;
+  CPU_ZERO(&args.favor);
+  CPU_SET(3, &args.favor);
+  args.routine = []() { while (true) sleep(2); };
+  oak::System::CreateThread(args);
 
   // Startup worker process.
 
