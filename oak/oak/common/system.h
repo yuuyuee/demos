@@ -65,16 +65,7 @@ struct System {
 
   // Initialize current CPU layout, this is not thread safe and it
   // is only calling before any thread has been created.
-  static void InitCpuLayout();
-
-  // Returns the current available CPU layout. this is not thread
-  // safe and it is only calling before any thread has been created.
-  static const CpuLayout GetCpuLayout();
-
-  // Setup a new CPU layout to replace the current CPU layout.
-  // this is not thread safe and it is only calling before any thread
-  // has been created.
-  static void SetCpuLayout(const CpuLayout& cpu_layout);
+  static void InitCpuLayout(CpuLayout* cpu_layout);
 
   // Create a new thread named @name, starts execution by invoking
   // @routine running in core @favor. if @name is empty meaning that

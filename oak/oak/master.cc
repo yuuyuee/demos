@@ -70,7 +70,8 @@ int main(int argc, char* argv[]) {
   // TODO(YUYUE):
 
   // Initialize runtime environment, e.g. CPU, channel.
-  oak::CpuLayout cpu_layout = oak::System::GetCpuLayout();
+  oak::CpuLayout cpu_layout;
+  oak::System::InitCpuLayout(&cpu_layout);
 
   // Startup worker process.
 

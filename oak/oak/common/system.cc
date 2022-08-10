@@ -11,7 +11,6 @@
 #include <assert.h>
 
 #include <atomic>
-#include <mutex>
 
 #include "oak/common/fs.h"
 #include "oak/common/error_code.h"
@@ -78,7 +77,7 @@ int StrToInt(const char* s, size_t n) {
 void InitSocketNode(SocketNode* socket_node) {
   for (int i = 0; i < OAK_MAX_NUMA_NODES; ++i) {
     socket_node[i].enable = false;
-    socket_node[i].socket_id = -1;
+    socket_node[i].socket_id = i;
     for (int j = 0; j < OAK_MAX_LOGIC_CORES; ++j)
       socket_node[i].logic_core_id[j] = -1;
   }
@@ -88,25 +87,24 @@ void InitLogicCore(LogicCore* logic_core) {
   for (int i = 0; i < OAK_MAX_LOGIC_CORES; ++i) {
     logic_core[i].enable = false;
     logic_core[i].lock = false;
-    logic_core[i].logic_core_id = -1;
-    logic_core[i].core_id = -1;
+    logic_core[i].logic_core_id = i;
+    logic_core[i].core_id = 0;
     CPU_ZERO(&logic_core[i].mask);
     for (int j = 0; j < OAK_MAX_NUMA_NODES; ++j)
       logic_core[i].socket_id[j] = -1;
   }
 }
 
-CpuLayout g_cpu_layout;
-std::mutex g_cpu_layout_lock;
+}  // anonymous namespace
 
 #define OAK_SYS_CPU_DIR  "/sys/devices/system/cpu"
 #define OAK_SYS_NODE_DIR "/sys/devices/system/node"
 
-void InitCpuLayoutImpl() {
-  InitSocketNode(g_cpu_layout.socket_node);
-  InitLogicCore(g_cpu_layout.logic_core);
+void System::InitCpuLayout(CpuLayout* cpu_layout) {
+  InitSocketNode(cpu_layout->socket_node);
+  InitLogicCore(cpu_layout->logic_core);
 
-  SocketNode* socket_node = g_cpu_layout.socket_node;
+  SocketNode* socket_node = cpu_layout->socket_node;
   for (int i = 0; i < OAK_MAX_NUMA_NODES; ++i) {
     std::string path = Format(OAK_SYS_NODE_DIR "/node%d", i);
     if (!IsExists(path))
@@ -121,7 +119,7 @@ void InitCpuLayoutImpl() {
     }
   }
 
-  LogicCore* logic_core = g_cpu_layout.logic_core;
+  LogicCore* logic_core = cpu_layout->logic_core;
   for (int i = 0; i < OAK_MAX_LOGIC_CORES; ++i) {
     std::string path = Format(OAK_SYS_CPU_DIR "/cpu%d/topology/core_id", i);
     if (!IsExists(path))
@@ -144,24 +142,7 @@ void InitCpuLayoutImpl() {
   }
 }
 
-}  // anonymous namespace
-
-void System::InitCpuLayout() {
-  static std::once_flag flag;
-  std::call_once(flag, InitCpuLayoutImpl);
-}
-
-const CpuLayout System::GetCpuLayout() {
-  InitCpuLayout();
-  return g_cpu_layout;
-}
-
-void System::SetCpuLayout(const CpuLayout& cpu_layout) {
-  memcpy(&g_cpu_layout, &cpu_layout, sizeof(g_cpu_layout));
-}
-
 void System::CreateThread(const ThreadArgs& param) {
-  std::lock_guard<std::mutex> lock(g_cpu_layout_lock);
   // TODO(yuyue):
 }
 
