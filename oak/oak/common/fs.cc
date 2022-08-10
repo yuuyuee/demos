@@ -13,6 +13,7 @@
 #include <assert.h>
 #include <string.h>
 
+#include "oak/common/error_code.h"
 #include "oak/common/format.h"
 #include "oak/common/throw_delegate.h"
 
@@ -40,8 +41,10 @@ std::string DirectoryName(const std::string& path) {
 std::string GetCurrentDirectory() {
   char path[PATH_MAX];
   const char* p = getcwd(path, PATH_MAX);
-  if (!p)
-    THROW_SYSTEM_ERROR("GetCurrentDirectory() failed");
+  if (!p) {
+    THROW_SYSTEM_ERROR("GetCurrentDirectory() failed: %s",
+                       Strerror(errno));
+  }
   return std::string(path);
 }
 
@@ -49,8 +52,10 @@ std::string GetRealPath(const std::string& path) {
   assert(!path.empty() && "Invalid path");
   char real_path[PATH_MAX];
   const char* p = realpath(path.c_str(), real_path);
-  if (!p)
-    THROW_SYSTEM_ERROR("GetRealPath(%s) failed", path.c_str());
+  if (!p) {
+    THROW_SYSTEM_ERROR("GetRealPath(%s) failed: %s",
+                       path.c_str(), Strerror(errno));
+  }
   return std::string(real_path);
 }
 
@@ -58,8 +63,10 @@ void CreateDirectory(const std::string& directory) {
   assert(!directory.empty() && "Invalid directory name");
   static unsigned int mode = S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH;
   int ret = mkdir(directory.c_str(), mode);
-  if (ret < 0 && errno != EEXIST)
-    THROW_SYSTEM_ERROR("CreateDirectory(%s) failed", directory.c_str());
+  if (ret < 0 && errno != EEXIST) {
+    THROW_SYSTEM_ERROR("CreateDirectory(%s) failed: %s",
+                       directory.c_str(), Strerror(errno));
+  }
 }
 
 void CreateDirectoryRecursively(const std::string& directory) {
@@ -75,19 +82,25 @@ void CreateDirectoryRecursively(const std::string& directory) {
       CreateDirectoryRecursively(path);
       ret = mkdir(directory.c_str(), mode);
       if (ret < 0)
-        THROW_SYSTEM_ERROR("CreateDirectoryRecursively(%s) failed",
-                           directory.c_str());
+        THROW_SYSTEM_ERROR("CreateDirectoryRecursively(%s) failed: %s",
+                           directory.c_str(), Strerror(errno));
     } else {
-      THROW_SYSTEM_ERROR("CreateDirectoryRecursively(%s) failed",
-                         directory.c_str());
+      THROW_SYSTEM_ERROR("CreateDirectoryRecursively(%s) failed: %s",
+                         directory.c_str(), Strerror(errno));
     }
   }
 }
 
 void ChangeWorkDirectory(const std::string& directory) {;
   int ret = chdir(directory.c_str());
-  if (ret < 0)
-    THROW_SYSTEM_ERROR("ChangeWorkDirectory(%s) failed", directory.c_str());
+  if (ret < 0) {
+    THROW_SYSTEM_ERROR("ChangeWorkDirectory(%s) failed: %s",
+                       directory.c_str(), Strerror(errno));
+  }
+}
+
+bool IsExists(const std::string& path) {
+  return access(path.c_str(), F_OK) == 0;
 }
 
 // File
@@ -117,8 +130,10 @@ File::File(int fd, bool owner) noexcept : fd_(fd), owner_(owner) {
 
 File::File(const char* name, int flags, int mode)
     : fd_(open(name, flags, mode)), owner_(false) {
-  if (fd_ < 0)
-    THROW_SYSTEM_ERROR("open(%s, %04o, %04o) failed", name, flags, mode);
+  if (fd_ < 0) {
+    THROW_SYSTEM_ERROR("open(%s, %04o, %04o) failed: %s",
+                       name, flags, mode, Strerror(errno));
+  }
   owner_ = true;
 }
 
@@ -158,8 +173,10 @@ size_t File::Read(void* buffer, size_t size) {
   do {
     ret = read(fd_, buffer, size);
   } while (ret < 0 && errno == EINTR);
-  if (ret < 0)
-    THROW_SYSTEM_ERROR("read(%d, %p, %ld) failed", fd_, buffer, size);
+  if (ret < 0) {
+    THROW_SYSTEM_ERROR("read(%d, %p, %ld) failed: %s",
+                       fd_, buffer, size, Strerror(errno));
+  }
   return ret;
 }
 
@@ -169,35 +186,44 @@ size_t File::Write(const void* buffer, size_t size) {
   do {
     ret = write(fd_, buffer, size);
   } while (ret < 0 && errno == EINTR);
-  if (ret < 0)
-    THROW_SYSTEM_ERROR("write(%d, %p, %ld) failed", fd_, buffer, size);
+  if (ret < 0) {
+    THROW_SYSTEM_ERROR("write(%d, %p, %ld) failed: %s",
+                       fd_, buffer, size, Strerror(errno));
+  }
   return ret;
 }
 
 off_t File::Seek(off_t offset, int whence) {
   off_t ret = lseek(fd_, offset, whence);
-  if (ret < 0)
-    THROW_SYSTEM_ERROR("lseek(%d, %ld, %d) failed", fd_, offset, whence);
+  if (ret < 0) {
+    THROW_SYSTEM_ERROR("lseek(%d, %ld, %d) failed: %s",
+                       fd_, offset, whence, Strerror(errno));
+  }
   return ret;
 }
 
 void File::Sync() {
   int ret = fsync(fd_);
-  if (ret < 0)
-    THROW_SYSTEM_ERROR("fsync(%d) failed", fd_);
+  if (ret < 0) {
+    THROW_SYSTEM_ERROR("fsync(%d) failed: %s", fd_, Strerror(errno));
+  }
 }
 
 bool File::TryLock() {
   int ret = flock(fd_, LOCK_EX | LOCK_NB);
-  if (ret < 0 && errno != EWOULDBLOCK)
-    THROW_SYSTEM_ERROR("flock(%d, LOCK_EX | LOCK_NB) failed", fd_);
+  if (ret < 0 && errno != EWOULDBLOCK) {
+    THROW_SYSTEM_ERROR("flock(%d, LOCK_EX | LOCK_NB) failed: %s",
+                       fd_, Strerror(errno));
+  }
   return ret == 0;
 }
 
 void File::Unlock() {
   int ret = flock(fd_, LOCK_UN);
-  if (ret < 0)
-    THROW_SYSTEM_ERROR("flock(%d, LOCK_UN) failed", fd_);
+  if (ret < 0) {
+    THROW_SYSTEM_ERROR("flock(%d, LOCK_UN) failed: %s",
+                       fd_, Strerror(errno));
+  }
 }
 
 int File::Release() noexcept {

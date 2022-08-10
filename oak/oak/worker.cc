@@ -9,7 +9,7 @@
 #include "oak/common/fs.h"
 #include "oak/common/format.h"
 #include "oak/common/debug.h"
-#include "oak/common/trivial.h"
+#include "oak/common/system.h"
 #include "oak/logging/logging.h"
 #include "oak/config.h"
 
@@ -33,8 +33,8 @@ int main(int argc, char* argv[]) {
   IGNORE_UNUESD(argc, argv);
 
   // Setup exception handler.
-  oak::System::SetupParentDeathSignal(SIGTERM);
-  oak::SetupSignalAltStack();
+  oak::System::SetParentDeathSignal(SIGTERM);
+  oak::SetSignalAltStack();
   oak::RegisterFailureSignalHandler();
   oak::RegisterFailureMessageHandler(STDERR_FILENO);
 

@@ -27,6 +27,9 @@ void CreateDirectoryRecursively(const std::string& directory);
 // Changes current working directory to path where @path is inside.
 void ChangeWorkDirectory(const std::string& directory);
 
+// Tests for the existence of the path.
+bool IsExists(const std::string& path);
+
 class File {
  public:
   static const int kMode;

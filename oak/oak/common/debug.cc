@@ -13,7 +13,8 @@
 #include <atomic>
 #include <memory>
 
-#include "oak/common/trivial.h"
+#include "oak/common/error_code.h"
+#include "oak/common/system.h"
 #include "oak/common/format.h"
 #include "oak/common/fs.h"
 #include "oak/common/throw_delegate.h"
@@ -33,11 +34,11 @@ bool SetupSignalAltStackImpl() {
   if (ss.ss_sp == MAP_FAILED) {
     ThrowStdSystemError(
         Format("map() for alternate signal stack failed: %s",
-               strerror(errno)));
+               Strerror(errno)));
   }
   if (sigaltstack(&ss, nullptr) < 0) {
     ThrowStdSystemError(
-        Format("sigaltstack() failed: %s", strerror(errno)));
+        Format("sigaltstack() failed: %s", Strerror(errno)));
   }
   return true;
 }
@@ -111,7 +112,7 @@ void RegisterFailureSignalHandlerOnce(int signo) {
   act.sa_sigaction = FailureSignalHandler;
   if (sigaction(signo, &act, nullptr) < 0) {
     ThrowStdSystemError(
-        Format("sigaction() failed: %s", strerror(errno)));
+        Format("sigaction() failed: %s", Strerror(errno)));
   }
 }
 
@@ -121,12 +122,12 @@ bool SignalAltStackEnabled() {
   stack_t ss;
   if (sigaltstack(nullptr, &ss) < 0) {
     ThrowStdSystemError(
-        Format("sigaltstack() failed: %s", strerror(errno)));
+        Format("sigaltstack() failed: %s", Strerror(errno)));
   }
   return !(ss.ss_flags & SS_DISABLE);
 }
 
-bool SetupSignalAltStack() {
+bool SetSignalAltStack() {
   static thread_local bool enable = SetupSignalAltStackImpl();
   return enable;
 }

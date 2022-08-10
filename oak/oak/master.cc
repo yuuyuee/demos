@@ -8,6 +8,7 @@
 #include "oak/common/format.h"
 #include "oak/common/fs.h"
 #include "oak/common/debug.h"
+#include "oak/common/system.h"
 #include "oak/logging/logging.h"
 #include "oak/config.h"
 
@@ -33,7 +34,7 @@ int main(int argc, char* argv[]) {
   IGNORE_UNUESD(argc);
 
   // Setup exception handler.
-  oak::SetupSignalAltStack();
+  oak::SetSignalAltStack();
   oak::RegisterFailureSignalHandler();
   oak::RegisterFailureMessageHandler(STDERR_FILENO);
 
@@ -69,13 +70,14 @@ int main(int argc, char* argv[]) {
   // TODO(YUYUE):
 
   // Initialize runtime environment, e.g. CPU, channel.
+  oak::CpuLayout cpu_layout = oak::System::GetCpuLayout();
 
   // Startup worker process.
 
   // Waiting for response of the worker process.
 
   // Initialize event receiver and waiting for task event of the outside.
-abort();
+
   while (true)
     sleep(2);
 

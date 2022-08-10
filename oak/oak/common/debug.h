@@ -12,7 +12,7 @@ namespace oak {
 bool SignalAltStackEnabled();
 
 // Setup signal alternate stack, there is safety for multiple calls.
-bool SetupSignalAltStack();
+bool SetSignalAltStack();
 
 // Register failure message handler.
 void RegisterFailureMessageHandler(int fd);

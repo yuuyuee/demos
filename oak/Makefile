@@ -3,15 +3,19 @@ all: master stringpiece_test any_test;
 
 master:
 	g++ -std=c++11 -Wall -Wextra -g -O0 -rdynamic -I. -Ithird_party/jsoncpp-1.9.5 -o $@ \
-			oak/master.cc oak/common/trivial.cc oak/common/fs.cc oak/common/format.cc \
-			oak/common/throw_delegate.cc oak/common/debug.cc oak/logging/logging.cc oak/config.cc \
-			third_party/jsoncpp-1.9.5/jsoncpp.cpp
+			oak/master.cc oak/common/system.cc oak/common/fs.cc oak/common/format.cc \
+			oak/common/throw_delegate.cc oak/common/debug.cc oak/logging/logging.cc \
+			oak/config.cc oak/common/error_code.cc \
+			third_party/jsoncpp-1.9.5/jsoncpp.cpp \
+			-lpthread
 
 worker:
 	g++ -std=c++11 -Wall -Wextra -g -O0 -rdynamic -I. -Ithird_party/jsoncpp-1.9.5 -o $@ \
-			oak/worker.cc oak/common/trivial.cc oak/common/fs.cc oak/common/format.cc \
-			oak/common/throw_delegate.cc oak/common/debug.cc oak/logging/logging.cc oak/config.cc \
-			third_party/jsoncpp-1.9.5/jsoncpp.cpp
+			oak/worker.cc oak/common/system.cc oak/common/fs.cc oak/common/format.cc \
+			oak/common/throw_delegate.cc oak/common/debug.cc oak/logging/logging.cc \
+			oak/config.cc oak/common/error_code.cc \
+			third_party/jsoncpp-1.9.5/jsoncpp.cpp \
+			-lpthread
 
 stringpiece_test:
 	g++ -std=c++11 -Wall -Wextra -g -rdynamic -I. -Ithird_party/gtest -O2 -o $@ \
