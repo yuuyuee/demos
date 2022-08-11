@@ -2,16 +2,20 @@
 
 #include <unistd.h>
 #include <assert.h>
+#include <stdio.h>
 
 #include "oak/addons/public/compiler.h"
 #include "oak/addons/public/platform.h"
+#include "oak/common/macros.h"
 #include "oak/common/format.h"
 #include "oak/common/fs.h"
 #include "oak/common/debug.h"
 #include "oak/common/system.h"
+#include "oak/common/asio_wrapper.h"
 #include "oak/logging/logging.h"
 #include "oak/config.h"
 
+namespace oak {
 namespace {
 bool CreateGuardFile(const std::string& guard_file) {
   std::string pid = oak::Format("%d", getpid());
@@ -30,7 +34,7 @@ bool CreateGuardFile(const std::string& guard_file) {
 
 }  // anonymous namespace
 
-int main(int argc, char* argv[]) {
+void Master(int argc, char* argv[]) {
   IGNORE_UNUESD(argc);
 
   // Setup exception handler.
@@ -47,7 +51,7 @@ int main(int argc, char* argv[]) {
 
   // Setup crash handler.
   oak::CreateDirectory(proc_config.log_dir);
-  // oak::RegisterFailureMessageHandler(proc_config.crash_file);
+  oak::RegisterFailureMessageHandler(proc_config.crash_file);
 
   // Locks pid file to checking whther process is running.
   oak::CreateDirectory(oak::DirectoryName(proc_config.guard_file));
@@ -55,7 +59,7 @@ int main(int argc, char* argv[]) {
     // Other process has already locked.
     OAK_ERROR("%s: Process is already running.\n",
               proc_config.proc_name.c_str());
-    return -1;
+    return;
   }
 
   OAK_INFO("%s: Change working directory to %s\n",
@@ -81,6 +85,27 @@ int main(int argc, char* argv[]) {
 
   while (true)
     sleep(2);
+}
 
+void Worker(int argc, char* argv[]);
+}  // namespace oak
+
+int main(int argc, char* argv[]) {
+  const char* usage =
+    "Usage: rs <-w> ...\n"
+    "Options:"
+    "    -w running as woker, default as master\n"
+    "    -h print help\n";
+
+  bool running_as_master = true;
+  for (int i = 1; i < argc; ++i) {
+    if (argv[i][0] == '-' && argv[i][1] == 'h' && argv[i][2] == '\0') {
+      printf("%s", usage);
+      return 0;
+    } else if (argv[i][0] == '-' && argv[i][1] == 'w' && argv[i][2] == '\0') {
+      running_as_master = false;
+    }
+  }
+  running_as_master ? oak::Master(argc, argv) : oak::Worker(argc, argv);
   return 0;
 }

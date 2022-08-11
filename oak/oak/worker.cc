@@ -6,6 +6,7 @@
 
 #include "oak/addons/public/compiler.h"
 #include "oak/addons/public/platform.h"
+#include "oak/common/macros.h"
 #include "oak/common/fs.h"
 #include "oak/common/format.h"
 #include "oak/common/debug.h"
@@ -13,6 +14,7 @@
 #include "oak/logging/logging.h"
 #include "oak/config.h"
 
+namespace oak {
 namespace {
 bool CheckGuardFile(const std::string& guard_file) {
   std::string ppid = oak::Format("%d", getppid());
@@ -29,11 +31,11 @@ bool CheckGuardFile(const std::string& guard_file) {
 
 }  // anonymous namespace
 
-int main(int argc, char* argv[]) {
+void Worker(int argc, char* argv[]) {
   IGNORE_UNUESD(argc, argv);
 
   // Setup exception handler.
-  oak::System::SetParentDeathSignal(SIGTERM);
+  // oak::System::SetParentDeathSignal(SIGTERM);
   oak::SetSignalAltStack();
   oak::RegisterFailureSignalHandler();
   oak::RegisterFailureMessageHandler(STDERR_FILENO);
@@ -50,10 +52,11 @@ int main(int argc, char* argv[]) {
   oak::RegisterFailureMessageHandler(proc_config.crash_file);
 
   // Cheaks whether or not the pid file has locked by parent process.
-  if (!CheckGuardFile(proc_config.guard_file)) {
-    OAK_ERROR("%s: Can not run individually.\n",
+  if (!oak::IsExists(proc_config.guard_file) ||
+      !CheckGuardFile(proc_config.guard_file)) {
+    OAK_ERROR("%s: Unable to running individually.\n",
               proc_config.proc_name.c_str());
-    return -1;
+    return;
   }
 
   OAK_INFO("%s: Change working directory to %s\n",
@@ -77,6 +80,6 @@ int main(int argc, char* argv[]) {
 
   while (true)
     sleep(2);
-
-  return 0;
 }
+
+}  // namespace oak

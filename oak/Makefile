@@ -1,21 +1,26 @@
 
-all: master stringpiece_test any_test;
+all: rs;
 
-master:
-	g++ -std=c++11 -Wall -Wextra -g -O0 -rdynamic -I. -Ithird_party/jsoncpp-1.9.5 -o $@ \
-			oak/master.cc oak/common/system.cc oak/common/fs.cc oak/common/format.cc \
-			oak/common/throw_delegate.cc oak/common/debug.cc oak/logging/logging.cc \
-			oak/config.cc oak/common/error_code.cc \
+rs:
+	g++ -std=c++11 -Wall -Wextra -g -O0 -rdynamic -o $@ \
+			-I. \
+			-Ithird_party/jsoncpp-1.9.5 \
+			-Ithird_party/asio-1.22.2/asio/include \
+			oak/master.cc \
+			oak/worker.cc \
+			oak/common/system.cc \
+			oak/common/fs.cc \
+			oak/common/format.cc \
+			oak/common/throw_delegate.cc \
+			oak/common/debug.cc \
+			oak/logging/logging.cc \
+			oak/config.cc \
+			oak/common/error_code.cc \
 			third_party/jsoncpp-1.9.5/jsoncpp.cpp \
 			-lpthread
-
-worker:
-	g++ -std=c++11 -Wall -Wextra -g -O0 -rdynamic -I. -Ithird_party/jsoncpp-1.9.5 -o $@ \
-			oak/worker.cc oak/common/system.cc oak/common/fs.cc oak/common/format.cc \
-			oak/common/throw_delegate.cc oak/common/debug.cc oak/logging/logging.cc \
-			oak/config.cc oak/common/error_code.cc \
-			third_party/jsoncpp-1.9.5/jsoncpp.cpp \
-			-lpthread
+	if test -e "dist/bin" -a -d "dist/bin"; then \
+		cp rs dist/bin/; \
+	fi;
 
 stringpiece_test:
 	g++ -std=c++11 -Wall -Wextra -g -rdynamic -I. -Ithird_party/gtest -O2 -o $@ \
@@ -42,6 +47,6 @@ buffer_test:
 			-lpthread
 
 clean:
-	-rm -f master worker stringpiece_test any_test circle_test buffer_test
+	-rm -f rs stringpiece_test any_test circle_test buffer_test
 
-.PHYONE: master worker stringpiece_test any_test circle_test buffer_test
+.PHONY: rs stringpiece_test any_test circle_test buffer_test
