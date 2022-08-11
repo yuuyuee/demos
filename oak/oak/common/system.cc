@@ -150,10 +150,10 @@ void* StartRoutine(void* thread_args) {
 
   const ThreadArgs* args = reinterpret_cast<ThreadArgs*>(thread_args);
   if (!args->name.empty())
-    oak::System::SetThreadName(args->name);
+    oak::System::SetThreadName(pthread_self(), args->name);
 
   if (CPU_COUNT(&args->favor) > 0) {
-    oak::System::SetPthreadAffinity(pthread_self(), args->favor);
+    oak::System::SetThreadAffinity(pthread_self(), args->favor);
     oak::System::ThreadYield();
   }
 
