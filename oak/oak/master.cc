@@ -4,8 +4,7 @@
 #include <assert.h>
 #include <stdio.h>
 
-#include "oak/addons/public/compiler.h"
-#include "oak/addons/public/platform.h"
+
 #include "oak/common/macros.h"
 #include "oak/common/format.h"
 #include "oak/common/fs.h"
@@ -77,35 +76,27 @@ void Master(int argc, char* argv[]) {
   oak::CpuLayout cpu_layout;
   oak::System::InitCpuLayout(&cpu_layout);
 
-  // Startup worker process.
+  // EventLoop loop;
 
-  // Waiting for response of the worker process.
+  // KafkaProductor productor;
+
+  // TaskManager task;
+
+  // KafkaConsumer consumer;
+  // Server server(loop);
+  // server.start(
+  //   // On connected: update task
+  //   // On read: call message handler
+  // );
+
+  // Waiting for connection of the worker process.
 
   // Initialize event receiver and waiting for task event of the outside.
 
-  while (true)
+  while (true) {
     sleep(2);
+  }
 }
 
-void Worker(int argc, char* argv[]);
 }  // namespace oak
 
-int main(int argc, char* argv[]) {
-  const char* usage =
-    "Usage: rs <-w> ...\n"
-    "Options:"
-    "    -w running as woker, default as master\n"
-    "    -h print help\n";
-
-  bool running_as_master = true;
-  for (int i = 1; i < argc; ++i) {
-    if (argv[i][0] == '-' && argv[i][1] == 'h' && argv[i][2] == '\0') {
-      printf("%s", usage);
-      return 0;
-    } else if (argv[i][0] == '-' && argv[i][1] == 'w' && argv[i][2] == '\0') {
-      running_as_master = false;
-    }
-  }
-  running_as_master ? oak::Master(argc, argv) : oak::Worker(argc, argv);
-  return 0;
-}

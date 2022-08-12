@@ -16,18 +16,18 @@
 
 namespace oak {
 namespace {
-bool CheckGuardFile(const std::string& guard_file) {
-  std::string ppid = oak::Format("%d", getppid());
-  oak::File file = oak::File::MakeRandomAccessFile(guard_file);
-  if (file.TryLock())
-    return false;
+// bool CheckGuardFile(const std::string& guard_file) {
+//   std::string ppid = oak::Format("%d", getppid());
+//   oak::File file = oak::File::MakeRandomAccessFile(guard_file);
+//   if (file.TryLock())
+//     return false;
 
-  file.Seek(SEEK_SET, 0);
-  char buffer[32];
-  size_t size = file.Read(buffer, sizeof(buffer));
-  return ppid.size() == size &&
-         ppid.compare(0, size, buffer, size) == 0;
-}
+//   file.Seek(SEEK_SET, 0);
+//   char buffer[32];
+//   size_t size = file.Read(buffer, sizeof(buffer));
+//   return ppid.size() == size &&
+//          ppid.compare(0, size, buffer, size) == 0;
+// }
 
 }  // anonymous namespace
 
@@ -52,12 +52,12 @@ void Worker(int argc, char* argv[]) {
   oak::RegisterFailureMessageHandler(proc_config.crash_file);
 
   // Cheaks whether or not the pid file has locked by parent process.
-  if (!oak::IsExists(proc_config.guard_file) ||
-      !CheckGuardFile(proc_config.guard_file)) {
-    OAK_ERROR("%s: Unable to running individually.\n",
-              proc_config.proc_name.c_str());
-    return;
-  }
+  // if (!oak::IsExists(proc_config.guard_file) ||
+  //     !CheckGuardFile(proc_config.guard_file)) {
+  //   OAK_ERROR("%s: Unable to running individually.\n",
+  //             proc_config.proc_name.c_str());
+  //   return;
+  // }
 
   OAK_INFO("%s: Change working directory to %s\n",
             proc_config.proc_name.c_str(),
@@ -70,16 +70,27 @@ void Worker(int argc, char* argv[]) {
   // Setup runtime logging and business logging.'
   // TODO(YUYUE):
 
-  // Initialize runtime environment, e.g. channel.
+  // Connect an channel to communicate with master process
 
-  // Startup an channel to communicate with master process
+  // Addon.LoadingAddon(path);
+  // EventLoop loop;
+  // Client client;
+
+  // client.SyncRead(cpulayout);
+  // threads.Running();
+  // client.AsyncRead(
+  //   // On update task, update the data
+  // );
+
+  // Initialize runtime environment, e.g. channel.
 
   // When channel has established, acqurie the remaining CPU information
   // and ues for allocate the worker threads, eventually, respond a message
   // to master process indicated that is done.
 
-  while (true)
+  while (true) {
     sleep(2);
+  }
 }
 
 }  // namespace oak
