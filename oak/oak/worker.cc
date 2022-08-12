@@ -4,8 +4,6 @@
 #include <assert.h>
 #include <signal.h>
 
-#include "oak/addons/public/compiler.h"
-#include "oak/addons/public/platform.h"
 #include "oak/common/macros.h"
 #include "oak/common/fs.h"
 #include "oak/common/format.h"

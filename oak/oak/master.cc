@@ -14,6 +14,8 @@
 #include "oak/logging/logging.h"
 #include "oak/config.h"
 
+using event_proto = asio::local::datagram_protocol;
+
 namespace oak {
 namespace {
 bool CreateGuardFile(const std::string& guard_file) {
@@ -29,6 +31,29 @@ bool CreateGuardFile(const std::string& guard_file) {
   // on the return to keep locking.
   file.Release();
   return true;
+}
+
+
+
+class EventServer {
+ public:
+  EventServer(asio::io_context* ioctx, const std::string& address);
+  ~EventServer();
+
+  void Start();
+
+ private:
+
+
+ private:
+  event_proto::socket socket_;
+  event_proto::endpoint remote_endpoint_;
+};
+
+EventServer::EventServer(asio::io_context* ioctx, const std::string& file)
+    : socket_(*ioctx, event_proto::endpoint(file)) {
+  // Start server
+  socket_.async_receive_from();
 }
 
 }  // anonymous namespace
@@ -88,6 +113,8 @@ void Master(int argc, char* argv[]) {
   //   // On connected: update task
   //   // On read: call message handler
   // );
+
+  asio::io_context ioctx(1);  // single thread
 
   // Waiting for connection of the worker process.
 
