@@ -35,10 +35,11 @@ bool CreateGuardFile(const std::string& guard_file) {
 
 
 
-class EventServer {
+
+class EventChannel {
  public:
-  EventServer(asio::io_context* ioctx, const std::string& address);
-  ~EventServer();
+  EventChannel(asio::io_context* ioctx, const std::string& address);
+  ~EventChannel();
 
   void Start();
 
@@ -50,7 +51,7 @@ class EventServer {
   event_proto::endpoint remote_endpoint_;
 };
 
-EventServer::EventServer(asio::io_context* ioctx, const std::string& file)
+EventChannel::EventChannel(asio::io_context* ioctx, const std::string& file)
     : socket_(*ioctx, event_proto::endpoint(file)) {
   // Start server
   socket_.async_receive_from();
