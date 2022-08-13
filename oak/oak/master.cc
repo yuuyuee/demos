@@ -10,11 +10,8 @@
 #include "oak/common/fs.h"
 #include "oak/common/debug.h"
 #include "oak/common/system.h"
-#include "oak/common/asio_wrapper.h"
 #include "oak/logging/logging.h"
 #include "oak/config.h"
-
-using event_proto = asio::local::datagram_protocol;
 
 namespace oak {
 namespace {
@@ -31,30 +28,6 @@ bool CreateGuardFile(const std::string& guard_file) {
   // on the return to keep locking.
   file.Release();
   return true;
-}
-
-
-
-
-class EventChannel {
- public:
-  EventChannel(asio::io_context* ioctx, const std::string& address);
-  ~EventChannel();
-
-  void Start();
-
- private:
-
-
- private:
-  event_proto::socket socket_;
-  event_proto::endpoint remote_endpoint_;
-};
-
-EventChannel::EventChannel(asio::io_context* ioctx, const std::string& file)
-    : socket_(*ioctx, event_proto::endpoint(file)) {
-  // Start server
-  socket_.async_receive_from();
 }
 
 }  // anonymous namespace

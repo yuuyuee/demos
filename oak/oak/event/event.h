@@ -7,16 +7,12 @@
 
 namespace oak {
 
-class Message {
+class EventManager {
  public:
-  Message();
-  virtual ~Message();
 
-  virtual bool Serialize(std::vector<char>* buffer) = 0;
-  virtual bool Deserialize(const std::vector<char>& buffer) = 0;
+ private:
+
 };
-
-class Event {};
 
 }  // namespace oak
 
