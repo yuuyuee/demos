@@ -4,7 +4,6 @@
 #include <assert.h>
 #include <stdio.h>
 
-
 #include "oak/common/macros.h"
 #include "oak/common/format.h"
 #include "oak/common/fs.h"
@@ -12,6 +11,7 @@
 #include "oak/common/system.h"
 #include "oak/logging/logging.h"
 #include "oak/config.h"
+#include "oak/event/server.h"
 
 namespace oak {
 namespace {
@@ -89,14 +89,17 @@ void Master(int argc, char* argv[]) {
   // );
 
   asio::io_context ioctx(1);  // single thread
+  oak::Server<Internet> server(&ioctx);
+  server.Start("0.0.0.0", "8899");
+  ioctx.run();
 
   // Waiting for connection of the worker process.
 
   // Initialize event receiver and waiting for task event of the outside.
 
-  while (true) {
-    sleep(2);
-  }
+  // while (true) {
+  //   sleep(2);
+  // }
 }
 
 }  // namespace oak

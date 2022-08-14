@@ -5,6 +5,11 @@
 
 namespace oak {
 
+class Request {
+ public:
+  Request() {}
+};
+
 }  // namespace oak
 
 #endif  // OAK_EVENT_REQUEST_H_
