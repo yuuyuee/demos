@@ -89,8 +89,8 @@ void Master(int argc, char* argv[]) {
   // );
 
   asio::io_context ioctx(1);  // single thread
-  oak::Server<Internet> server(&ioctx);
-  server.Start("0.0.0.0", "8899");
+  oak::Server<Local> server(&ioctx);
+  server.Start("unix.socket", "8899");
   ioctx.run();
 
   // Waiting for connection of the worker process.

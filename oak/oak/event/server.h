@@ -11,7 +11,6 @@
 #include <set>
 #include <array>
 #include <system_error>
-#include <type_traits>
 
 #include "oak/event/request.h"
 #include "oak/common/asio_wrapper.h"
