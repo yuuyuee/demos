@@ -14,28 +14,20 @@ namespace oak {
 #define OAK_MAX_NUMA_NODES (8)
 #define OAK_MAX_LOGIC_CORES (128)
 
-struct SocketNode {
-  int enable;
-  int socket_id;
-  int logic_core_id[OAK_MAX_LOGIC_CORES];
-};
-
 struct LogicCore {
   bool enable;
   bool lock;
   int logic_core_id;
-  int core_id;
   cpu_set_t mask;
-  int socket_id[OAK_MAX_NUMA_NODES];
+  int socket_id;
 };
 
-struct CpuLayout {
-  SocketNode socket_node[OAK_MAX_NUMA_NODES];
-  LogicCore logic_core[OAK_MAX_LOGIC_CORES];
-};
+// struct CpuLayout {
+//   SocketNode socket_node[OAK_MAX_NUMA_NODES];
+//   LogicCore logic_core[OAK_MAX_LOGIC_CORES];
+// };
 
-
-struct ThreadArgs {
+struct ThreadArguments {
   std::string name;
   cpu_set_t favor;
   std::function<void()> routine;
@@ -55,7 +47,7 @@ struct System {
   static pid_t GetLogicThreadId();
 
   // Returns CPU on which the calling thread is running.
-  static int GeCurrenttCpu();
+  static int GetCurrentCpu();
 
   // Yield the calling thread to relinquish the CPU.
   static void ThreadYield();
@@ -63,15 +55,15 @@ struct System {
   // Setup the parent process death signal of the calling process.
   static void SetParentDeathSignal(int signo);
 
-  // Initialize current CPU layout, this is not thread safe and it
-  // is only calling before any thread has been created.
-  static void InitCpuLayout(CpuLayout* cpu_layout);
+  // Initialize current CPU layout and returns the number of available
+  // logic cores.
+  static int GetCpuLayout(LogicCore* logic_core, int size);
 
   // Create a new thread named @name, starts execution by invoking
   // @routine running in core @favor. if @name is empty meaning that
   // do not setting the name for the new thread. if @favor is empty
   // meaning that do not setting the CPU affinity for the new thread.
-  static void CreateThread(const ThreadArgs& thread_args);
+  static void CreateThread(const ThreadArguments& thread_args);
 
   // Setup the affinity of the thread.
   static void SetThreadAffinity(pthread_t id, const cpu_set_t& mask);

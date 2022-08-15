@@ -10,7 +10,7 @@
 #include <utility>
 #include <set>
 #include <array>
-#include <system_error>
+#include <system_error>  // NOLINT
 
 #include "oak/event/request.h"
 #include "oak/common/asio_wrapper.h"
@@ -216,8 +216,8 @@ void Server<Protocol>::Bind(const std::string& address,
 
 template <typename Protocol>
 void Server<Protocol>::Bind(const std::string& address,
-                                       const std::string&,
-                                       typename Local::endpoint*) {
+                            const std::string&,
+                            typename Local::endpoint*) {
   unlink(address.c_str());
   typename Local::endpoint endpoint = typename Local::endpoint(address);
   acceptor_.open(endpoint.protocol());

@@ -7,7 +7,6 @@ rs:
 			-Ithird_party/jsoncpp-1.9.5 \
 			-Ithird_party/asio-1.22.2/asio/include \
 			oak/rs.cc	\
-			oak/master.cc \
 			oak/worker.cc \
 			oak/common/system.cc \
 			oak/common/fs.cc \

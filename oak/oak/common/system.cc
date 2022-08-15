@@ -47,7 +47,7 @@ pid_t System::GetLogicThreadId() {
   return thread_id;
 }
 
-int System::GeCurrenttCpu() {
+int System::GetCurrentCpu() {
   return sched_getcpu();
 }
 
@@ -65,34 +65,13 @@ void System::SetParentDeathSignal(int signo) {
 }
 
 namespace {
-int StrToInt(const char* s, size_t n) {
-  int ret = 0;
-  for (size_t i = 0; i < n; ++i) {
-    if (!(s[i] >= '0' && s[i] <= '9'))
-      break;
-    ret = ret * 10 + (s[i] - '0');
-  }
-  return ret;
-}
-
-void InitSocketNode(SocketNode* socket_node) {
-  for (int i = 0; i < OAK_MAX_NUMA_NODES; ++i) {
-    socket_node[i].enable = false;
-    socket_node[i].socket_id = i;
-    for (int j = 0; j < OAK_MAX_LOGIC_CORES; ++j)
-      socket_node[i].logic_core_id[j] = -1;
-  }
-}
-
-void InitLogicCore(LogicCore* logic_core) {
-  for (int i = 0; i < OAK_MAX_LOGIC_CORES; ++i) {
+void InitLogicCore(LogicCore* logic_core, int size) {
+  for (int i = 0; i < size; ++i) {
     logic_core[i].enable = false;
     logic_core[i].lock = false;
     logic_core[i].logic_core_id = i;
-    logic_core[i].core_id = 0;
-    CPU_ZERO(&logic_core[i].mask);
-    for (int j = 0; j < OAK_MAX_NUMA_NODES; ++j)
-      logic_core[i].socket_id[j] = -1;
+    CPU_ZERO(&(logic_core[i].mask));
+    logic_core[i].socket_id = 0;
   }
 }
 
@@ -102,62 +81,49 @@ void InitLogicCore(LogicCore* logic_core) {
 #define OAK_SYS_NODE_DIR "/sys/devices/system/node/"
 #define OAK_SYS_CORE_ID "/topology/core_id"
 
-void System::InitCpuLayout(CpuLayout* cpu_layout) {
-  InitSocketNode(cpu_layout->socket_node);
-  InitLogicCore(cpu_layout->logic_core);
+int System::GetCpuLayout(LogicCore* logic_core, int size) {
+  InitLogicCore(logic_core, size);
+  int available_cores = 0;
 
-  SocketNode* socket_node = cpu_layout->socket_node;
-  for (int i = 0; i < OAK_MAX_NUMA_NODES; ++i) {
-    std::string path = Format(OAK_SYS_NODE_DIR "node%d", i);
-    if (!IsExists(path))
-      continue;
-    socket_node[i].enable = true;
-    socket_node[i].socket_id = i;
-    for (int j = 0; j < OAK_MAX_LOGIC_CORES; ++j) {
-      path = Format(OAK_SYS_NODE_DIR "/node%d/cpu%d", i, j);
-      if (!IsExists(path))
-        continue;
-      socket_node[i].logic_core_id[j] = j;
-    }
-  }
-
-  LogicCore* logic_core = cpu_layout->logic_core;
-  for (int i = 0; i < OAK_MAX_LOGIC_CORES; ++i) {
+  for (int i = 0; i < size; ++i) {
     std::string path = Format(OAK_SYS_CPU_DIR "cpu%d" OAK_SYS_CORE_ID, i);
     if (!IsExists(path))
       continue;
     logic_core[i].enable = true;
     logic_core[i].lock = false;
     logic_core[i].logic_core_id = i;
-    char tmp[128];
-    File file = File::MakeReadOnlyFile(path);
-    size_t len = file.Read(tmp, 128);
-    logic_core[i].core_id = StrToInt(tmp, len);
-    CPU_SET(i, &logic_core[i].mask);
+    CPU_SET(i, &(logic_core[i].mask));
 
     for (int j = 0; j < OAK_MAX_NUMA_NODES; ++j) {
       path = Format(OAK_SYS_CPU_DIR "cpu%d/node%d", i, j);
       if (!IsExists(path))
         continue;
-      logic_core[i].socket_id[j] = j;
+      logic_core[i].socket_id = j;
+      break;
     }
+    ++available_cores;
   }
+
+  return available_cores;
 }
 
 namespace {
-void* StartRoutine(void* thread_args) {
+void* StartRoutine(void* args) {
   SetSignalAltStack();
 
-  const ThreadArgs* args = reinterpret_cast<ThreadArgs*>(thread_args);
-  if (!args->name.empty())
-    oak::System::SetThreadName(pthread_self(), args->name);
+  const ThreadArguments thread_args =
+      *reinterpret_cast<ThreadArguments*>(args);
+  delete reinterpret_cast<ThreadArguments*>(args);
 
-  if (CPU_COUNT(&args->favor) > 0) {
-    oak::System::SetThreadAffinity(pthread_self(), args->favor);
+  if (!thread_args.name.empty())
+    oak::System::SetThreadName(pthread_self(), thread_args.name);
+
+  if (CPU_COUNT(&thread_args.favor) > 0) {
+    oak::System::SetThreadAffinity(pthread_self(), thread_args.favor);
     oak::System::ThreadYield();
   }
 
-  args->routine();
+  thread_args.routine();
   return 0;
 }
 
@@ -169,7 +135,7 @@ void* StartRoutine(void* thread_args) {
 
 }  // anonymous namespace
 
-void System::CreateThread(const ThreadArgs& thread_args) {
+void System::CreateThread(const ThreadArguments& thread_args) {
   assert(thread_args.routine && "Invalid argument");
 
   pthread_attr_t attr;
@@ -180,8 +146,10 @@ void System::CreateThread(const ThreadArgs& thread_args) {
   PTHREAD_ERROR(err, "pthread_attr_setdetachstate() failed")
 
   pthread_t pid;
+  ThreadArguments* args = new ThreadArguments;
+  *args = thread_args;
   err = pthread_create(&pid, &attr, StartRoutine,
-      const_cast<void*>(static_cast<const void*>(&thread_args)));
+      const_cast<void*>(static_cast<const void*>(args)));
   PTHREAD_ERROR(err, "pthread_create() failed");
 }
 
@@ -197,7 +165,7 @@ void System::SetThreadName(pthread_t id, const std::string& name) {
   size_t size = name.size() < 15 ? name.size() : 15;
   char buffer[16];
   memcpy(buffer, name.c_str(), size);
-  buffer[size + 1] = '\0';
+  buffer[size] = '\0';
   int err = pthread_setname_np(id, buffer);
   PTHREAD_ERROR(err, "pthread_setname_np() failed");
 }
