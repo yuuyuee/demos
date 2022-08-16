@@ -35,7 +35,7 @@ struct oak_source_module {
    *         may used to initialize.
    *
    * Return 0 on success or -1 if an error occurred. */
-  int (*init)(const struct oak_source_module* module,
+  int (*init)(struct oak_source_module* module,
               const struct oak_dict* config);
 
   /* Callback to read the buffer and decoded as the metadata.
@@ -49,7 +49,7 @@ struct oak_source_module {
               struct oak_metadata* metadata);
 
   /* Callback to close the module. */
-  void (*close)(const struct oak_source_module* module);
+  void (*close)(struct oak_source_module* module);
 };
 
 #ifdef __cplusplus

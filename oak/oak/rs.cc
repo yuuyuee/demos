@@ -93,8 +93,6 @@ int main(int argc, char* argv[]) {
   // Setup logger.
   // TODO(YUYUE):
 
-  // Initialize runtime environment, e.g. CPU, events, workers.
-
   // Initialize CPU layout.
   oak::CpuLayout layout;
   oak::System::GetCpuLayout(&layout);

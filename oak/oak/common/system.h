@@ -9,6 +9,7 @@
 #include <string>
 #include <functional>
 #include <atomic>
+#include <utility>
 
 namespace oak {
 
@@ -35,6 +36,11 @@ struct ThreadArguments {
   std::string name;
   cpu_set_t favor;
   std::function<void()> routine;
+
+  // ThreadArguments(const std::string& name,
+  //                 cpu_set_t favor,
+  //                 std::function<void()> routine)
+  //     : name(name), favor(favor), routine(std::move(routine)) {}
 };
 
 struct System {
