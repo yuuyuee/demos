@@ -25,14 +25,6 @@ void DummyFun() {
     sleep(2);
 }
 
-LogicCore* GetNextAvailableCore(LogicCore* core, int size) {
-  for (int i = 0; i < size; ++i) {
-    if (core[i].enable && !core[i].lock)
-      return core + i;
-  }
-  return nullptr;
-}
-
 void CreateWorker(const Config& config, CpuLayout* layout) {
   for (int i = 0; i < config.source.num_threads; ++i) {
     LogicCore* logic_core = System::GetNextAvailableCore(layout);
