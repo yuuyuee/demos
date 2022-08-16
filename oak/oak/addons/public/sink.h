@@ -15,6 +15,9 @@ extern "C" {
 # define OAK_NAME_MAX 128
 #endif
 
+/* Sink module flags */
+#define OAK_MODULE_SINK 0x03
+
 /* struct oak_sink_module
  *
  * Sink module abstract interface.*/
@@ -23,7 +26,7 @@ struct oak_sink_module {
   char name[OAK_NAME_MAX];    /* Module name */
   int version;                /* MUST equal to OAK_VERSION */
   int flags;                  /* Module flags */
-  void* opaque;               /* Module private data */
+  void* priv_data;            /* Module private data */
 
   /* Callback to initialize the module once before any functions
    * below has been called.
@@ -31,20 +34,22 @@ struct oak_sink_module {
    * @module module object.
    * @config key/value dict that import from configuration and
    *         may used to initialize.
+   *
    * Return 0 on success or -1 if an error occurred. */
   int (*init)(struct oak_sink_module* module,
               const struct oak_dict* config);
 
-  /* Callback to write the meta to module specified the sink.
+  /* Callback to write the metadata to module specified the sink.
    *
    * @module module object.
    * @meta some key/value fileds has been saved.
+   *
    * Return 0 on success or -1 if an error occurred. */
   int (*write)(struct oak_sink_module* module,
-               const struct oak_meta* meta);
+               const struct oak_metadata* metadata);
 
-  /* Callback to free the module. */
-  void (*free)(struct oak_sink_module* module);
+  /* Callback to close the module. */
+  void (*close)(struct oak_sink_module* module);
 };
 
 #ifdef __cplusplus

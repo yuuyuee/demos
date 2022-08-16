@@ -15,6 +15,9 @@ extern "C" {
 # define OAK_NAME_MAX 128
 #endif
 
+/* Parser module flags */
+#define OAK_MODULE_PARSER 0x02
+
 /* struct oak_parser_module
  *
  * Parser module abstract interface.*/
@@ -23,43 +26,47 @@ struct oak_parser_module {
   char name[OAK_NAME_MAX];    /* Module name */
   int version;                /* MUST equal to OAK_VERSION */
   int flags;                  /* Module flags */
-  void* opaque;               /* Module private data */
+  void* priv_data;            /* Module private data */
 
-  /* Callback to initialize the module once before
-   * any functions below has been called.
+  /* Callback to initialize the module once before any functions
+   * below has been called.
    *
    * @module module object.
    * @config key/value dict that import from configuration and
    *         may used to initialize.
+   *
    * Return 0 on success or -1 if an error occurred. */
   int (*init)(struct oak_parser_module* module,
               const struct oak_dict* config);
 
-  /* Callback to parse the stream.
+  /* Callback to parsing the stream to extract the fields.
    *
    * @module module object.
    * @up_stream buffer reference the up stream.
    * @down_stream buffer reference the down stream.
    * @fields to save any pared the key/value fields.
+   *
    * Return 0 on success or -1 if an error occurred. */
   int (*parse)(struct oak_parser_module* module,
                const struct oak_buffer_ref* up_stream,
                const struct oak_buffer_ref* down_stream,
                struct oak_dict* fields);
 
-  /* Callback to parse the stream.
+  /* Callback to parsing the stream to indicate whether or not
+   * the stream should be saved.
    *
    * @module module object.
    * @up_stream buffer reference the up stream.
    * @down_stream buffer reference the down stream.
-   * Return 0 on success or -1 if an error occurred. on success the
-   * up/down stream will be saved. */
+   *
+   * Return 0 on success or -1 if an error occurred. on success
+   * the up/down stream should be saved. */
   int (*mark)(struct oak_parser_module* module,
               const struct oak_buffer_ref* up_stream,
               const struct oak_buffer_ref* down_stream);
 
-  /* Free the module. */
-  void (*free)(struct oak_parser_module* module);
+  /* Callback to close the module. */
+  void (*close)(struct oak_parser_module* module);
 };
 
 #ifdef __cplusplus

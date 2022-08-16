@@ -14,6 +14,9 @@ extern "C" {
 # define OAK_NAME_MAX 128
 #endif
 
+/* Source module flags */
+#define OAK_MODULE_SOURCE 0x01
+
 /* struct oak_source_module
  *
  * Source module abstract interface. */
@@ -22,7 +25,7 @@ struct oak_source_module {
   char name[OAK_NAME_MAX];    /* Module name */
   int version;                /* MUST equal to OAK_VERSION */
   int flags;                  /* Module flags */
-  void* opaque;               /* Module private data */
+  void* priv_data;            /* Module private data */
 
   /* Callback to initialize the object once before any functions
    * below has been called.
@@ -30,21 +33,23 @@ struct oak_source_module {
    * @module module object.
    * @config key/value dict that import from configuration and
    *         may used to initialize.
+   *
    * Return 0 on success or -1 if an error occurred. */
   int (*init)(const struct oak_source_module* module,
               const struct oak_dict* config);
 
-  /* Callback to read some meta from buffer.
+  /* Callback to read the buffer and decoded as the metadata.
    *
    * @module module object.
    * @buffer buffer shoul be read from.
+   *
    * Return 0 on success or -1 if an error occurred. */
   int (*read)(const struct oak_source_module* module,
               const struct oak_buffer_ref* buffer,
-              struct oak_meta* meta);
+              struct oak_metadata* metadata);
 
-  /* Callback to free the module. */
-  void (*free)(const struct oak_source_module* module);
+  /* Callback to close the module. */
+  void (*close)(const struct oak_source_module* module);
 };
 
 #ifdef __cplusplus

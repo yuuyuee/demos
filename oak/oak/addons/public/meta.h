@@ -10,7 +10,7 @@
 extern "C" {
 #endif
 
-struct oak_meta {
+struct oak_metadata {
   struct oak_buffer up_stream;
   struct oak_buffer down_stream;
 
@@ -22,7 +22,7 @@ struct oak_meta {
   int padding_;
 };
 
-inline void oak_meta_init(struct oak_meta* meta) {
+inline void oak_meta_init(struct oak_metadata* meta) {
   oak_buffer_init(&meta->up_stream, OAK_BUFFER_DFL_CAP);
   oak_buffer_init(&meta->down_stream, OAK_BUFFER_DFL_CAP);
   oak_dict_init(&meta->universal);
@@ -31,7 +31,7 @@ inline void oak_meta_init(struct oak_meta* meta) {
   meta->flags = 0;
 }
 
-inline void oak_meta_free(struct oak_meta* meta) {
+inline void oak_meta_free(struct oak_metadata* meta) {
   oak_buffer_free(&meta->up_stream);
   oak_buffer_free(&meta->down_stream);
   oak_dict_free(&meta->universal);
@@ -39,7 +39,7 @@ inline void oak_meta_free(struct oak_meta* meta) {
   oak_dict_free(&meta->exts);
 }
 
-inline void oak_meta_clear(struct oak_meta* meta) {
+inline void oak_meta_clear(struct oak_metadata* meta) {
   oak_buffer_clear(&meta->up_stream);
   oak_buffer_clear(&meta->down_stream);
   oak_dict_clear(&meta->universal);

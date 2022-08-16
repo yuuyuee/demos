@@ -90,10 +90,12 @@ int main(int argc, char* argv[]) {
   oak::ReadConfig(&config, proc_config.conf_file);
   oak::WriteConfig(config, proc_config.etc_dir + "/rs.write.json");
 
-  // Setup runtime logging and business logging.
+  // Setup logger.
   // TODO(YUYUE):
 
-  // Initialize runtime environment, e.g. CPU, threads.
+  // Initialize runtime environment, e.g. CPU, events, workers.
+
+  // Initialize CPU layout.
   oak::CpuLayout layout;
   oak::System::GetCpuLayout(&layout);
   assert(layout.available_cores > 0 && "Logic error");
@@ -105,12 +107,14 @@ int main(int argc, char* argv[]) {
   oak::System::SetThreadAffinity(pthread_self(), logic_core->mask);
   oak::System::ThreadYield();
 
+  // Initialize events receiver.
+
+  // Recover events that has occurred.
+
+  // creates worker thread.
   oak::CreateWorker(config, &layout);
 
-  // Waiting for connection of the worker process.
-
-  // Initialize event receiver and waiting for task event of the outside.
-
+  // Waiting for task event of the outside.
   while (true) {
     sleep(2);
   }
