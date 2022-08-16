@@ -8,8 +8,6 @@
 #include <assert.h>
 #include <stddef.h>
 
-#include "oak/addons/public/compiler.h"
-#include "oak/addons/public/platform.h"
 #include "oak/addons/public/buffer.h"
 
 #ifdef __cplusplus
@@ -20,7 +18,8 @@ extern "C" {
  *
  * Used to storing key:value pairs. */
 
-#define OAK_DICT_DFL_CAP 128
+#define OAK_BUFFER_DFL_CAP 128
+#define OAK_DICT_DFL_CAP 64
 
 struct oak_dict_entry {
   struct oak_buffer key;
@@ -38,19 +37,25 @@ inline void oak_dict_entry_free(struct oak_dict_entry* entry) {
 }
 
 struct oak_dict {
-  struct oak_dict_entry* elems[OAK_DICT_DFL_CAP];
+  struct oak_dict_entry elems[OAK_DICT_DFL_CAP];
   size_t size;
 };
 
-inline void oak_dict_init(struct dict* dict) {
-  /*  */
+inline void oak_dict_init(struct oak_dict* dict) {
+  for (size_t i = 0; i < OAK_DICT_DFL_CAP; ++i)
+    oak_dict_entry_init(&(dict->elems[i]));
+  dict->size = 0;
 }
 
-inline void oak_dict_free(struct dict* dict) {
-  /*  */
+inline void oak_dict_free(struct oak_dict* dict) {
+  for (size_t i = 0; i < OAK_DICT_DFL_CAP; ++i)
+    oak_dict_entry_free(&(dict->elems[i]));
+  dict->size = 0;
 }
 
-
+inline void oak_dict_clear(struct oak_dict* dict) {
+  dict->size = 0;
+}
 
 #ifdef __cplusplus
 }

@@ -3,25 +3,48 @@
 #ifndef OAK_ADDONS_PUBLIC_SOURCE_H_
 #define OAK_ADDONS_PUBLIC_SOURCE_H_
 
-#include "oak/addons/public/compiler.h"
-#include "oak/addons/public/platform.h"
 #include "oak/addons/public/buffer.h"
+#include "oak/addons/public/dict.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-struct source_context {
-  char name[NAME_MAX];
-  char work_directory[PATH_MAX];
-  void* args;
-};
+#ifndef OAK_NAME_MAX
+# define OAK_NAME_MAX 128
+#endif
 
-struct source_ops {
-  int (*open)(source_context*);
-  ssize_t (*read)(source_context*, oak_buffer* buffer);
-  void (*close)(source_context*);
-  unsigned int (version)();
+/* struct oak_source_module
+ *
+ * Source module abstract interface. */
+
+struct oak_source_module {
+  char name[OAK_NAME_MAX];    /* Module name */
+  int version;                /* MUST equal to OAK_VERSION */
+  int flags;                  /* Module flags */
+  void* opaque;               /* Module private data */
+
+  /* Callback to initialize the object once before any functions
+   * below has been called.
+   *
+   * @module module object.
+   * @config key/value dict that import from configuration and
+   *         may used to initialize.
+   * Return 0 on success or -1 if an error occurred. */
+  int (*init)(const struct oak_source_module* module,
+              const struct oak_dict* config);
+
+  /* Callback to read some meta from buffer.
+   *
+   * @module module object.
+   * @buffer buffer shoul be read from.
+   * Return 0 on success or -1 if an error occurred. */
+  int (*read)(const struct oak_source_module* module,
+              const struct oak_buffer_ref* buffer,
+              struct oak_meta* meta);
+
+  /* Callback to free the module. */
+  void (*free)(const struct oak_source_module* module);
 };
 
 #ifdef __cplusplus

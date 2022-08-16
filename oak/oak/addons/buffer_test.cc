@@ -177,10 +177,10 @@ TEST(OAK_PIECE_TEST, Compare) {
   oak_buffer_assign_str(&b1, foo, strlen(foo));
   oak_buffer_assign_str(&b2, bar, strlen(bar));
 
-  struct oak_piece p1 = oak_as_piece_str(foo, strlen(foo));
-  struct oak_piece p2 = oak_as_piece_str(bar, strlen(bar));
-  struct oak_piece p3 = oak_as_piece(&b1);
-  struct oak_piece p4 = oak_as_piece(&b2);
+  struct oak_buffer_ref p1 = oak_as_piece_str(foo, strlen(foo));
+  struct oak_buffer_ref p2 = oak_as_piece_str(bar, strlen(bar));
+  struct oak_buffer_ref p3 = oak_as_piece(&b1);
+  struct oak_buffer_ref p4 = oak_as_piece(&b2);
   EXPECT_NE(oak_piece_compare(p1, p2), 0);
   EXPECT_NE(oak_piece_compare(p3, p4), 0);
   EXPECT_EQ(oak_piece_compare(p1, p3), 0);

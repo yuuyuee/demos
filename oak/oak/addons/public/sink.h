@@ -11,18 +11,40 @@
 extern "C" {
 #endif
 
-struct oak_sink_context {
-  char name[NAME_MAX];
-  char work_directory[PATH_MAX];
-  void* args;
-};
+#ifndef OAK_NAME_MAX
+# define OAK_NAME_MAX 128
+#endif
 
-struct oak_sink_ops {
-  int (*open)(struct oak_sink_context* ctx);
-  ssize_t (*write)(struct oak_sink_context* ctx,
-                   const struct oak_meta_data* meta);
-  void (*close)(struct oak_sink_context* ctx);
-  unsigned int (version)();
+/* struct oak_sink_module
+ *
+ * Sink module abstract interface.*/
+
+struct oak_sink_module {
+  char name[OAK_NAME_MAX];    /* Module name */
+  int version;                /* MUST equal to OAK_VERSION */
+  int flags;                  /* Module flags */
+  void* opaque;               /* Module private data */
+
+  /* Callback to initialize the module once before any functions
+   * below has been called.
+   *
+   * @module module object.
+   * @config key/value dict that import from configuration and
+   *         may used to initialize.
+   * Return 0 on success or -1 if an error occurred. */
+  int (*init)(struct oak_sink_module* module,
+              const struct oak_dict* config);
+
+  /* Callback to write the meta to module specified the sink.
+   *
+   * @module module object.
+   * @meta some key/value fileds has been saved.
+   * Return 0 on success or -1 if an error occurred. */
+  int (*write)(struct oak_sink_module* module,
+               const struct oak_meta* meta);
+
+  /* Callback to free the module. */
+  void (*free)(struct oak_sink_module* module);
 };
 
 #ifdef __cplusplus

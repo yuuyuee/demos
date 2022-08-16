@@ -10,9 +10,6 @@
 #include <string.h>
 #include <limits.h>
 
-#include "oak/addons/public/compiler.h"
-#include "oak/addons/public/platform.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -21,19 +18,18 @@ extern "C" {
  *
  * Used to create a buffer object to represent raw memory.*/
 
-#define OAK_BUFFER_DFL_CAP 128
-
 struct oak_buffer {
   void* ptr;
   size_t size;
+  void* padding_;
   size_t capacity;
-  void* reserve;
 };
 
 /* Initialize the object.
  * Note: which @buffer object must be an uninitialized object. */
 inline void oak_buffer_init(struct oak_buffer* buffer, size_t capacity) {
   buffer->size = 0;
+  buffer->padding_ = (void*) 0x45444F4344414544UL;   // NOLINT
   buffer->capacity = capacity;
   buffer->ptr = NULL;
   if (buffer->capacity > 0) {
@@ -129,42 +125,43 @@ inline void oak_buffer_append_str(struct oak_buffer* lhs,
 inline int oak_buffer_compare(const oak_buffer* lhs,
                               const oak_buffer* rhs) {
   int r0 = memcmp(lhs->ptr, rhs->ptr, lhs->size);
-  long int r1 = lhs->size - rhs->size;
+  long int r1 = lhs->size - rhs->size;  // NOLINT
   if (r1 > INT_MAX) r1 = INT_MAX;
   else if (r1 < INT_MIN) r1 = INT_MIN;
   return r0 != 0 ? r0 : r1 != 0 ? r1 : 0;
 }
 
-/* struct oak_piece, oak_const_piece
+/* struct oak_buffer_ref
  *
  * like as oak_buffer but it does not own the underlying data.
  * and it does not modify the underlying data. */
 
-struct oak_piece {
+struct oak_buffer_ref {
   const void* ptr;
   size_t size;
 };
 
-#define OAK_MEMBER_SIZE(type, field) (sizeof(((type*) 0)->field))
+#define OAK_MEMBER_SIZE(type, field) (sizeof(((type*) 0)->field))  // NOLINT
 
 /* Create an referrence from the oak_buffer. */
-inline struct oak_piece oak_as_piece(const struct oak_buffer* buffer) {
+inline struct oak_buffer_ref oak_as_buffer_ref(
+    const struct oak_buffer* buffer) {
   assert(offsetof(struct oak_buffer, ptr) ==
-         offsetof(struct oak_piece, ptr) &&
+         offsetof(struct oak_buffer_ref, ptr) &&
          OAK_MEMBER_SIZE(struct oak_buffer, ptr) ==
-         OAK_MEMBER_SIZE(struct oak_piece, ptr));
+         OAK_MEMBER_SIZE(struct oak_buffer_ref, ptr));
   assert(offsetof(struct oak_buffer, size) ==
-         offsetof(struct oak_piece, size) &&
+         offsetof(struct oak_buffer_ref, size) &&
          OAK_MEMBER_SIZE(struct oak_buffer, size) ==
-         OAK_MEMBER_SIZE(struct oak_piece, size));
+         OAK_MEMBER_SIZE(struct oak_buffer_ref, size));
 
-  return *(const struct oak_piece*) buffer;
+  return *(const struct oak_buffer_ref*) buffer;
 }
 
 /* Create an referrence from the c-style string. */
-inline struct oak_piece
-oak_as_piece_str(const char* str, size_t size) {
-  const struct oak_piece piece = {
+inline struct oak_buffer_ref
+oak_as_buffer_ref_str(const char* str, size_t size) {
+  const struct oak_buffer_ref piece = {
     .ptr = str,
     .size = size
   };
@@ -172,17 +169,17 @@ oak_as_piece_str(const char* str, size_t size) {
 }
 
 /* Compare equal between @lhs and @rhs. */
-inline int oak_piece_compare(const oak_piece lhs,
-                             const oak_piece rhs) {
+inline int oak_buffer_ref_compare(const oak_buffer_ref lhs,
+                                  const oak_buffer_ref rhs) {
   int r0 = memcmp(lhs.ptr, rhs.ptr, lhs.size);
-  long int r1 = lhs.size - rhs.size;
+  long int r1 = lhs.size - rhs.size;  // NOLINT
   if (r1 > INT_MAX) r1 = INT_MAX;
   else if (r1 < INT_MIN) r1 = INT_MIN;
   return r0 != 0 ? r0 : r1 != 0 ? r1 : 0;
 }
 
 /* Test whether it is empty. */
-inline int oak_piece_empty(const struct oak_piece piece) {
+inline int oak_buffer_ref_empty(const struct oak_buffer_ref piece) {
   return piece.size == 0;
 }
 
