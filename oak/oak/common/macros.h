@@ -13,6 +13,7 @@ template <typename T, size_t N, typename R = char (&)[N]>
 R ArraySizeHelper(const T (&)[N]);
 }  // namespace macros_internal
 }  // namespace oak
+
 #include "oak/addons/public/compiler.h"
 
 // OAK_HAS_ATTRIBUTE()
@@ -110,7 +111,10 @@ R ArraySizeHelper(const T (&)[N]);
 
 #include "oak/addons/public/platform.h"
 
-#define OAK_CACHELINE_SIZE 64
+#ifndef OAK_CACHELINE_SIZE
+# define OAK_CACHELINE_SIZE 64
+#endif
+
 #define OAK_CACHELINE_ALIGNED OAK_ATTR_ALIGNED(OAK_CACHELINE_SIZE)
 
 // IGNORE_UNUNSED()

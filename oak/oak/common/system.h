@@ -8,24 +8,28 @@
 
 #include <string>
 #include <functional>
+#include <atomic>
 
 namespace oak {
 
 #define OAK_MAX_NUMA_NODES (8)
 #define OAK_MAX_LOGIC_CORES (128)
+#ifndef OAK_CACHELINE_SIZE
+# define OAK_CACHELINE_SIZE (64)
+#endif
 
-struct LogicCore {
+struct alignas(OAK_CACHELINE_SIZE) LogicCore {
   bool enable;
-  bool lock;
+  std::atomic<bool> lock;
   int logic_core_id;
   cpu_set_t mask;
   int socket_id;
 };
 
-// struct CpuLayout {
-//   SocketNode socket_node[OAK_MAX_NUMA_NODES];
-//   LogicCore logic_core[OAK_MAX_LOGIC_CORES];
-// };
+struct CpuLayout {
+  int available_cores;
+  LogicCore logic_core[OAK_MAX_LOGIC_CORES];
+};
 
 struct ThreadArguments {
   std::string name;
@@ -57,13 +61,16 @@ struct System {
 
   // Initialize current CPU layout and returns the number of available
   // logic cores.
-  static int GetCpuLayout(LogicCore* logic_core, int size);
+  static void GetCpuLayout(CpuLayout* layout);
+
+  // Get the point reference next the available core.
+  static LogicCore* GetNextAvailableCore(CpuLayout* layout, int core_hint = -1);
 
   // Create a new thread named @name, starts execution by invoking
   // @routine running in core @favor. if @name is empty meaning that
   // do not setting the name for the new thread. if @favor is empty
   // meaning that do not setting the CPU affinity for the new thread.
-  static void CreateThread(const ThreadArguments& thread_args);
+  static pthread_t CreateThread(const ThreadArguments& thread_args);
 
   // Setup the affinity of the thread.
   static void SetThreadAffinity(pthread_t id, const cpu_set_t& mask);

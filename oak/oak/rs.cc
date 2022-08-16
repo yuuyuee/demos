@@ -43,7 +43,7 @@ bool CreateGuardFile(const std::string& guard_file) {
 }  // anonymous namespace
 
 namespace oak {
-void CreateWorker(const Config& config, LogicCore* core, int size);
+void CreateWorker(const Config& config, CpuLayout* layout);
 }  // namespace oak
 
 int main(int argc, char* argv[]) {
@@ -94,32 +94,18 @@ int main(int argc, char* argv[]) {
   // TODO(YUYUE):
 
   // Initialize runtime environment, e.g. CPU, threads.
-  oak::LogicCore logic_core[OAK_MAX_LOGIC_CORES];
-  int avail_cores =
-      oak::System::GetCpuLayout(logic_core, OAK_MAX_LOGIC_CORES);
-  assert(avail_cores > 0 && "Logic error");
+  oak::CpuLayout layout;
+  oak::System::GetCpuLayout(&layout);
+  assert(layout.available_cores > 0 && "Logic error");
 
   int current_core = oak::System::GetCurrentCpu();
-  for (int i = 0; i < OAK_MAX_LOGIC_CORES; ++i) {
-    if (logic_core[i].logic_core_id == current_core) {
-      assert(logic_core[i].enable && "Logic error");
-      logic_core[i].lock = true;
-      --avail_cores;
-      oak::System::SetThreadAffinity(pthread_self(), logic_core[i].mask);
-      oak::System::ThreadYield();
-      OAK_INFO("master core %d\n", current_core);
-    }
-  }
+  oak::LogicCore* logic_core =
+      oak::System::GetNextAvailableCore(&layout, current_core);
+  assert(logic_core != nullptr && "Logic error");
+  oak::System::SetThreadAffinity(pthread_self(), logic_core->mask);
+  oak::System::ThreadYield();
 
-  int required_cores = config.source.num_threads +
-                       config.parser.num_threads +
-                       config.sink.num_threads;
-  if (required_cores > avail_cores) {
-    OAK_ERROR("Not enough available CPU\n");
-    return -1;
-  }
-
-  oak::CreateWorker(config, logic_core, OAK_MAX_LOGIC_CORES);
+  oak::CreateWorker(config, &layout);
 
   // Waiting for connection of the worker process.
 

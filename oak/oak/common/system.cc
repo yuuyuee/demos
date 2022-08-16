@@ -81,11 +81,12 @@ void InitLogicCore(LogicCore* logic_core, int size) {
 #define OAK_SYS_NODE_DIR "/sys/devices/system/node/"
 #define OAK_SYS_CORE_ID "/topology/core_id"
 
-int System::GetCpuLayout(LogicCore* logic_core, int size) {
-  InitLogicCore(logic_core, size);
-  int available_cores = 0;
+void System::GetCpuLayout(CpuLayout* layout) {
+  InitLogicCore(layout->logic_core, OAK_MAX_LOGIC_CORES);
+  layout->available_cores = 0;
+  LogicCore* logic_core = layout->logic_core;
 
-  for (int i = 0; i < size; ++i) {
+  for (int i = 0; i < OAK_MAX_LOGIC_CORES; ++i) {
     std::string path = Format(OAK_SYS_CPU_DIR "cpu%d" OAK_SYS_CORE_ID, i);
     if (!IsExists(path))
       continue;
@@ -101,10 +102,27 @@ int System::GetCpuLayout(LogicCore* logic_core, int size) {
       logic_core[i].socket_id = j;
       break;
     }
-    ++available_cores;
+    ++layout->available_cores;
   }
+}
 
-  return available_cores;
+LogicCore* System::GetNextAvailableCore(CpuLayout* layout, int core_hint) {
+  for (int i = 0; i < OAK_MAX_LOGIC_CORES; ++i) {
+    LogicCore* logic_core = &(layout->logic_core[i]);
+    if (!logic_core->enable)
+      continue;
+
+    if (core_hint >= 0 && logic_core->logic_core_id != core_hint)
+      continue;
+
+    bool locked = false;
+    if (!logic_core->lock.compare_exchange_strong(
+        locked, true, std::memory_order_acq_rel, std::memory_order_relaxed)) {
+      continue;
+    }
+    return logic_core;
+  }
+  return nullptr;
 }
 
 namespace {
@@ -135,7 +153,7 @@ void* StartRoutine(void* args) {
 
 }  // anonymous namespace
 
-void System::CreateThread(const ThreadArguments& thread_args) {
+pthread_t System::CreateThread(const ThreadArguments& thread_args) {
   assert(thread_args.routine && "Invalid argument");
 
   pthread_attr_t attr;
@@ -151,6 +169,8 @@ void System::CreateThread(const ThreadArguments& thread_args) {
   err = pthread_create(&pid, &attr, StartRoutine,
       const_cast<void*>(static_cast<const void*>(args)));
   PTHREAD_ERROR(err, "pthread_create() failed");
+
+  return pid;
 }
 
 void System::SetThreadAffinity(pthread_t id, const cpu_set_t& mask) {

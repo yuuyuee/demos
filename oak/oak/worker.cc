@@ -3,16 +3,19 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "oak/config.h"
 #include "oak/common/format.h"
 #include "oak/common/system.h"
+#include "oak/common/throw_delegate.h"
+#include "oak/logging/logging.h"
 
 namespace oak {
 
 struct WorkerContext {
   pthread_t self;
-  LogicCore* logic_core;
+  const LogicCore* logic_core;
   void* caller;
   void* message;
 };
@@ -30,33 +33,36 @@ LogicCore* GetNextAvailableCore(LogicCore* core, int size) {
   return nullptr;
 }
 
-void CreateWorker(const Config& config, LogicCore* core, int size) {
+void CreateWorker(const Config& config, CpuLayout* layout) {
   for (int i = 0; i < config.source.num_threads; ++i) {
-    LogicCore* avail_core = GetNextAvailableCore(core, size);
-    avail_core->lock = true;
+    LogicCore* logic_core = System::GetNextAvailableCore(layout);
+    if (logic_core == nullptr)
+      ThrowStdOutOfRange("No enough available CPU");
     ThreadArguments args;
     args.name = oak::Format("source-%d", i);
-    args.favor = avail_core->mask;
+    args.favor = logic_core->mask;
     args.routine = DummyFun;
     oak::System::CreateThread(args);
   }
 
   for (int i = 0; i < config.parser.num_threads; ++i) {
-    LogicCore* avail_core = GetNextAvailableCore(core, size);
-    avail_core->lock = true;
+    LogicCore* logic_core = System::GetNextAvailableCore(layout);
+    if (logic_core == nullptr)
+      ThrowStdOutOfRange("No enough available CPU");
     ThreadArguments args;
     args.name = oak::Format("parser-%d", i);
-    args.favor = avail_core->mask;
+    args.favor = logic_core->mask;
     args.routine = DummyFun;
     oak::System::CreateThread(args);
   }
 
   for (int i = 0; i < config.sink.num_threads; ++i) {
-    LogicCore* avail_core = GetNextAvailableCore(core, size);
-    avail_core->lock = true;
+    LogicCore* logic_core = System::GetNextAvailableCore(layout);
+    if (logic_core == nullptr)
+      ThrowStdOutOfRange("No enough available CPU");
     ThreadArguments args;
     args.name = oak::Format("sink-%d", i);
-    args.favor = avail_core->mask;
+    args.favor = logic_core->mask;
     args.routine = DummyFun;
     oak::System::CreateThread(args);
   }
