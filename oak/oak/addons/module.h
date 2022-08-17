@@ -44,11 +44,12 @@ enum LangType {
 };
 
 struct Module {
-  int id;
   bool enable;
+  std::atomic<int> ref_count;
+
+  int id;
   char name[OAK_NAME_MAX];
   char path[PATH_MAX];
-
   ModuleType type;
   LangType lang_type;
 
@@ -61,7 +62,6 @@ struct Module {
     const struct oak_event_module* event;
   };
   void* dl_handler;
-  std::atomic<int> ref_count;
 
   // For python script
   std::string script;

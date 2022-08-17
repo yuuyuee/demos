@@ -32,7 +32,7 @@ void InitModule(Module* module) {
   module->type = MODULE_TYPE_UNKNOWN;
   module->lang_type = LANG_TYPE_UNKNOWN;
   module->header = nullptr;
-  module->ref_count.store(0, std::memory_order_relaxed);
+  module->ref_count.store(0);
   module->dl_handler = nullptr;
 }
 
@@ -58,7 +58,6 @@ int OpenCppModule(Module* module, int id,
   }
 
   module->id = id;
-  module->enable = true;
   memcpy(module->name, symbol.c_str(),
       symbol.size() < OAK_NAME_MAX ? symbol.size() : OAK_NAME_MAX);
   memcpy(module->path, path.c_str(),
@@ -66,7 +65,6 @@ int OpenCppModule(Module* module, int id,
   module->type = static_cast<ModuleType>(header->flags);
   module->lang_type = LANG_TYPE_C_CPP;
   module->dl_handler = handler;
-  module->ref_count.store(1, std::memory_order_relaxed);
   return 0;
 }
 
@@ -81,13 +79,16 @@ int OpenModule(Module* module, int id,
                const string& path) {
   assert(!symbol.empty() && "invalid symbol");
 
+  int ret = -1;
   if (path.empty() || StringPiece(path).ends_with(".so")) {
-    return OpenCppModule(module, id, symbol, path.c_str());
+    ret = OpenCppModule(module, id, symbol, path.c_str());
   } else if (StringPiece(path).ends_with(".py")) {
-    return OpenCppModule(module, id, symbol, path.c_str());
-  } else {
-    return -1;
+    ret = OpenCppModule(module, id, symbol, path.c_str());
   }
+
+  if (ret == 0)
+    module->enable = true;
+  return ret;
 }
 
 void CloseModule(Module* module) {
