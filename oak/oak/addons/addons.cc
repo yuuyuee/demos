@@ -5,15 +5,7 @@
 #include <unistd.h>
 
 namespace oak {
-static_assert(offsetof(ModuleHeader, priv_data) ==
-              offsetof(oak_source_module, priv_data),
-              "logic error");
-static_assert(offsetof(ModuleHeader, priv_data) ==
-              offsetof(oak_parser_module, priv_data),
-              "logic error");
-static_assert(offsetof(ModuleHeader, priv_data) ==
-              offsetof(oak_sink_module, priv_data),
-              "logic error");
+
 
 void SourceRoutine(SourceContext* context) {
   // TODO(YUYUE):

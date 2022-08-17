@@ -13,8 +13,8 @@
 #include "oak/common/debug.h"
 #include "oak/common/system.h"
 #include "oak/logging/logging.h"
+#include "oak/common/throw_delegate.h"
 #include "oak/config.h"
-#include "oak/event/server.h"
 
 namespace {
 
@@ -110,7 +110,33 @@ int main(int argc, char* argv[]) {
   // Recover events that has occurred.
 
   // creates worker thread.
-  oak::CreateWorker(config, &layout);
+  for (int i = 0; i < config.source.num_threads; ++i) {
+    oak::LogicCore* logic_core = oak::System::GetNextAvailableCore(&layout);
+    if (logic_core == nullptr)
+      oak::ThrowStdOutOfRange("No enough available CPU");
+    std::string name = oak::Format("source-%d", i);
+    oak::System::CreateThread(name, logic_core->mask,
+                              []() { while (true) sleep(2); });
+  }
+
+  for (int i = 0; i < config.parser.num_threads; ++i) {
+    oak::LogicCore* logic_core = oak::System::GetNextAvailableCore(&layout);
+    if (logic_core == nullptr)
+      oak::ThrowStdOutOfRange("No enough available CPU");
+    std::string name = oak::Format("parser-%d", i);
+    oak::System::CreateThread(name, logic_core->mask,
+                              []() { while (true) sleep(2); });
+  }
+
+  for (int i = 0; i < config.sink.num_threads; ++i) {
+    oak::LogicCore* logic_core = oak::System::GetNextAvailableCore(&layout);
+    if (logic_core == nullptr)
+      oak::ThrowStdOutOfRange("No enough available CPU");
+    std::string name = oak::Format("sink-%d", i);
+    oak::System::CreateThread(name, logic_core->mask,
+                              []() { while (true) sleep(2); });
+  }
+
 
   // Waiting for task event of the outside.
   while (true) {

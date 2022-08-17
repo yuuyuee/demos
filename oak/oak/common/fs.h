@@ -11,6 +11,9 @@ namespace oak {
 // Return directory name of the path.
 std::string DirectoryName(const std::string& path);
 
+// Return file name of the path.
+std::string Basename(const std::string& path);
+
 // Return current working directory.
 std::string GetCurrentDirectory();
 

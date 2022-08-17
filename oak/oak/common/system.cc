@@ -126,22 +126,32 @@ LogicCore* System::GetNextAvailableCore(CpuLayout* layout, int core_hint) {
 }
 
 namespace {
+struct RoutineArgs {
+  std::string name;
+  cpu_set_t favor;
+  std::function<void()> fn;
+
+  RoutineArgs(const std::string& name,
+              const cpu_set_t& favor,
+              std::function<void()> fn)
+      : name(name), favor(favor), fn(std::move(fn)) {}
+};
+
 void* StartRoutine(void* args) {
   SetSignalAltStack();
 
-  const ThreadArguments thread_args =
-      *reinterpret_cast<ThreadArguments*>(args);
-  delete reinterpret_cast<ThreadArguments*>(args);
+  const RoutineArgs rout_args(*reinterpret_cast<RoutineArgs*>(args));
+  delete reinterpret_cast<RoutineArgs*>(args);
 
-  if (!thread_args.name.empty())
-    oak::System::SetThreadName(pthread_self(), thread_args.name);
+  if (!rout_args.name.empty())
+    oak::System::SetThreadName(pthread_self(), rout_args.name);
 
-  if (CPU_COUNT(&thread_args.favor) > 0) {
-    oak::System::SetThreadAffinity(pthread_self(), thread_args.favor);
+  if (CPU_COUNT(&rout_args.favor) > 0) {
+    oak::System::SetThreadAffinity(pthread_self(), rout_args.favor);
     oak::System::ThreadYield();
   }
 
-  thread_args.routine();
+  rout_args.fn();
   return 0;
 }
 
@@ -153,8 +163,10 @@ void* StartRoutine(void* args) {
 
 }  // anonymous namespace
 
-pthread_t System::CreateThread(const ThreadArguments& thread_args) {
-  assert(thread_args.routine && "Invalid argument");
+pthread_t System::CreateThread(const std::string& name,
+                               const cpu_set_t& favor,
+                               std::function<void()> fn) {
+  assert(fn && "Invalid argument");
 
   pthread_attr_t attr;
   int err = pthread_attr_init(&attr);
@@ -164,8 +176,7 @@ pthread_t System::CreateThread(const ThreadArguments& thread_args) {
   PTHREAD_ERROR(err, "pthread_attr_setdetachstate() failed")
 
   pthread_t pid;
-  ThreadArguments* args = new ThreadArguments;
-  *args = thread_args;
+  RoutineArgs* args = new RoutineArgs(name, favor, std::move(fn));
   err = pthread_create(&pid, &attr, StartRoutine,
       const_cast<void*>(static_cast<const void*>(args)));
   PTHREAD_ERROR(err, "pthread_create() failed");

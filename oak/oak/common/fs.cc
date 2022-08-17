@@ -38,6 +38,11 @@ std::string DirectoryName(const std::string& path) {
   return pos ? std::string(real_path, pos - real_path) : ".";
 }
 
+std::string Basename(const std::string& path) {
+  auto pos = path.rfind('/');
+  return pos != std::string::npos ? path.substr(pos) : path;
+}
+
 std::string GetCurrentDirectory() {
   char path[PATH_MAX];
   const char* p = getcwd(path, PATH_MAX);

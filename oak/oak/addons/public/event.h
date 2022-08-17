@@ -1,24 +1,24 @@
 /* Copyright 2022 The Oak Authors. */
 
-#ifndef OAK_ADDONS_PUBLIC_SINK_H_
-#define OAK_ADDONS_PUBLIC_SINK_H_
+#ifndef OAK_ADDONS_PUBLIC_EVENT_H_
+#define OAK_ADDONS_PUBLIC_EVENT_H_
 
 #include "oak/addons/public/version.h"
+#include "oak/addons/public/buffer.h"
 #include "oak/addons/public/dict.h"
-#include "oak/addons/public/metadata.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /* Sink module flags */
-#define OAK_MODULE_SINK 0x03
+#define OAK_MODULE_EVENT 0x04
 
-/* struct oak_sink_module
+/* struct oak_event_module
  *
- * Sink module abstract interface.*/
+ * Event module abstract interface.*/
 
-struct oak_sink_module {
+struct oak_event_module {
   int version;        /* MUST equal to OAK_VERSION */
   int flags;          /* Module flags */
 
@@ -31,13 +31,19 @@ struct oak_sink_module {
    * Return module context on success or NULL if an error occurred. */
   int (*init)(const struct oak_dict* config);
 
-  /* Callback to write the metadata to module specified the sink.
+  /* Callback to receive the event from module.
    *
    * @module module context.
-   * @meta some key/value fileds has been saved.
+   * @buffer some event has been received.
    * Return 0 on success or -1 if an error occurred. */
-  int (*write)(void* context,
-               const struct oak_metadata* metadata);
+  int (*receive)(void* context, struct oak_buffer* buffer);
+
+  /* Callback to report the event to module.
+   *
+   * @module module context.
+   * @buffer some event has been reported.
+   * Return 0 on success or -1 if an error occurred. */
+  int (*report)(void* context, const struct oak_buffer* buffer);
 
   /* Callback to close the module context. */
   void (*close)(void* context);
@@ -47,4 +53,4 @@ struct oak_sink_module {
 }
 #endif
 
-#endif  /* OAK_ADDONS_PUBLIC_SINK_H_ */
+#endif  /* OAK_ADDONS_PUBLIC_EVENT_H_ */

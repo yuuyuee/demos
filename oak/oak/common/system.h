@@ -32,17 +32,6 @@ struct CpuLayout {
   LogicCore logic_core[OAK_MAX_LOGIC_CORES];
 };
 
-struct ThreadArguments {
-  std::string name;
-  cpu_set_t favor;
-  std::function<void()> routine;
-
-  // ThreadArguments(const std::string& name,
-  //                 cpu_set_t favor,
-  //                 std::function<void()> routine)
-  //     : name(name), favor(favor), routine(std::move(routine)) {}
-};
-
 struct System {
   // Returns the native thread identification.
   static pid_t GetThreadId();
@@ -76,7 +65,9 @@ struct System {
   // @routine running in core @favor. if @name is empty meaning that
   // do not setting the name for the new thread. if @favor is empty
   // meaning that do not setting the CPU affinity for the new thread.
-  static pthread_t CreateThread(const ThreadArguments& thread_args);
+  static pthread_t CreateThread(const std::string& name,
+                                const cpu_set_t& favor,
+                                std::function<void()> fn);
 
   // Setup the affinity of the thread.
   static void SetThreadAffinity(pthread_t id, const cpu_set_t& mask);

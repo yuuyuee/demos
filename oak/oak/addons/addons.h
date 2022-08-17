@@ -5,58 +5,56 @@
 
 #include <limits.h>
 #include <pthread.h>
-#include <type_traits>
+
 #include <atomic>
+#include <string>
 #include <unordered_map>
 
 #include "oak/common/ring.h"
 #include "oak/common/macros.h"
-#include "oak/addons/public/parser.h"
-#include "oak/addons/public/source.h"
-#include "oak/addons/public/sink.h"
+#include "oak/addons/module.h"
+#include "oak/config.h"
 
+namespace oak {
+using Dict = std::unordered_map<std::string, std::string>;
 
-extern "C" {
-
-// OAK module common header is useful to identify the types of
-// the module when it should be loading.
-struct oak_module {
-  char name[OAK_NAME_MAX];
-  int version;
-  int flag;
+struct ModuleContext {
+  const Module* module;
+  Dict config;
   void* priv_data;
 };
 
-}   // extern "C"
+class alignas(OAK_CACHELINE_SIZE) SourceRoutine {
+ public:
+  SourceRoutine();
 
-namespace oak {
+  void Update(const Module& module, const Dict& config);
+  void operator()() {}
 
-// Module language type
-enum LangType {
-  LANG_TYPE_C_CPP = 0,
-  LANG_TYPE_PYTHON = 1,
+ private:
+  std::unordered_map<std::string, std::string> config_;
 };
 
-template <typename Module>
-struct IsModule: std::false_type {};
+class alignas(OAK_CACHELINE_SIZE) ParserRoutine {
+ public:
+  ParserRoutine();
 
-template <> struct IsModule<oak_source_module>: std::true_type {};
-template <> struct IsModule<oak_parser_module>: std::true_type {};
-template <> struct IsModule<oak_sink_module>: std::true_type {};
+  void operator()() {}
 
-// There template must is one of the following type:
-// oak_source_module, oak_parser_module, oak_sink_module
-template <typename Module,
-          typename = std::enable_if<IsModule<Module>::value>>
-struct ModuleWrapper {
-  int id;
-  char path[PATH_MAX];
-  LangType lang_type;
+ private:
 
-  // For c/c++ dynamic library
-  Module module;
-  void* dl_handler;
 };
+
+class alignas(OAK_CACHELINE_SIZE) SinkRoutine {
+ public:
+  SinkRoutine();
+
+  void operator()() {}
+
+ private:
+
+};
+
 
 enum StopFlags {
   KEEP_RUNNING = 0,
@@ -65,16 +63,9 @@ enum StopFlags {
 };
 
 // Routine context.
-struct alignas(OAK_CACHELINE_SIZE) SourceContext {
-  using Module = ModuleWrapper<oak_source_module>;
-
-  std::atomic<int> flags;
-  std::unordered_map<int, Module> modules;
-  pthread_spinlock_t module_lock;
-};
 
 struct alignas(OAK_CACHELINE_SIZE) ParserContext {
-  using Module = ModuleWrapper<oak_parser_module>;
+  using Module = ModuleWrapper<oak_module_parser>;
 
   std::atomic<int> flags;
 
@@ -88,23 +79,7 @@ struct alignas(OAK_CACHELINE_SIZE) ParserContext {
   pthread_spinlock_t metrics_lock;
 };
 
-struct alignas(OAK_CACHELINE_SIZE) SinkContext {
-  using Module = ModuleWrapper<oak_sink_module>;
 
-  pthread_t pid;
-  std::atomic<int> flags;
-  std::unordered_map<int, Module> modules;
-  pthread_spinlock_t module_lock;
-};
-
-// Source module routine.
-void SourceRoutine(SourceContext* context);
-
-// Parser module routine.
-void ParserRoutine(ParserContext* context);
-
-// Sink module routine.
-void SinkRoutine(SinkContext* context);
 
 }  // namespace oak
 
