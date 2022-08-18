@@ -26,13 +26,11 @@ static_assert(offsetof(oak_common_header, flags) ==
 
 void InitModule(Module* module) {
   module->id = -1;
-  module->enable = false;
   module->name[0] = '\0';
   module->path[0] = '\0';
   module->type = MODULE_TYPE_UNKNOWN;
   module->lang_type = LANG_TYPE_UNKNOWN;
   module->header = nullptr;
-  module->ref_count.store(0);
   module->dl_handler = nullptr;
 }
 
@@ -85,23 +83,14 @@ int OpenModule(Module* module, int id,
   } else if (StringPiece(path).ends_with(".py")) {
     ret = OpenCppModule(module, id, symbol, path.c_str());
   }
-
-  if (ret == 0)
-    module->enable = true;
   return ret;
 }
 
 void CloseModule(Module* module) {
-  int ref_count = 1;
-  while (!module->ref_count.compare_exchange_strong(
-      ref_count, 0, std::memory_order_acq_rel, std::memory_order_relaxed)) {
-    ref_count = 1;
-  }
   const char* err = dlerror();
   int ret = dlclose(module->dl_handler);
-  if (ret) {
+  if (ret != 0)
     OAK_ERROR("dlclose() failed: %s\n", dlerror());
-  }
-  module->enable = false;
 }
+
 }  // namespace oak

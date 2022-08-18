@@ -6,26 +6,13 @@
 
 namespace oak {
 
+SourceRoutine::SourceRoutine() {}
+SourceRoutine::~SourceRoutine() {}
 
-void SourceRoutine(SourceContext* context) {
-  // TODO(YUYUE):
+ParserRoutine::ParserRoutine() {}
+ParserRoutine::~ParserRoutine() {}
 
-  while (true)
-    sleep(2);
-}
-
-void ParserRoutine(ParserContext* context) {
-  // TODO(YUYUE):
-
-  while (true)
-    sleep(2);
-}
-
-void SinkRoutine(SinkContext* context) {
-  // TODO(YUYUE):
-
-  while (true)
-    sleep(2);
-}
+SinkRoutine::SinkRoutine() {}
+SinkRoutine::~SinkRoutine() {}
 
 }  // namespace oak

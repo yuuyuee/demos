@@ -3,6 +3,7 @@
 #ifndef OAK_ADDONS_ADDONS_H_
 #define OAK_ADDONS_ADDONS_H_
 
+#include <sched.h>
 #include <limits.h>
 #include <pthread.h>
 
@@ -18,60 +19,47 @@
 namespace oak {
 using Dict = std::unordered_map<std::string, std::string>;
 
-struct ModuleContext {
-  const Module* module;
-  Dict config;
-  void* priv_data;
-};
-
 class alignas(OAK_CACHELINE_SIZE) SourceRoutine {
  public:
   SourceRoutine();
+  virtual ~SourceRoutine();
 
-  void Update(const Module& module, const Dict& config);
-  void operator()() {}
+  virtual void Start() = 0;
+  virtual void Stop() = 0;
 
- private:
-  std::unordered_map<std::string, std::string> config_;
+  virtual void Add(const Module& module, const Dict& config) = 0;
+  virtual void Routine(const cpu_set_t& mask) = 0;
 };
 
 class alignas(OAK_CACHELINE_SIZE) ParserRoutine {
  public:
   ParserRoutine();
+  virtual ~ParserRoutine();
 
-  void operator()() {}
+  virtual void Start() = 0;
+  virtual void Stop() = 0;
 
- private:
-
+  virtual void Add(const Module& module, const Dict& config) = 0;
+  virtual void Remove(const Module& module) = 0;
+  virtual void Update(const Module& module, const Dict& config) = 0;
+  virtual void Routine(const cpu_set_t& mask) = 0;
 };
 
 class alignas(OAK_CACHELINE_SIZE) SinkRoutine {
  public:
   SinkRoutine();
+  virtual ~SinkRoutine();
 
-  void operator()() {}
+  virtual void Start() = 0;
+  virtual void Stop() = 0;
 
- private:
-
-};
-
-
-enum StopFlags {
-  KEEP_RUNNING = 0,
-  REQUIRE_STOP,
-  ALREADY_STOPPED
+  virtual void Add(const Module& module, const Dict& config) = 0;
+  virtual void Routine(const cpu_set_t& mask) = 0;
 };
 
 // Routine context.
 
 struct alignas(OAK_CACHELINE_SIZE) ParserContext {
-  using Module = ModuleWrapper<oak_module_parser>;
-
-  std::atomic<int> flags;
-
-  std::unordered_map<int, Module> modules;
-  pthread_spinlock_t module_lock;
-
   Ring report;
   pthread_spinlock_t report_lock;
 

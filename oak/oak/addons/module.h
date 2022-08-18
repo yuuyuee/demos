@@ -4,7 +4,6 @@
 #define OAK_ADDONS_MODULE_H_
 
 #include <string>
-#include <atomic>
 
 #include "oak/addons/public/parser.h"
 #include "oak/addons/public/source.h"
@@ -44,9 +43,6 @@ enum LangType {
 };
 
 struct Module {
-  bool enable;
-  std::atomic<int> ref_count;
-
   int id;
   char name[OAK_NAME_MAX];
   char path[PATH_MAX];

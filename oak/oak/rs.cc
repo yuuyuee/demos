@@ -7,13 +7,15 @@
 #include "oak/addons/public/compiler.h"
 #include "oak/addons/public/platform.h"
 #include "oak/addons/public/version.h"
+#include "oak/addons/module.h"
 #include "oak/common/macros.h"
 #include "oak/common/format.h"
 #include "oak/common/fs.h"
 #include "oak/common/debug.h"
 #include "oak/common/system.h"
-#include "oak/logging/logging.h"
 #include "oak/common/throw_delegate.h"
+#include "oak/logging/logging.h"
+
 #include "oak/config.h"
 
 namespace {
@@ -40,11 +42,12 @@ bool CreateGuardFile(const std::string& guard_file) {
   return true;
 }
 
-}  // anonymous namespace
+struct EventReceiver {
+  oak::Module module;
+  void* context;
+};
 
-namespace oak {
-void CreateWorker(const Config& config, CpuLayout* layout);
-}  // namespace oak
+}  // anonymous namespace
 
 int main(int argc, char* argv[]) {
   for (int i = 1; i < argc; ++i) {
@@ -93,25 +96,23 @@ int main(int argc, char* argv[]) {
   // Setup logger.
   // TODO(YUYUE):
 
-  // Initialize CPU layout.
-  oak::CpuLayout layout;
-  oak::System::GetCpuLayout(&layout);
-  assert(layout.available_cores > 0 && "Logic error");
-
-  int current_core = oak::System::GetCurrentCpu();
-  oak::LogicCore* logic_core =
-      oak::System::GetNextAvailableCore(&layout, current_core);
+  // Setup master thread are guaranteed to be resident in current CPU.
+  int core = oak::System::GetCurrentCpu();
+  oak::LogicCore* logic_core = oak::System::GetNextAvailableLogicCore(core);
   assert(logic_core != nullptr && "Logic error");
   oak::System::SetThreadAffinity(pthread_self(), logic_core->mask);
   oak::System::ThreadYield();
 
   // Initialize events receiver.
+  if (config.modules.empty()) {
+    OAK_WARNING("Not found configuration of the events receiver.\n");
+  }
 
   // Recover events that has occurred.
 
   // creates worker thread.
   for (int i = 0; i < config.source.num_threads; ++i) {
-    oak::LogicCore* logic_core = oak::System::GetNextAvailableCore(&layout);
+    oak::LogicCore* logic_core = oak::System::GetNextAvailableLogicCore();
     if (logic_core == nullptr)
       oak::ThrowStdOutOfRange("No enough available CPU");
     std::string name = oak::Format("source-%d", i);
@@ -120,7 +121,7 @@ int main(int argc, char* argv[]) {
   }
 
   for (int i = 0; i < config.parser.num_threads; ++i) {
-    oak::LogicCore* logic_core = oak::System::GetNextAvailableCore(&layout);
+    oak::LogicCore* logic_core = oak::System::GetNextAvailableLogicCore();
     if (logic_core == nullptr)
       oak::ThrowStdOutOfRange("No enough available CPU");
     std::string name = oak::Format("parser-%d", i);
@@ -129,7 +130,7 @@ int main(int argc, char* argv[]) {
   }
 
   for (int i = 0; i < config.sink.num_threads; ++i) {
-    oak::LogicCore* logic_core = oak::System::GetNextAvailableCore(&layout);
+    oak::LogicCore* logic_core = oak::System::GetNextAvailableLogicCore();
     if (logic_core == nullptr)
       oak::ThrowStdOutOfRange("No enough available CPU");
     std::string name = oak::Format("sink-%d", i);

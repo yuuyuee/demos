@@ -4,7 +4,6 @@
 #define OAK_ADDONS_PUBLIC_EVENT_H_
 
 #include "oak/addons/public/version.h"
-#include "oak/addons/public/buffer.h"
 #include "oak/addons/public/dict.h"
 
 #ifdef __cplusplus
@@ -13,6 +12,24 @@ extern "C" {
 
 /* Sink module flags */
 #define OAK_MODULE_EVENT 0x04
+
+enum event_type {
+  ET_ADD_PARSER,
+  ET_UPDATE_PARSER,
+  ET_REMOVE_PARSER,
+};
+
+#ifndef OAK_PATH_MAX
+# define OAK_PATH_MAX 255
+#endif
+
+struct event {
+  int id;                   /* parser id */
+  int type;                 /* event type */
+  int proto_type;           /* protocol type */
+  char name[OAK_PATH_MAX];  /* parser name */
+  char path[OAK_PATH_MAX];  /* parser path */
+};
 
 /* struct oak_event_module
  *
@@ -29,21 +46,29 @@ struct oak_event_module {
    *         may used to initialize.
    *
    * Return module context on success or NULL if an error occurred. */
-  int (*init)(const struct oak_dict* config);
+  void* (*init)(const struct oak_dict* config);
 
   /* Callback to receive the event from module.
    *
    * @module module context.
-   * @buffer some event has been received.
+   * @event event has been received.
    * Return 0 on success or -1 if an error occurred. */
-  int (*receive)(void* context, struct oak_buffer* buffer);
+  int (*recv)(void* context, struct event* event);
 
-  /* Callback to report the event to module.
+  /* Callback to receive the all of event from module.
    *
    * @module module context.
-   * @buffer some event has been reported.
+   * @event some event has been received.
+   * @size how many events can be received.
    * Return 0 on success or -1 if an error occurred. */
-  int (*report)(void* context, const struct oak_buffer* buffer);
+  int (*recv_bulk)(void* context, struct event* event, int size);
+
+  /* Callback to send the event to module.
+   *
+   * @module module context.
+   * @buffer event has been sended.
+   * Return 0 on success or -1 if an error occurred. */
+  int (*send)(void* context, const struct oak_buffer* buffer);
 
   /* Callback to close the module context. */
   void (*close)(void* context);

@@ -3,7 +3,7 @@
   "log_method": "debug:file",
 
   "modules": {
-    "kafka": {
+    "kafka_event_receiver": {
       "enable": true,
       "bootstrap": "master.get_task.kafka.bootstrap"
     }

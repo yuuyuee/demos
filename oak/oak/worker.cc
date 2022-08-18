@@ -25,9 +25,9 @@ void DummyFun() {
     sleep(2);
 }
 
-void CreateWorker(const Config& config, CpuLayout* layout) {
+void CreateWorker(const Config& config) {
   for (int i = 0; i < config.source.num_threads; ++i) {
-    LogicCore* logic_core = System::GetNextAvailableCore(layout);
+    LogicCore* logic_core = System::GetNextAvailableLogicCore();
     if (logic_core == nullptr)
       ThrowStdOutOfRange("No enough available CPU");
     oak::System::CreateThread(oak::Format("source-%d", i),
@@ -36,7 +36,7 @@ void CreateWorker(const Config& config, CpuLayout* layout) {
   }
 
   for (int i = 0; i < config.parser.num_threads; ++i) {
-    LogicCore* logic_core = System::GetNextAvailableCore(layout);
+    LogicCore* logic_core = System::GetNextAvailableLogicCore();
     if (logic_core == nullptr)
       ThrowStdOutOfRange("No enough available CPU");
     oak::System::CreateThread(oak::Format("parser-%d", i),
@@ -45,7 +45,7 @@ void CreateWorker(const Config& config, CpuLayout* layout) {
   }
 
   for (int i = 0; i < config.sink.num_threads; ++i) {
-    LogicCore* logic_core = System::GetNextAvailableCore(layout);
+    LogicCore* logic_core = System::GetNextAvailableLogicCore();
     if (logic_core == nullptr)
       ThrowStdOutOfRange("No enough available CPU");
     oak::System::CreateThread(oak::Format("sink-%d", i),
