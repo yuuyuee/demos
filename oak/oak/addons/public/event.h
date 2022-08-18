@@ -14,21 +14,74 @@ extern "C" {
 #define OAK_MODULE_EVENT 0x04
 
 enum event_type {
-  ET_ADD_PARSER,
-  ET_UPDATE_PARSER,
-  ET_REMOVE_PARSER,
+  /* below for incomming event */
+  ET_ADD,
+  ET_UPDATE,
+  ET_REMOVE,
+  ET_CLEAR,
+
+  /* below for outcoming event */
+  ET_ACK,
+  ET_ALARM,
+  ET_METRICS
 };
 
 #ifndef OAK_PATH_MAX
 # define OAK_PATH_MAX 255
 #endif
 
-struct event {
-  int id;                   /* parser id */
-  int type;                 /* event type */
-  int proto_type;           /* protocol type */
-  char name[OAK_PATH_MAX];  /* parser name */
-  char path[OAK_PATH_MAX];  /* parser path */
+struct incoming_event {
+  int type;                     /* incoming event type */
+  int id;                       /* parser id */
+  int proto_type;               /* protocol type */
+  char name[OAK_PATH_MAX];      /* parser name */
+  char path[OAK_PATH_MAX];      /* parser path */
+  char _reverse[128];
+
+  union {
+    struct {                    /* protocol parser arguments */
+      int m_input_flow;         /* count the input netflow */
+      int m_output_data;        /* count the output records */
+      char _reverse[128];
+    } proto_parser;
+
+    struct {                    /* data control arguments */
+      int is_extract_netflow;   /* communication */
+      int m_keep_flow;          /* size of the saved netflow */
+      char _reverse[128];
+    } data_control;
+  };
+};
+
+#ifndef OAK_MODULE_MAX
+# define OAK_MODULE_MAX 64
+#endif
+
+#ifndef OAK_SUBJECT_MAX
+# define OAK_SUBJECT_MAX 256
+#endif
+
+struct outcoming_event {
+  int type;                           /* outcoming event type */
+  char _reverse[128];
+
+  union {
+    struct {                          /* alarm arguments */
+      char module[OAK_MODULE_MAX];    /* alarm module name */
+      char subject[OAK_SUBJECT_MAX];  /* alarm subject */
+      char _reverse[128];
+    } alarm;
+
+    struct {                          /* metrics arguments */
+      char module[OAK_MODULE_MAX];    /* metrics module name */
+      char subject[OAK_SUBJECT_MAX];  /* metrics subject */
+      char _reverse[128];
+    } metrics;
+
+    struct {
+      char _reverse[512];
+    } ack;
+  };
 };
 
 /* struct oak_event_module
@@ -53,7 +106,7 @@ struct oak_event_module {
    * @module module context.
    * @event event has been received.
    * Return 0 on success or -1 if an error occurred. */
-  int (*recv)(void* context, struct event* event);
+  int (*recv)(void* context, struct incoming_event* event);
 
   /* Callback to receive the all of event from module.
    *
@@ -61,14 +114,22 @@ struct oak_event_module {
    * @event some event has been received.
    * @size how many events can be received.
    * Return 0 on success or -1 if an error occurred. */
-  int (*recv_bulk)(void* context, struct event* event, int size);
+  int (*recv_bulk)(void* context, struct incoming_event* event, int* size);
 
   /* Callback to send the event to module.
    *
    * @module module context.
-   * @buffer event has been sended.
+   * @event event has been sended.
    * Return 0 on success or -1 if an error occurred. */
-  int (*send)(void* context, const struct oak_buffer* buffer);
+  int (*send)(void* context, const struct outcoming_event* event);
+
+  /* Callback to send the all of event to module.
+   *
+   * @module module context.
+   * @event some event has been sended.
+   * @size how many events can be sended.
+   * Return 0 on success or -1 if an error occurred. */
+  int (*send_bulk)(void* context, const struct outcoming_event* event, int size);
 
   /* Callback to close the module context. */
   void (*close)(void* context);

@@ -186,13 +186,27 @@ static void* kafka_event_receiver_init(const struct oak_dict* config) {
 }
 
 static int kafka_event_receiver_recv(void* context,
-                                     struct oak_buffer* buffer) {
+                                     struct incoming_event* event) {
+  // TODO(YUYUE):
+  return -1;
+}
+
+static int kafka_event_receiver_recv_bulk(void* context,
+                                          struct incoming_event* event,
+                                          int* size) {
   // TODO(YUYUE):
   return -1;
 }
 
 static int kafka_event_receiver_send(void* context,
-                                     const struct oak_buffer* buffer) {
+                                     const struct outcoming_event* event) {
+  // TODO(YUYUE):
+  return -1;
+}
+
+static int kafka_event_receiver_send_bulk(void* context,
+                                          const struct outcoming_event* event,
+                                          int size) {
   // TODO(YUYUE):
   return -1;
 }
@@ -201,13 +215,15 @@ static void kafka_event_receiver_close(void* context) {
   // TODO(YUYUE):
 }
 
-struct oak_event_module kafka_event_receiver = {
+const struct oak_event_module kafka_event_receiver = {
   .version = OAK_VERSION,
   .flags = OAK_MODULE_EVENT,
   .init = kafka_event_receiver_init,
   .recv = kafka_event_receiver_recv,
+  .recv_bulk = kafka_event_receiver_recv_bulk,
   .send = kafka_event_receiver_send,
+  .send_bulk = kafka_event_receiver_send_bulk,
   .close = kafka_event_receiver_close
 };
 
-}
+}  // extern "C"
