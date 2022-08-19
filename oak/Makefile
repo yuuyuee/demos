@@ -28,6 +28,12 @@ stringpiece_test:
 			third_party/gtest/gtest_main.cc third_party/gtest/gmock-gtest-all.cc \
 			-lpthread
 
+queue_test:
+	g++ -std=c++11 -Wall -Wextra -g -rdynamic -I. -Ithird_party/gtest -O2 -o $@ \
+			oak/common/queue_test.cc \
+			third_party/gtest/gtest_main.cc third_party/gtest/gmock-gtest-all.cc \
+			-lpthread
+
 any_test:
 	g++ -std=c++11 -Wall -Wextra -g -rdynamic -I. -Ithird_party/gtest -O2 -o $@ \
 			oak/common/any_test.cc \
@@ -53,6 +59,6 @@ codec_test:
 			-lpthread
 
 clean:
-	-rm -f rs stringpiece_test any_test circle_test buffer_test codec_test
+	-rm -f rs stringpiece_test any_test circle_test buffer_test codec_test queue_test
 
-.PHONY: rs stringpiece_test any_test circle_test buffer_test codec_test
+.PHONY: rs stringpiece_test any_test circle_test buffer_test codec_test queue_test
