@@ -3,12 +3,14 @@
 #ifndef OAK_CONFIG_H_
 #define OAK_CONFIG_H_
 
-#include <vector>
 #include <string>
 #include <memory>
 #include <unordered_map>
 
 namespace oak {
+
+using Dict = std::unordered_map<std::string, std::string>;
+using ModuleConfigDict = std::unordered_map<std::string, oak::ModuleConfig>;
 
 // ProcessConfig
 //
@@ -35,8 +37,7 @@ const ProcessConfig& GetProcessConfig();
 struct ModuleConfig {
   std::string name;     ///< module name
   bool enable{false};   ///< whether or not the module is enable
-  std::unordered_map<std::string, std::string> param;
-                        ///< module parameters
+  Dict config;          ///< module config
 };
 
 // Config
@@ -44,25 +45,25 @@ struct ModuleConfig {
 struct SourceConfig {
   std::string comment;
   int num_threads{-1};
-  std::vector<ModuleConfig> modules;
+  ModuleConfigDict modules;
 };
 
 struct ParserConfig {
   std::string comment;
   int num_threads{-1};
-  std::vector<ModuleConfig> modules;
+  ModuleConfigDict modules;
 };
 
 struct SinkConfig {
   std::string comment;
   int num_threads{-1};
-  std::vector<ModuleConfig> modules;
+  ModuleConfigDict modules;
 };
 
 struct Config {
   std::string comment;
   std::string log_method;
-  std::vector<ModuleConfig> modules;
+  ModuleConfigDict modules;
   SourceConfig source;
   ParserConfig parser;
   SinkConfig sink;

@@ -57,7 +57,7 @@ EventProxy::~EventProxy() {
   CloseModule(&module_);
 }
 
-int EventProxy::Pull(struct incoming_event* event, int* size) {
+int EventProxy::Pull(struct incoming_event* event, int size) {
   return module_.event->pull(context_, event, size);
 }
 

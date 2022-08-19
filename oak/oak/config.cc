@@ -50,8 +50,7 @@ namespace {
 
 // ReadModuleConfig()
 
-void ReadModuleConfig(std::vector<ModuleConfig>* modules,
-                      const Json2::Value& node) {
+void ReadModuleConfig(ModuleConfigDict* modules, const Json2::Value& node) {
   for (const auto& name : node.getMemberNames()) {
     ModuleConfig module;
     module.name = name;
@@ -61,24 +60,23 @@ void ReadModuleConfig(std::vector<ModuleConfig>* modules,
       if (key == "enable") {
         module.enable = module_node[key].asBool();
       } else {
-        module.param[key] = module_node[key].asString();
+        module.config[key] = module_node[key].asString();
       }
     }
 
-    modules->push_back(module);
+    (*modules)[name] = module;
   }
 }
 
 // WriteModuleConfig()
 
-void WriteModuleConfig(const std::vector<ModuleConfig>& modules,
-                       Json2::Value* node) {
+void WriteModuleConfig(const ModuleConfigDict& modules, Json2::Value* node) {
   for (const auto& module : modules) {
     Json2::Value value(Json2::objectValue);
-    value["enable"] = module.enable;
-    for (const auto& kv : module.param)
+    value["enable"] = module.second.enable;
+    for (const auto& kv : module.second.config)
       value[kv.first] = kv.second;
-    (*node)[module.name] = value;
+    (*node)[module.second.name] = value;
   }
 }
 

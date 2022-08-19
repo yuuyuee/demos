@@ -29,7 +29,7 @@ class EventProxy{
                     std::unique_ptr<EventProxy>* event);
 
   // pull out the previous event from event module.
-  int Pull(struct incoming_event* event, int* size);
+  int Pull(struct incoming_event* event, int size);
 
   // receive the event from event module.
   int Recv(struct incoming_event* event);

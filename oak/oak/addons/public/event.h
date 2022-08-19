@@ -15,13 +15,14 @@ extern "C" {
 
 enum event_type {
   /* below for incomming event */
-  ET_ADD,
+  ET_ADD,       /*< this option in 'oak_event_module.pull' indicate */
+                /*  that parser has been enabled. */
   ET_UPDATE,
   ET_REMOVE,
   ET_CLEAR,
 
   /* below for outgoing event */
-  ET_ACK,
+  ET_ACK = 1000,
   ET_ALARM,
   ET_METRICS
 };
@@ -30,27 +31,35 @@ enum event_type {
 # define OAK_PATH_MAX 255
 #endif
 
+#ifndef OAK_NAME_MAX
+# define OAK_NAME_MAX 128
+#endif
+
 struct incoming_event {
-  int type;                   /* incoming event type */
-  int id;                     /* parser id */
-  int proto_type;             /* protocol type */
-  char name[OAK_PATH_MAX];    /* parser name */
-  char path[OAK_PATH_MAX];    /* parser path */
+  int type;                       /* incoming event type */
+
+  /* below for parser common arguments */
+
+  int id;                         /* parser id */
+  int proto_type;                 /* protocol type */
+  char proto_name[OAK_NAME_MAX];  /* protocol name */
+  char file_name[OAK_PATH_MAX];   /* parser file name */
+  char http_url[OAK_PATH_MAX];    /* parser http URL for download */
   char _reverse[128];
 
-  union {
-    struct {                  /* protocol parser arguments */
-      int m_input_flow;       /* metrics: count the size of input netflow */
-      int m_output_data;      /* metrics: count the number of output records */
-      char _reverse[128];
-    } proto_parser;
+  /* below for protocol parser arguments */
 
-    struct {                  /* data control arguments */
-      int is_extract_netflow; /* metrics: communication */
-      int m_keep_flow;        /* metrics: count the size of the saved netflow */
-      char _reverse[128];
-    } data_control;
-  };
+  int m_input_flow;   /* metrics: count the size of the input netflow */
+  int m_output_data;  /* metrics: count the number of the output records */
+
+  char _reverse[128];
+
+  /* below for data control arguments */
+
+  int is_extract_netflow; /* enable communication */
+  int m_keep_flow;  /* metrics: count the size of the controlled netflow */
+
+  char _reverse[128];
 };
 
 #ifndef OAK_MODULE_MAX
@@ -109,7 +118,7 @@ struct oak_event_module {
    *
    * Return greater than or equal to 0 on success indicate the number
    * of the event has been received, or -1 if an error occurred. */
-  int (*pull)(void* context, struct incoming_event* event, int* size);
+  int (*pull)(void* context, struct incoming_event* event, int size);
 
   /* Callback to receive the event from module.
    *

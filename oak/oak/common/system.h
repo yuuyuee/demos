@@ -48,7 +48,7 @@ struct System {
   static void SetParentDeathSignal(int signo);
 
   // Get the point reference next the available logic core.
-  static LogicCore* GetNextAvailableLogicCore(int core_hint = -1);
+  static const LogicCore* GetNextAvailLogicCore(int core_hint = -1);
 
   // Get the point reference current logic core.
   static const LogicCore* GetCurrentLogicCore();

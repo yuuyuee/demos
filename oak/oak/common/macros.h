@@ -3,7 +3,7 @@
 #ifndef OAK_COMMON_MACROS_H_
 #define OAK_COMMON_MACROS_H_
 
-#define OAK_ARRAYSIZE(a) (sizeof(ArraySizeHelper(a)))
+#define OAK_ARRAYSIZE(a) (sizeof(oak::macros_internal::ArraySizeHelper(a)))
 
 #include <stddef.h>  // size_t
 

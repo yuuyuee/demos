@@ -193,7 +193,7 @@ static int kafka_event_recv(void* context,
 
 static int kafka_event_pull(void* context,
                             struct incoming_event* event,
-                            int* size) {
+                            int size) {
   // TODO(YUYUE):
   return -1;
 }

@@ -109,7 +109,7 @@ int InitCpuLayout() {
 
 }  // anonymous namespace
 
-LogicCore* System::GetNextAvailableLogicCore(int core_hint) {
+const LogicCore* System::GetNextAvailLogicCore(int core_hint) {
   static const int done = InitCpuLayout();
   for (int i = 0; i < OAK_MAX_LOGIC_CORES; ++i) {
     LogicCore* logic_core = &(logic_core[i]);
