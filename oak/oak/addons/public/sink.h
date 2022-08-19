@@ -28,13 +28,15 @@ struct oak_sink_module {
    * @config key/value dict that import from configuration and
    *         may used to initialize.
    *
-   * Return module context on success or NULL if an error occurred. */
+   * Return module context, this function always success no matter
+   * what value is returned. */
   int (*init)(const struct oak_dict* config);
 
   /* Callback to write the metadata to module specified the sink.
    *
    * @module module context.
    * @meta some key/value fileds has been saved.
+   *
    * Return 0 on success or -1 if an error occurred. */
   int (*write)(void* context,
                const struct oak_metadata* metadata);

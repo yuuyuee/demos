@@ -4,6 +4,8 @@
 #include <assert.h>
 #include <stdio.h>
 
+#include <string>
+
 #include "oak/addons/public/compiler.h"
 #include "oak/addons/public/platform.h"
 #include "oak/addons/public/version.h"
@@ -41,11 +43,6 @@ bool CreateGuardFile(const std::string& guard_file) {
   file.Release();
   return true;
 }
-
-struct EventReceiver {
-  oak::Module module;
-  void* context;
-};
 
 }  // anonymous namespace
 

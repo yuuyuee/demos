@@ -22,7 +22,7 @@ struct oak_common_header {
   int flags;
 };
 
-}   // extern "C"
+}  // extern "C"
 
 namespace oak {
 
@@ -42,6 +42,7 @@ enum LangType {
   LANG_TYPE_PYTHON = 2,
 };
 
+// NOTE: This class MUST be default copyable.
 struct Module {
   int id;
   char name[OAK_NAME_MAX];
@@ -63,12 +64,16 @@ struct Module {
   std::string script;
 };
 
+// Initialize the module object.
 void InitModule(Module* module);
 
+// Loading module with entry @name from the path, if path has empty,
+// loading from main program.
 int OpenModule(Module* module, int id,
                const std::string& name,
                const std::string& path);
 
+// Close the module to free handler.
 void CloseModule(Module* module);
 
 }  // namespace oak

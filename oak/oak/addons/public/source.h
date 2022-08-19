@@ -26,13 +26,16 @@ struct oak_source_module {
    *
    * @config key/value dict that import from configuration and
    *         may used to initialize.
-   * Return module context on success or NULL if an error occurred. */
+   *
+   * Return module context, this function always success no matter
+   * what value is returned. */
   void* (*init)(const struct oak_dict* config);
 
   /* Callback to read the buffer and decoded as the metadata.
    *
    * @context module context.
    * @metadata read from module.
+   *
    * Return 0 on success or -1 if an error occurred. */
   int (*read)(void* context, struct oak_metadata* metadata);
 

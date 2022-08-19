@@ -28,7 +28,8 @@ struct oak_parser_module {
    * @config key/value dict that import from configuration and
    *         may used to initialize.
    *
-   * Return module context on success or NULL if an error occurred. */
+   * Return module context, this function always success no matter
+   * what value is returned. */
   void* (*init)(const struct oak_dict* config);
 
   /* Callback to parsing the stream to extract the fields.
@@ -37,6 +38,7 @@ struct oak_parser_module {
    * @up_stream buffer reference the up stream.
    * @down_stream buffer reference the down stream.
    * @fields to save any pared the key/value fields.
+   *
    * Return 0 on success or -1 if an error occurred. */
   int (*parse)(void* context,
                const struct oak_buffer_ref* up_stream,
@@ -49,6 +51,7 @@ struct oak_parser_module {
    * @module module context.
    * @up_stream buffer reference the up stream.
    * @down_stream buffer reference the down stream.
+   *
    * Return 0 on success or -1 if an error occurred. on success
    * the up/down stream should be saved. */
   int (*mark)(void* context,

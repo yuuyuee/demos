@@ -66,9 +66,23 @@ int OpenCppModule(Module* module, int id,
   return 0;
 }
 
+void CloseCppModule(Module* module) {
+  const char* err = dlerror();
+  int ret = dlclose(module->dl_handler);
+  if (ret != 0)
+    OAK_ERROR("dlclose() failed: %s\n", dlerror());
+}
+
 int OpenCppModule(Module*, int, const std::string&, const std::string&) {
   return -1;
 }
+
+
+
+void ClosePyModule(Module* ) {
+  // TODO(YUYUE):
+}
+
 
 }  // anonymous namespace
 
@@ -87,10 +101,18 @@ int OpenModule(Module* module, int id,
 }
 
 void CloseModule(Module* module) {
-  const char* err = dlerror();
-  int ret = dlclose(module->dl_handler);
-  if (ret != 0)
-    OAK_ERROR("dlclose() failed: %s\n", dlerror());
+  switch (module->lang_type) {
+  case LANG_TYPE_C_CPP:
+    CloseCppModule(module);
+    break;
+  case LANG_TYPE_PYTHON:
+    ClosePyModule(module);
+    break;
+  case MODULE_TYPE_UNKNOWN:
+    break;
+  default:
+    break;
+  }
 }
 
 }  // namespace oak
