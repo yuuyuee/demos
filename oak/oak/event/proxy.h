@@ -14,7 +14,7 @@ namespace oak {
 
 using Dict = std::unordered_map<std::string, std::string>;
 
-// EventModuleProxy
+// EventProxy
 
 // This class provides resource management and interface forwarding for
 // event module implements.

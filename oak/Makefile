@@ -35,14 +35,14 @@ queue_test:
 			-lpthread
 
 any_test:
-	g++ -std=c++11 -Wall -Wextra -g -rdynamic -I. -Ithird_party/gtest -O2 -o $@ \
+	g++ -std=c++11 -Wall -Wextra -g -rdynamic -I. -Ithird_party/gtest -O0 -o $@ \
 			oak/common/any_test.cc \
 			third_party/gtest/gtest_main.cc third_party/gtest/gmock-gtest-all.cc \
 			-lpthread
 
-circle_test:
+ring_test:
 	g++ -std=c++11 -Wall -Wextra -g -rdynamic -I. -Ithird_party/gtest -O2 -o$@ \
-			oak/common/circle_test.cc \
+			oak/common/ring_test.cc \
 			third_party/gtest/gtest_main.cc third_party/gtest/gmock-gtest-all.cc \
 			-lpthread
 

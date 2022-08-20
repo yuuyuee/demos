@@ -11,8 +11,6 @@
 #include <type_traits>
 #include <utility>
 
-#include "oak/common/macros.h"
-
 namespace oak {
 
 // Queue
@@ -26,20 +24,20 @@ class Queue {
   explicit Queue(uint32_t size) noexcept
       : size_(size < 2 ? 2 : size),
         records_(static_cast<Tp*>(malloc(sizeof(Tp) * size))),
-        read_index_(0),
-        write_index_(0) {}
+        cons_head_(0),
+        prod_head_(0),
+        prod_tail_(0) {}
 
   // Destruct anything that may still exist in the queue.
   // Note: only one thread can be doing this.
   ~Queue() {
     if (!std::is_trivially_destructible<Tp>::value) {
-      size_t read_index = read_index_;
-      size_t end_index = write_index_;
-      while (read_index != end_index) {
-        records_[read_index].~Tp();
-        if (++read_index == size_) {
-          read_index = 0;
-        }
+      size_t cons_head = cons_head_;
+      size_t prod_tail = prod_tail_;
+      while (cons_head != prod_tail) {
+        records_[cons_head].~Tp();
+        if (++cons_head == size_)
+          cons_head = 0;
       }
     }
 
@@ -47,67 +45,45 @@ class Queue {
   }
 
   template <typename... Args>
-  bool Write(Args&&... args) {
-    auto const current_write = write_index_.load(std::memory_order_relaxed);
-    auto next_record = current_write + 1;
-    if (next_record == size_)
-      next_record = 0;
-    if (next_record != read_index_.load(std::memory_order_acquire)) {
-      new (&records_[current_write]) Tp(std::forward<Args>(args)...);
-      write_index_.store(next_record, std::memory_order_release);
-      return true;
-    }
-    return false;
-  }
+  bool Push(Args&&... args) {
+    auto prod_head = prod_head_.load(std::memory_order_relaxed);
+    auto next_prod_head = 0U;
 
-  // Move (or copy) the value at the front of the queue to given variable
-  bool Read(Tp* record) {
-    auto const current_read = read_index_.load(std::memory_order_relaxed);
-    if (current_read == write_index_.load(std::memory_order_acquire))
-      return false;
+    do {
+      next_prod_head = prod_head + 1;
+      if (next_prod_head == size_)
+        next_prod_head = 0;
 
-    auto next_record = current_read + 1;
-    if (next_record == size_) {
-      next_record = 0;
-    }
-    *record = std::move(records_[current_read]);
-    records_[current_read].~Tp();
-    read_index_.store(next_record, std::memory_order_release);
+      if (next_prod_head == cons_head_.load(std::memory_order_acquire))
+        return false;
+    } while (!prod_head_.compare_exchange_strong(
+             prod_head, next_prod_head,
+             std::memory_order_acq_rel,
+             std::memory_order_relaxed));
+
+    ::new(&records_[prod_head]) Tp(std::forward<Args>(args)...);
+
+    auto prod_tail = prod_tail_.load(std::memory_order_relaxed);
+    while (!prod_tail_.compare_exchange_strong(
+            prod_tail, prod_tail + 1,
+            std::memory_order_acq_rel,
+            std::memory_order_relaxed)) {}
     return true;
   }
 
-  // Pointer to the value at the front of the queue (for use in-place) or
-  // nullptr if empty.
-  Tp* Front() {
-    auto const current_read = read_index_.load(std::memory_order_relaxed);
-    if (current_read == write_index_.load(std::memory_order_acquire))
-      return nullptr;
-    return &records_[current_read];
-  }
-
-  // Queue must not be empty
-  void PopFront() {
-    auto const current_read = read_index_.load(std::memory_order_relaxed);
-    assert(current_read != write_index_.load(std::memory_order_acquire));
-
-    auto next_record = current_read + 1;
-    if (next_record == size_)
-      next_record = 0;
-    records_[current_read].~Tp();
-    read_index_.store(next_record, std::memory_order_release);
-  }
-
-  bool Empty() const {
-    return read_index_.load(std::memory_order_acquire) ==
-        write_index_.load(std::memory_order_acquire);
-  }
-
-  bool Full() const {
-    auto next_record = write_index_.load(std::memory_order_acquire) + 1;
-    if (next_record == size_)
-      next_record = 0;
-    if (next_record != read_index_.load(std::memory_order_acquire))
+  // Move (or copy) the value at the front of the queue to given variable
+  bool Pop(Tp* record) {
+    auto cons_head = cons_head_.load(std::memory_order_relaxed);
+    if (cons_head == prod_tail_.load(std::memory_order_acquire))
       return false;
+
+    *record = std::move(records_[cons_head]);
+    records_[cons_head].~Tp();
+
+    cons_head += 1;
+    if (cons_head == size_)
+      cons_head = 0;
+    cons_head_.store(cons_head, std::memory_order_release);
     return true;
   }
 
@@ -117,11 +93,11 @@ class Queue {
   // be removing items concurrently.
   // It is undefined to call this from any other thread.
   size_t SizeGuess() const {
-    int ret = write_index_.load(std::memory_order_acquire) -
-        read_index_.load(std::memory_order_acquire);
-    if (ret < 0)
-      ret += size_;
-    return ret;
+    int diff = prod_tail_.load(std::memory_order_acquire) -
+               cons_head_.load(std::memory_order_acquire);
+    if (diff < 0)
+      diff += size_;
+    return diff;
   }
 
   // Maximum number of items in the queue.
@@ -131,16 +107,19 @@ class Queue {
   Queue(Queue const&) = delete;
   Queue& operator=(const Queue&) = delete;
 
-  char padding0_[OAK_CACHELINE_SIZE];
+  char padding0_[64];
   const uint32_t size_;
   Tp* const records_;
-  char padding1_[OAK_CACHELINE_SIZE - sizeof(uint32_t) - sizeof(Tp*)];
+  char padding1_[64 - sizeof(uint32_t) - sizeof(Tp*)];
 
-  std::atomic<unsigned int> read_index_;
-  char padding2_[OAK_CACHELINE_SIZE - sizeof(std::atomic<unsigned int>)];
+  std::atomic<unsigned int> cons_head_;
+  char padding2_[64 - sizeof(std::atomic<unsigned int>)];
 
-  std::atomic<unsigned int> write_index_;
-  char padding3_[OAK_CACHELINE_SIZE - sizeof(std::atomic<unsigned int>)];
+  std::atomic<unsigned int> prod_head_;
+  char padding3_[64 - sizeof(std::atomic<unsigned int>)];
+
+  std::atomic<unsigned int> prod_tail_;
+  char padding4_[64 - sizeof(std::atomic<unsigned int>)];
 };
 
 }  // namespace oak

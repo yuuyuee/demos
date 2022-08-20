@@ -25,7 +25,7 @@ struct TestTraits<std::string> {
   std::string Generate() const { return std::string(12, ' '); }
 };
 
-template <class QueueType, size_t Size>
+template <class QueueType, size_t Size, bool Pop = false>
 struct PerfTest {
   using Tp = typename QueueType::value_type;
 
@@ -48,14 +48,24 @@ struct PerfTest {
 
   void Producer() {
     for (auto i = traits_.Limit(); i > 0; --i) {
-      while (!queue_.Push(traits_.Generate())) {}
+      while (!queue_.Write(traits_.Generate())) {
+        // Loop
+      }
     }
   }
 
   void Consumer() {
-    while (!done_) {
-      Tp data;
-      queue_.Pop(&data);
+    if (Pop) {
+      while (!done_) {
+        if (queue_.Front()) {
+          queue_.PopFront();
+        }
+      }
+    } else {
+      while (!done_) {
+        Tp data;
+        queue_.Read(&data);
+      }
     }
   }
 
@@ -70,12 +80,13 @@ void DoTest(const char*) {
   (*t)();
 }
 
-template <class Tp>
+template <class Tp, bool Pop = false>
 void PerfTestType(const char*) {
-  DoTest<PerfTest<oak::Queue<Tp>, 10>>("Queue");
+  const size_t size = 0xfffe;
+  DoTest<PerfTest<oak::Queue<Tp>, size, Pop>>("Queue");
 }
 
-template <class QueueType, size_t Size>
+template <class QueueType, size_t Size, bool Pop>
 struct CorrectnessTest {
   using Tp = typename QueueType::value_type;
 
@@ -98,24 +109,51 @@ struct CorrectnessTest {
 
   void Producer() {
     for (auto& data : test_data_) {
-      while (!queue_.Push(data)) {
-        // printf("Push failed:\n");
+      while (!queue_.Write(data)) {
       }
     }
   }
 
   void Consumer() {
-    Tp data;
+    if (Pop) {
+      ConsumerPop();
+    } else {
+      ConsumerRead();
+    }
+  }
+
+  void ConsumerPop() {
     for (auto expect : test_data_) {
     again:
-      if (!queue_.Pop(&data)) {
+      Tp* data;
+      if (!(data = queue_.Front())) {
         if (done_) {
-          if (!queue_.Pop(&data)) {
+          if (!(data = queue_.Front())) {
+            EXPECT_TRUE(0 && "Finished too early");
+            return;
+          }
+        } else {
+          goto again;
+        }
+        EXPECT_EQ(*data, expect);
+      } else {
+        EXPECT_EQ(*data, expect);
+        queue_.PopFront();
+      }
+    }
+  }
+
+  void ConsumerRead() {
+    for (auto expect : test_data_) {
+    again:
+      Tp data;
+      if (!queue_.Read(&data)) {
+        if (done_) {
+          if (!queue_.Read(&data)) {
             EXPECT_TRUE(0 && "Finished too early ...");
             return;
           }
         } else {
-          printf("Pop failed:\n");
           goto again;
         }
       }
@@ -129,9 +167,9 @@ struct CorrectnessTest {
   std::atomic<bool> done_;
 };
 
-template <class Tp>
-void CorrectnessTestType(const char*) {
-  DoTest<CorrectnessTest<oak::Queue<Tp>, 10>>("Queue");
+template <class Tp, bool Pop = false>
+void CorrectnessTestType(const std::string&) {
+  DoTest<CorrectnessTest<oak::Queue<Tp>, 0xfffe, Pop>>("Queue");
 }
 
 struct DestructChecker {
@@ -147,12 +185,14 @@ unsigned int DestructChecker::numInstances = 0;
 }  // anonymous namespace
 
 TEST(QueueTest, QueueCorrectness) {
+  CorrectnessTestType<std::string, true>("string (front+pop)");
   CorrectnessTestType<std::string>("string");
   CorrectnessTestType<int>("int");
   CorrectnessTestType<unsigned long long>("unsigned long long");  // NOLINT
 }
 
 TEST(QueueTest, PerfTest) {
+  PerfTestType<std::string, true>("string (front+pop)");
   PerfTestType<std::string>("string");
   PerfTestType<int>("int");
   PerfTestType<unsigned long long>("unsigned long long");  // NOLINT
@@ -163,15 +203,15 @@ TEST(QueueTest, Destructor) {
   {
     oak::Queue<DestructChecker> queue(1024);
     for (int i = 0; i < 10; ++i) {
-      EXPECT_TRUE(queue.Push(DestructChecker()));
+      EXPECT_TRUE(queue.Write(DestructChecker()));
     }
 
     EXPECT_EQ(DestructChecker::numInstances, 10U);
 
     {
       DestructChecker ignore;
-      EXPECT_TRUE(queue.Pop(&ignore));
-      EXPECT_TRUE(queue.Pop(&ignore));
+      EXPECT_TRUE(queue.Read(&ignore));
+      EXPECT_TRUE(queue.Read(&ignore));
     }
 
     EXPECT_EQ(DestructChecker::numInstances, 8U);
@@ -180,27 +220,39 @@ TEST(QueueTest, Destructor) {
   EXPECT_EQ(DestructChecker::numInstances, 0U);
 
   // Test the same thing in the case that the queue write pointer has
-  // wrapped, but the Pop one hasn't.
+  // wrapped, but the Read one hasn't.
   {
     oak::Queue<DestructChecker> queue(4);
     for (int i = 0; i < 3; ++i) {
-      EXPECT_TRUE(queue.Push(DestructChecker()));
+      EXPECT_TRUE(queue.Write(DestructChecker()));
     }
     EXPECT_EQ(DestructChecker::numInstances, 3U);
     {
       DestructChecker ignore;
-      EXPECT_TRUE(queue.Pop(&ignore));
+      EXPECT_TRUE(queue.Read(&ignore));
     }
     EXPECT_EQ(DestructChecker::numInstances, 2U);
-    EXPECT_TRUE(queue.Push(DestructChecker()));
+    EXPECT_TRUE(queue.Write(DestructChecker()));
     EXPECT_EQ(DestructChecker::numInstances, 3U);
   }
   EXPECT_EQ(DestructChecker::numInstances, 0U);
 }
 
-TEST(QueueTest, SizeGuess) {
+TEST(QueueTest, EmptyFull) {
   oak::Queue<int> queue(3);
-  EXPECT_FALSE(queue.Push(3));
+  EXPECT_TRUE(queue.Empty());
+  EXPECT_FALSE(queue.Full());
+
+  EXPECT_TRUE(queue.Write(1));
+  EXPECT_FALSE(queue.Empty());
+  EXPECT_FALSE(queue.Full());
+
+  EXPECT_TRUE(queue.Write(2));
+  EXPECT_FALSE(queue.Empty());
+  // Tricky: full after 2 writes, not 3.
+  EXPECT_TRUE(queue.Full());
+
+  EXPECT_FALSE(queue.Write(3));
   EXPECT_EQ(queue.SizeGuess(), 2U);
 }
 

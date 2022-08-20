@@ -9,7 +9,15 @@ namespace {
 struct Data {
   int value;
   Ring node;
+
+  static int kConstructCount;
+  static int kDestructCount;
+  Data() { ++kConstructCount; }
+  ~Data() { ++kDestructCount; }
 };
+
+int Data::kConstructCount = 0;
+int Data::kDestructCount = 0;
 
 std::vector<int> RingToVector(Ring* h) {
   std::vector<int> vec;
@@ -51,6 +59,7 @@ TEST(RingTest, InsertHead) {
   }
 
   FreeRing(&h);
+  EXPECT_EQ(Data::kConstructCount, Data::kDestructCount);
 }
 
 TEST(RingTest, InsertTail) {
@@ -74,6 +83,7 @@ TEST(RingTest, InsertTail) {
   }
 
   FreeRing(&h);
+  EXPECT_EQ(Data::kConstructCount, Data::kDestructCount);
 }
 
 TEST(RingTest, ADD) {
@@ -108,6 +118,7 @@ TEST(RingTest, ADD) {
 
   FreeRing(&h1);
   FreeRing(&h2);
+  EXPECT_EQ(Data::kConstructCount, Data::kDestructCount);
 }
 
 TEST(RingTest, SplitMove) {
@@ -152,6 +163,7 @@ TEST(RingTest, SplitMove) {
   FreeRing(&h2);
   FreeRing(&h3);
   FreeRing(&h4);
+  EXPECT_EQ(Data::kConstructCount, Data::kDestructCount);
 }
 
 }  // anonymous namespace
