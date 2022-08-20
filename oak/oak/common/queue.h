@@ -14,7 +14,7 @@
 namespace oak {
 
 // Queue
-// This class is a one producer and one consumer queue without locks.
+// This class is a multi producer and one consumer queue without locks.
 template <typename Tp>
 class Queue {
  public:
@@ -61,11 +61,10 @@ class Queue {
              std::memory_order_acq_rel,
              std::memory_order_relaxed));
 
-    ::new(&records_[prod_head]) Tp(std::forward<Args>(args)...);
+    new(&records_[prod_head]) Tp(std::forward<Args>(args)...);
 
-    auto prod_tail = prod_tail_.load(std::memory_order_relaxed);
     while (!prod_tail_.compare_exchange_strong(
-            prod_tail, prod_tail + 1,
+            prod_head, next_prod_head,
             std::memory_order_acq_rel,
             std::memory_order_relaxed)) {}
     return true;
@@ -83,25 +82,13 @@ class Queue {
     cons_head += 1;
     if (cons_head == size_)
       cons_head = 0;
+
     cons_head_.store(cons_head, std::memory_order_release);
     return true;
   }
 
-  // If called by consumer, then true size may be more because producer may
-  // be adding items concurrently.
-  // If called by producer, then true size may be less because consumer may
-  // be removing items concurrently.
-  // It is undefined to call this from any other thread.
-  size_t SizeGuess() const {
-    int diff = prod_tail_.load(std::memory_order_acquire) -
-               cons_head_.load(std::memory_order_acquire);
-    if (diff < 0)
-      diff += size_;
-    return diff;
-  }
-
   // Maximum number of items in the queue.
-  size_t Capacity() const { return size_ - 1; }
+  size_t Capacity() const { return size_; }
 
  private:
   Queue(Queue const&) = delete;

@@ -29,7 +29,7 @@ stringpiece_test:
 			-lpthread
 
 queue_test:
-	g++ -std=c++11 -Wall -Wextra -g -rdynamic -I. -Ithird_party/gtest -O2 -o $@ \
+	g++ -std=c++11 -Wall -Wextra -g -rdynamic -I. -Ithird_party/gtest -O0 -o $@ \
 			oak/common/queue_test.cc \
 			third_party/gtest/gtest_main.cc third_party/gtest/gmock-gtest-all.cc \
 			-lpthread
