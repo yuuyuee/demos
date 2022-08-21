@@ -2,7 +2,7 @@
 all: rs;
 
 rs:
-	g++ -std=c++11 -Wall -Wextra -g -O0 -rdynamic -o $@ \
+	g++ -std=c++11 -Wall -Wextra -faligned-new -g -O0 -rdynamic -o $@ \
 			-I. \
 			-Ithird_party/jsoncpp-1.9.5 \
 			-Ithird_party/asio-1.22.2/asio/include \
@@ -29,7 +29,7 @@ stringpiece_test:
 			-lpthread
 
 channel_test:
-	g++ -std=c++11 -Wall -Wextra -g -rdynamic -I. -Ithird_party/gtest -O2 -o $@ \
+	g++ -std=c++11 -Wall -Wextra -faligned-new -g -rdynamic -I. -Ithird_party/gtest -O2 -o $@ \
 			oak/common/channel_test.cc \
 			third_party/gtest/gtest_main.cc third_party/gtest/gmock-gtest-all.cc \
 			-lpthread

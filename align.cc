@@ -2,7 +2,7 @@
 #include <stddef.h>
 #include <type_traits> // for std::alignment_of
 
-struct test {
+struct alignas(64) test {
   int i;
   char c;
 };
@@ -10,6 +10,7 @@ struct test {
 struct alignas(64) test2 {
   alignas(64) int i;
   alignas(64) char c;
+  alignas(64) test t;
 };
 
 int main() {
@@ -29,6 +30,9 @@ int main() {
   std::cout << "sizeof(test): " << sizeof(test) << std::endl;
   std::cout << "alignof(test): " << alignof(test) << std::endl;
   std::cout << "std::alignment_of<test>::value: " << std::alignment_of<test>::value << std::endl;
+
+  test2* ptr = new test2;
+  delete ptr;
 
   return 0;
 }

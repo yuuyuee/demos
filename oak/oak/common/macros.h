@@ -23,6 +23,13 @@ R ArraySizeHelper(const T (&)[N]);
 # define OAK_HAS_ATTRIBUTE(x) 0
 #endif
 
+// OAK_HAS_CPP_ATTRIBUTE()
+#if defined(__has_cpp_attribute)
+# define OAK_HAS_CPP_ATTRIBUTE(x) __has_cpp_attribute(x)
+#else
+# define OAK_HAS_CPP_ATTRIBUTE(x) 0
+#endif
+
 // OAK_ATTR_ALWAYS_INLINE()
 #if (defined(__GNUC__) && !defined(__clang__)) || \
     OAK_HAS_ATTRIBUTE(always_inline)

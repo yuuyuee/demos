@@ -3,26 +3,28 @@
 #ifndef OAK_COMMON_CHANNEL_H_
 #define OAK_COMMON_CHANNEL_H_
 
-#include <stdlib.h>
 #include <assert.h>
-
+#include <stdint.h>
 #include <atomic>
-#include <utility>
+
+#include "oak/common/macros.h"
 
 namespace oak {
 
 // Queue
 // This class is a multi producer and multi consumer queue without locks.
 
-class Channel {
+class alignas(OAK_CACHELINE_SIZE) Channel {
  public:
   // Construct object with a fixed maximum size.
+  // NOTE: the size MUST be a pwer of 2.
   explicit Channel(uint32_t size, void** ptr = nullptr) noexcept
-      : ownship_(false), size_(size < 2 ? 2 : size), records_(ptr),
+      : ownship_(false), size_(size), records_(ptr),
         cons_head_(0), cons_tail_(0),
         prod_head_(0), prod_tail_(0) {
+    assert(((size & (size - 1)) == 0) && "size MUST be a pwer of 2");
     if (!records_) {
-      records_ = static_cast<void**>(malloc(sizeof(void*) * size));
+      records_ = ::new void*[size];
       assert(records_ && "No enough memory");
       ownship_ = true;
     }
@@ -31,7 +33,7 @@ class Channel {
   // Destruct object.
   ~Channel() {
     if (ownship_)
-      free(records_);
+      ::delete[](records_);
   }
 
   inline bool Push(void* ptr) {
@@ -42,15 +44,16 @@ class Channel {
       next_prod_head = prod_head + 1;
       if (next_prod_head == size_)
         next_prod_head = 0;
-      std::atomic_thread_fence(std::memory_order_acquire);
+
       if (next_prod_head == cons_tail_.load(std::memory_order_acquire))
         return false;
     } while (!prod_head_.compare_exchange_weak(
              prod_head, next_prod_head,
-             std::memory_order_relaxed,
+             std::memory_order_acq_rel,
              std::memory_order_relaxed));
 
     records_[prod_head] = ptr;
+    std::atomic_thread_fence(std::memory_order_release);
 
     while (prod_tail_.load(std::memory_order_relaxed) != prod_head) {
       // wait for completion of the other thread
@@ -66,17 +69,18 @@ class Channel {
     auto next_cons_head = 0U;
 
     do {
-      std::atomic_thread_fence(std::memory_order_acquire);
       if (cons_head == prod_tail_.load(std::memory_order_acquire))
         return false;
+
       next_cons_head = cons_head + 1;
       if (next_cons_head == size_)
         next_cons_head = 0;
-    } while (!cons_head_.compare_exchange_strong(
+    } while (!cons_head_.compare_exchange_weak(
              cons_head, next_cons_head,
-             std::memory_order_relaxed,
+             std::memory_order_acq_rel,
              std::memory_order_relaxed));
 
+    std::atomic_thread_fence(std::memory_order_acquire);
     *ptr = static_cast<Tp*>(records_[cons_head]);
 
     while (cons_tail_.load(std::memory_order_relaxed) != cons_head) {
@@ -87,22 +91,59 @@ class Channel {
     return true;
   }
 
+  // Return the number of used space in the channel.
+  constexpr size_t UsedSpace() const {
+    return (prod_tail_.load(std::memory_order_acquire) -
+           cons_head_.load(std::memory_order_acquire)) &
+           (size_ - 1);
+  }
+
+  // Return the number of available space in the channel.
+  constexpr size_t AvailSpace() const {
+    return size_ - 1 - UsedSpace();
+  }
+
   // Maximum number of items in the queue.
-  constexpr size_t Capacity() const { return size_; }
+  constexpr size_t Capacity() const { return size_ - 1; }
 
  private:
   Channel(Channel const&) = delete;
   Channel& operator=(const Channel&) = delete;
 
-  char padding0_[64];
+// #if !OAK_HAS_CPP_ATTRIBUTE(__cpp_aligned_new)
+//   char padding0_[OAK_CACHELINE_SIZE];
+// #endif
+
   bool ownship_;
   const uint32_t size_;
   void** records_;
 
-  alignas(64) std::atomic<unsigned int> cons_head_;
-  alignas(64) std::atomic<unsigned int> cons_tail_;
-  alignas(64) std::atomic<unsigned int> prod_head_;
-  alignas(64) std::atomic<unsigned int> prod_tail_;
+// #if !OAK_HAS_CPP_ATTRIBUTE(__cpp_aligned_new)
+//   char padding1_[OAK_CACHELINE_SIZE -
+//                  sizeof(ownship_) -
+//                  sizeof(size_) -
+//                  sizeof(records_)];
+// #endif
+
+  alignas(OAK_CACHELINE_SIZE) std::atomic<uint32_t> cons_head_;
+// #if !OAK_HAS_CPP_ATTRIBUTE(__cpp_aligned_new)
+//   char padding2_[OAK_CACHELINE_SIZE - sizeof(cons_head_)];
+// #endif
+
+  alignas(OAK_CACHELINE_SIZE) std::atomic<uint32_t> cons_tail_;
+// #if !OAK_HAS_CPP_ATTRIBUTE(__cpp_aligned_new)
+//   char padding3_[OAK_CACHELINE_SIZE - sizeof(cons_tail_)];
+// #endif
+
+  alignas(OAK_CACHELINE_SIZE) std::atomic<uint32_t> prod_head_;
+// #if !OAK_HAS_CPP_ATTRIBUTE(__cpp_aligned_new)
+//   char padding4_[OAK_CACHELINE_SIZE - sizeof(prod_head_)];
+// #endif
+
+  alignas(OAK_CACHELINE_SIZE) std::atomic<uint32_t> prod_tail_;
+// #if !OAK_HAS_CPP_ATTRIBUTE(__cpp_aligned_new)
+//   char padding5_[OAK_CACHELINE_SIZE - sizeof(prod_tail_)];
+// #endif
 };
 
 }  // namespace oak

@@ -2,9 +2,7 @@
 
 #include <oak/common/channel.h>
 
-#include <atomic>
 #include <chrono>   // NOLINT
-#include <memory>
 #include <thread>   // NOLINT
 #include <string>
 
@@ -12,12 +10,19 @@
 
 namespace {
 
+TEST(QueueTest, ClassSize) {
+  oak::Channel* ptr = new oak::Channel(1 << 2);
+  uint64_t base = reinterpret_cast<uint64_t>(ptr);
+  EXPECT_EQ(base & (OAK_CACHELINE_SIZE - 1), 0U);
+  delete ptr;
+}
+
 template <typename Tp>
 struct TestTraits {
   std::atomic<size_t> generate_count{0};
   std::atomic<size_t> free_count{0};
 
-  size_t Limits() { return 1 << 17; }
+  size_t Limits() { return 1 << 20; }
 
   template <typename Up>
   Tp* GenerateHelper(const Up*) {
@@ -106,7 +111,7 @@ struct PerfTest {
 
 TEST(QueueTest, PerfTest) {
   {
-    PerfTest<int, 65432> test;
+    PerfTest<int, 1 << 16> test;
     test();
     EXPECT_EQ(test.prod_count_0 + test.prod_count_1,
               test.cons_count_0 + test.cons_count_1);
@@ -114,7 +119,7 @@ TEST(QueueTest, PerfTest) {
   }
 
   {
-    PerfTest<std::string, 65432> test;
+    PerfTest<std::string, 1 << 16> test;
     test();
     EXPECT_EQ(test.prod_count_0 + test.prod_count_1,
               test.cons_count_0 + test.cons_count_1);
@@ -122,7 +127,7 @@ TEST(QueueTest, PerfTest) {
   }
 
   {
-    PerfTest<unsigned long long, 65432> test;
+    PerfTest<uint64_t, 1 << 16> test;
     test();
     EXPECT_EQ(test.prod_count_0 + test.prod_count_1,
               test.cons_count_0 + test.cons_count_1);
@@ -130,8 +135,74 @@ TEST(QueueTest, PerfTest) {
   }
 }
 
+TEST(QueueTest, UsedSpaceAvailSpace) {
+  oak::Channel channel(4);
+  void* ptr = reinterpret_cast<void*>(0);
+
+  // UsedSpace round 1
+  EXPECT_EQ(channel.UsedSpace(), 0U);
+
+  EXPECT_EQ(channel.Push(ptr), true);
+  EXPECT_EQ(channel.UsedSpace(), 1U);
+
+  EXPECT_EQ(channel.Push(ptr), true);
+  EXPECT_EQ(channel.UsedSpace(), 2U);
+
+  EXPECT_EQ(channel.Push(ptr), true);
+  EXPECT_EQ(channel.UsedSpace(), 3U);
+
+  EXPECT_EQ(channel.Push(ptr), false);
+  EXPECT_EQ(channel.UsedSpace(), 3U);
+
+  // AvailSpace round 1
+  EXPECT_EQ(channel.AvailSpace(), 0U);
+
+  EXPECT_EQ(channel.Pop(&ptr), true);
+  EXPECT_EQ(channel.AvailSpace(), 1U);
+
+  EXPECT_EQ(channel.Pop(&ptr), true);
+  EXPECT_EQ(channel.AvailSpace(), 2U);
+
+  EXPECT_EQ(channel.Pop(&ptr), true);
+  EXPECT_EQ(channel.AvailSpace(), 3U);
+
+  EXPECT_EQ(channel.Pop(&ptr), false);
+  EXPECT_EQ(channel.AvailSpace(), 3U);
+
+  // UsedSpace round 2
+  EXPECT_EQ(channel.UsedSpace(), 0U);
+
+  EXPECT_EQ(channel.Push(ptr), true);
+  EXPECT_EQ(channel.UsedSpace(), 1U);
+
+  EXPECT_EQ(channel.Push(ptr), true);
+  EXPECT_EQ(channel.UsedSpace(), 2U);
+
+  EXPECT_EQ(channel.Push(ptr), true);
+  EXPECT_EQ(channel.UsedSpace(), 3U);
+
+  EXPECT_EQ(channel.Push(ptr), false);
+  EXPECT_EQ(channel.UsedSpace(), 3U);
+
+  // AvailSpace round 2
+  EXPECT_EQ(channel.AvailSpace(), 0U);
+
+  EXPECT_EQ(channel.Pop(&ptr), true);
+  EXPECT_EQ(channel.AvailSpace(), 1U);
+
+  EXPECT_EQ(channel.Pop(&ptr), true);
+  EXPECT_EQ(channel.AvailSpace(), 2U);
+
+  EXPECT_EQ(channel.Pop(&ptr), true);
+  EXPECT_EQ(channel.AvailSpace(), 3U);
+
+  EXPECT_EQ(channel.Pop(&ptr), false);
+  EXPECT_EQ(channel.AvailSpace(), 3U);
+}
+
+
 TEST(QueueTest, Capacity) {
-  oak::Channel channel(3);
+  oak::Channel channel(4);
   EXPECT_EQ(channel.Capacity(), 3U);
 }
 
