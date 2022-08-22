@@ -11,6 +11,7 @@
 namespace {
 
 TEST(QueueTest, ClassSize) {
+  EXPECT_EQ(sizeof(oak::Channel) % OAK_CACHELINE_SIZE, 0U);
   oak::Channel* ptr = new oak::Channel(1 << 2);
   uint64_t base = reinterpret_cast<uint64_t>(ptr);
   EXPECT_EQ(base & (OAK_CACHELINE_SIZE - 1), 0U);

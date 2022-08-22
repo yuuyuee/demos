@@ -9,12 +9,21 @@
 #include "oak/common/format.h"
 #include "oak/common/system.h"
 #include "oak/common/throw_delegate.h"
+#include "oak/common/channel.h"
 #include "oak/logging/logging.h"
 
 namespace oak {
 
+enum Role {
+  ROLE_SOURCE,
+  ROLE_PARSER,
+  ROLE_SINK,
+  ROLE_UNKNOWN
+};
+
 struct WorkerContext {
   pthread_t self;
+  Role role;
   const LogicCore* logic_core;
   void* caller;
   void* message;

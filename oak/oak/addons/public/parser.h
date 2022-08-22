@@ -46,7 +46,7 @@ struct oak_parser_module {
                struct oak_dict* fields);
 
   /* Callback to parsing the stream to indicate whether or not
-   * the stream should be saved.
+   * the stream should be controlled.
    *
    * @module module context.
    * @up_stream buffer reference the up stream.

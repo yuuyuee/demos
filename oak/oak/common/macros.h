@@ -20,14 +20,14 @@ R ArraySizeHelper(const T (&)[N]);
 #if defined(__has_attribute)
 # define OAK_HAS_ATTRIBUTE(x) __has_attribute(x)
 #else
-# define OAK_HAS_ATTRIBUTE(x) 0
+# define OAK_HAS_ATTRIBUTE(x) (0)
 #endif
 
 // OAK_HAS_CPP_ATTRIBUTE()
 #if defined(__has_cpp_attribute)
 # define OAK_HAS_CPP_ATTRIBUTE(x) __has_cpp_attribute(x)
 #else
-# define OAK_HAS_CPP_ATTRIBUTE(x) 0
+# define OAK_HAS_CPP_ATTRIBUTE(x) (0)
 #endif
 
 // OAK_ATTR_ALWAYS_INLINE()
@@ -145,10 +145,14 @@ constexpr int IgnoreUnused() { return 0; }
     (false ? static_cast<void>(cond) : static_cast<void>(0))
 #else
 # include <assert.h>
-# define OAK_ASSERT(cond)                                 \
-    (OAK_LIKELY(cond)                                \
-        ? static_cast<void>(0)                            \
+# define OAK_ASSERT(cond)                       \
+    (OAK_LIKELY(cond)                           \
+        ? static_cast<void>(0)                  \
         : [] { assert(false && #cond); }())
 #endif
+
+#define OAK_DISALLOW_COPY_AND_ASSIGN(type)      \
+    type(type const&) = delete;                 \
+    type& operator=(type const&) = delete
 
 #endif  // OAK_COMMON_MACROS_H_

@@ -19,20 +19,20 @@ class alignas(OAK_CACHELINE_SIZE) Channel {
   // Construct object with a fixed maximum size.
   // NOTE: the size MUST be a pwer of 2.
   explicit Channel(uint32_t size, void** ptr = nullptr) noexcept
-      : ownship_(false), size_(size), records_(ptr),
+      : ownership_(false), size_(size), records_(ptr),
         cons_head_(0), cons_tail_(0),
         prod_head_(0), prod_tail_(0) {
     assert(((size & (size - 1)) == 0) && "size MUST be a pwer of 2");
     if (!records_) {
       records_ = ::new void*[size];
       assert(records_ && "No enough memory");
-      ownship_ = true;
+      ownership_ = true;
     }
   }
 
   // Destruct object.
   ~Channel() {
-    if (ownship_)
+    if (ownership_)
       ::delete[](records_);
   }
 
@@ -110,40 +110,28 @@ class alignas(OAK_CACHELINE_SIZE) Channel {
   Channel(Channel const&) = delete;
   Channel& operator=(const Channel&) = delete;
 
-// #if !OAK_HAS_CPP_ATTRIBUTE(__cpp_aligned_new)
-//   char padding0_[OAK_CACHELINE_SIZE];
-// #endif
+  char padding0_[OAK_CACHELINE_SIZE];
 
-  bool ownship_;
+  bool ownership_;
   const uint32_t size_;
   void** records_;
 
-// #if !OAK_HAS_CPP_ATTRIBUTE(__cpp_aligned_new)
-//   char padding1_[OAK_CACHELINE_SIZE -
-//                  sizeof(ownship_) -
-//                  sizeof(size_) -
-//                  sizeof(records_)];
-// #endif
+  char padding1_[OAK_CACHELINE_SIZE -
+                 sizeof(ownership_) -
+                 sizeof(size_) -
+                 sizeof(records_)];
 
   alignas(OAK_CACHELINE_SIZE) std::atomic<uint32_t> cons_head_;
-// #if !OAK_HAS_CPP_ATTRIBUTE(__cpp_aligned_new)
-//   char padding2_[OAK_CACHELINE_SIZE - sizeof(cons_head_)];
-// #endif
+  char padding2_[OAK_CACHELINE_SIZE - sizeof(cons_head_)];
 
   alignas(OAK_CACHELINE_SIZE) std::atomic<uint32_t> cons_tail_;
-// #if !OAK_HAS_CPP_ATTRIBUTE(__cpp_aligned_new)
-//   char padding3_[OAK_CACHELINE_SIZE - sizeof(cons_tail_)];
-// #endif
+  char padding3_[OAK_CACHELINE_SIZE - sizeof(cons_tail_)];
 
   alignas(OAK_CACHELINE_SIZE) std::atomic<uint32_t> prod_head_;
-// #if !OAK_HAS_CPP_ATTRIBUTE(__cpp_aligned_new)
-//   char padding4_[OAK_CACHELINE_SIZE - sizeof(prod_head_)];
-// #endif
+  char padding4_[OAK_CACHELINE_SIZE - sizeof(prod_head_)];
 
   alignas(OAK_CACHELINE_SIZE) std::atomic<uint32_t> prod_tail_;
-// #if !OAK_HAS_CPP_ATTRIBUTE(__cpp_aligned_new)
-//   char padding5_[OAK_CACHELINE_SIZE - sizeof(prod_tail_)];
-// #endif
+  char padding5_[OAK_CACHELINE_SIZE - sizeof(prod_tail_)];
 };
 
 }  // namespace oak

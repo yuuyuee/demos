@@ -19,7 +19,7 @@
 #include "oak/logging/logging.h"
 
 #include "oak/config.h"
-#include "oak/event/proxy.h"
+#include "oak/addons/proxy.h"
 
 namespace {
 

@@ -3,71 +3,152 @@
 #ifndef OAK_ADDONS_ADDONS_H_
 #define OAK_ADDONS_ADDONS_H_
 
-#include <sched.h>
-#include <limits.h>
-#include <pthread.h>
-
-#include <atomic>
 #include <string>
-#include <unordered_map>
 
-#include "oak/common/ring.h"
-#include "oak/common/macros.h"
+
+
 #include "oak/addons/module.h"
-#include "oak/config.h"
 
 namespace oak {
+
 using Dict = std::unordered_map<std::string, std::string>;
 
-class alignas(OAK_CACHELINE_SIZE) SourceRoutine {
+// EventModuleAccessor
+
+// This class provides resource management and interface forwarding for
+// event module implements.
+
+class EventModuleProxy {
  public:
-  SourceRoutine();
-  virtual ~SourceRoutine();
+  EventModuleProxy();
+  ~EventModuleProxy();
 
-  virtual void Start() = 0;
-  virtual void Stop() = 0;
+  // Initialize the event proxy, return 0 on success, -1 if any error
+  // occursed.
+  static int Create(const std::string& module_name,
+                    const Dict& config,
+                    std::unique_ptr<EventModuleProxy>* event);
 
-  virtual void Add(const Module& module, const Dict& config) = 0;
-  virtual void Routine(const cpu_set_t& mask) = 0;
+  // pull out the previous event from event module.
+  int Pull(struct incoming_event* event, int size);
+
+  // receive the event from event module.
+  int Recv(struct incoming_event* event);
+
+  // send the event to event module.
+  int Send(const struct outgoing_event* event);
+
+ private:
+
+
+  EventModuleProxy(EventModuleProxy const&) = delete;
+  const EventModuleProxy& operator=(EventModuleProxy const&) = delete;
 };
 
-class alignas(OAK_CACHELINE_SIZE) ParserRoutine {
+// EventProxy
+
+// This class provides resource management and interface forwarding for
+// event module implements.
+
+class EventProxy {
  public:
-  ParserRoutine();
-  virtual ~ParserRoutine();
+  ~EventProxy();
 
-  virtual void Start() = 0;
-  virtual void Stop() = 0;
+  // Initialize the event proxy, return 0 on success, -1 if any error
+  // occursed.
+  static int Create(const std::string& module_name,
+                    const Dict& config,
+                    std::unique_ptr<EventProxy>* event);
 
-  virtual void Add(const Module& module, const Dict& config) = 0;
-  virtual void Remove(const Module& module) = 0;
-  virtual void Update(const Module& module, const Dict& config) = 0;
-  virtual void Routine(const cpu_set_t& mask) = 0;
+  // pull out the previous event from event module.
+  int Pull(struct incoming_event* event, int size);
+
+  // receive the event from event module.
+  int Recv(struct incoming_event* event);
+
+  // send the event to event module.
+  int Send(const struct outgoing_event* event);
+
+ private:
+  EventProxy(const Module& module, void* context)
+      : module_(module), context_(context) {}
+
+  EventProxy(EventProxy const&) = delete;
+  const EventProxy& operator=(EventProxy const&) = delete;
+
+  Module module_;
+  void* context_;
 };
 
-class alignas(OAK_CACHELINE_SIZE) SinkRoutine {
+// EventProxy
+
+// This class provides resource management and interface forwarding for
+// event module implements.
+
+class EventProxy {
  public:
-  SinkRoutine();
-  virtual ~SinkRoutine();
+  ~EventProxy();
 
-  virtual void Start() = 0;
-  virtual void Stop() = 0;
+  // Initialize the event proxy, return 0 on success, -1 if any error
+  // occursed.
+  static int Create(const std::string& module_name,
+                    const Dict& config,
+                    std::unique_ptr<EventProxy>* event);
 
-  virtual void Add(const Module& module, const Dict& config) = 0;
-  virtual void Routine(const cpu_set_t& mask) = 0;
+  // pull out the previous event from event module.
+  int Pull(struct incoming_event* event, int size);
+
+  // receive the event from event module.
+  int Recv(struct incoming_event* event);
+
+  // send the event to event module.
+  int Send(const struct outgoing_event* event);
+
+ private:
+  EventProxy(const Module& module, void* context)
+      : module_(module), context_(context) {}
+
+  EventProxy(EventProxy const&) = delete;
+  const EventProxy& operator=(EventProxy const&) = delete;
+
+  Module module_;
+  void* context_;
 };
 
-// Routine context.
+// EventProxy
 
-struct alignas(OAK_CACHELINE_SIZE) ParserContext {
-  Ring report;
-  pthread_spinlock_t report_lock;
+// This class provides resource management and interface forwarding for
+// event module implements.
 
-  Ring metrics;
-  pthread_spinlock_t metrics_lock;
+class EventProxy {
+ public:
+  ~EventProxy();
+
+  // Initialize the event proxy, return 0 on success, -1 if any error
+  // occursed.
+  static int Create(const std::string& module_name,
+                    const Dict& config,
+                    std::unique_ptr<EventProxy>* event);
+
+  // pull out the previous event from event module.
+  int Pull(struct incoming_event* event, int size);
+
+  // receive the event from event module.
+  int Recv(struct incoming_event* event);
+
+  // send the event to event module.
+  int Send(const struct outgoing_event* event);
+
+ private:
+  EventProxy(const Module& module, void* context)
+      : module_(module), context_(context) {}
+
+  EventProxy(EventProxy const&) = delete;
+  const EventProxy& operator=(EventProxy const&) = delete;
+
+  Module module_;
+  void* context_;
 };
-
-
 
 }  // namespace oak
 
