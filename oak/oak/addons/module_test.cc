@@ -24,23 +24,23 @@ int main(int argc, char* argv[]) {
 
   int config;
 
-  oak::EventModule* em = nullptr;
-  oak::SourceModule* sm = nullptr;
+  oak::EventHandle* em = nullptr;
+  oak::SourceHandle* sm = nullptr;
   oak::ParserModule* pm = nullptr;
-  oak::SinkModule* sim = nullptr;
+  oak::SinkHandle* sim = nullptr;
 
   switch (handle->type) {
   case MODULE_TYPE_SOURCE:
-    sm = new oak::SourceModule(handle, config);
+    sm = new oak::SourceHandle(handle, config);
     break;
   case MODULE_TYPE_PARSER:
     pm = new oak::ParserModule(handle, config);
     break;
   case MODULE_TYPE_SINK:
-    sim = new oak::SinkModule(handle, config);
+    sim = new oak::SinkHandle(handle, config);
     break;
   case MODULE_TYPE_EVENT:
-    em = new oak::EventModule(handle, config);
+    em = new oak::EventHandle(handle, config);
     break;
   default: brea;
   }
