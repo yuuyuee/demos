@@ -66,13 +66,13 @@ class ModuleBase {
 void* OpenCppModule(const std::string& entry, const std::string& path);
 
 // Close C/C++ implemented module.
-void CloseCppModule(void* handle);
+void CloseCppModule(const std::string& entry, void* handle);
 
 // Open Python implemented module.
 void* OpenPyModule(const std::string& entry, const std::string& path);
 
 // Close Python implemented module.
-void ClosePyModule(void* handle);
+void ClosePyModule(const std::string& entry, void* handle);
 
 // Dump module.
 void DumpModule(const ModuleBase& base);
