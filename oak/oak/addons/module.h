@@ -82,8 +82,8 @@ class ModuleBase {
   }
 
  protected:
-  ModuleBase();
-  ModuleBase(int id, const std::string& name, const std::string& path);
+  ModuleBase() noexcept;
+  ModuleBase(int id, const std::string& name, const std::string& path) noexcept;
 
  protected:
   int id_;

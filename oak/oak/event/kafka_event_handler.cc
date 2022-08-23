@@ -159,12 +159,7 @@ struct Metrics {
   } body;
 };
 
-
-}  // anonymous namespace
-}  // namespace oak
-
-extern "C" {
-static int kafka_event_init(void**, const struct oak_dict* config) {
+int kafka_event_init(void**, const struct oak_dict* config) {
   // TODO(YUYUE):
   printf("kafka_event_init\n");
   for (size_t i = 0; i < config->size; ++i) {
@@ -175,13 +170,13 @@ static int kafka_event_init(void**, const struct oak_dict* config) {
   return 0;
 }
 
-static int kafka_event_recv(void* context,
+int kafka_event_recv(void* context,
                             struct incoming_event* event) {
   // TODO(YUYUE):
   return -1;
 }
 
-static int kafka_event_pull(void* context,
+int kafka_event_pull(void* context,
                             struct incoming_event* event,
                             int size) {
   printf("kafka_event_pull\n");
@@ -189,26 +184,27 @@ static int kafka_event_pull(void* context,
   return 0;
 }
 
-static int kafka_event_send(void* context,
+int kafka_event_send(void* context,
                             const struct outgoing_event* event) {
   // TODO(YUYUE):
   return -1;
 }
 
-static void kafka_event_close(void* context) {
+void kafka_event_close(void* context) {
   // TODO(YUYUE):
 }
 
-struct oak_event_module kafka_event_handler = {
+extern "C" struct oak_event_module kafka_event_module;
+
+struct oak_event_module kafka_event_module = {
   .version = OAK_VERSION,
   .flags = OAK_MODULE_EVENT,
-  .init = kafka_event_init,
-  .pull = kafka_event_pull,
-  .recv = kafka_event_recv,
-  .send = kafka_event_send,
-  .close = kafka_event_close
+  .init = oak::kafka_event_init,
+  .pull = oak::kafka_event_pull,
+  .recv = oak::kafka_event_recv,
+  .send = oak::kafka_event_send,
+  .close = oak::kafka_event_close
 };
 
-}  // extern "C"
-
-extern "C" struct oak_event_module kafka_event_handler;
+}  // anonymous namespace
+}  // namespace oak

@@ -148,7 +148,6 @@ int main(int argc, char* argv[]) {
 
   Config config;
   ReadConfig(&config, proc_config.conf_file);
-  WriteConfig(config, proc_config.etc_dir + "/rs.write.json");
 
   // Setup logger.
   // TODO(YUYUE):

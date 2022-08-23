@@ -10,12 +10,12 @@ using std::string;
 
 namespace oak {
 
-ModuleBase::ModuleBase(int id, const string& name, const string& path)
+ModuleBase::ModuleBase(int id, const string& name, const string& path) noexcept
     : id_(id), version_(0), name_(name), path_(path),
       type_(MODULE_TYPE_UNKNOWN),
       lang_type_(LANG_TYPE_UNKNOWN) {}
 
-ModuleBase::ModuleBase(): ModuleBase(-1, "", "") {}
+ModuleBase::ModuleBase() noexcept: ModuleBase(-1, "", "") {}
 
 ModuleBase::~ModuleBase() {}
 
