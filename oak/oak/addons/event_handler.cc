@@ -4,7 +4,6 @@
 
 #include <assert.h>
 #include <dlfcn.h>
-
 #include "oak/addons/dict_internal.h"
 #include "oak/logging/logging.h"
 
@@ -15,8 +14,7 @@ namespace oak {
 
 // EventHandle
 
-EventHandle::EventHandle(
-    int id, const std::string& name, const std::string& path)
+EventHandle::EventHandle(int id, const string& name, const string& path)
     : ModuleBase(id, name, path) {}
 
 EventHandle::~EventHandle() {}
@@ -33,6 +31,7 @@ class CppEventHandle: public EventHandle {
                           void* dl_handle,
                           struct oak_event_module* handle,
                           void* context);
+
   virtual ~CppEventHandle();
 
   CppEventHandle(CppEventHandle const&) = delete;
@@ -157,7 +156,7 @@ int CppEventHandleFactory(const ModuleArguments& module_args,
 // Create a event handle, return 0 on success, -1 if any error
 // occursed.
 int EventHandleFactory(const ModuleArguments& module_args,
-                       std::unique_ptr<EventHandle>* module_handle) {
+                       unique_ptr<EventHandle>* module_handle) {
   assert(!module_args.module_name.empty() && "Invalid module name");
   if (module_args.module_path.empty() ||
       module_args.module_path.find(".so") != string::npos) {

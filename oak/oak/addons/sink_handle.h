@@ -5,13 +5,11 @@
 
 #include <string>
 #include <memory>
-#include <unordered_map>
-#include "oak/common/macros.h"
+
 #include "oak/addons/module.h"
+#include "oak/addons/public/sink.h"
 
 namespace oak {
-
-using Dict = std::unordered_map<std::string, std::string>;
 
 // SinkHandle
 
@@ -20,22 +18,22 @@ using Dict = std::unordered_map<std::string, std::string>;
 
 class SinkHandle: public ModuleBase {
  public:
-  SinkHandle();
   virtual ~SinkHandle();
+
+  SinkHandle(SinkHandle const&) = delete;
+  SinkHandle& operator=(SinkHandle const&) = delete;
 
   // Write the metadata to module specified the sink.
   virtual int Write(const struct oak_metadata* metadata) = 0;
 
- private:
-  OAK_DISALLOW_COPY_AND_ASSIGN(SinkHandle);
+ protected:
+  SinkHandle(int id, const std::string& name, const std::string& path);
 };
 
 // Create a sink handle, return 0 on success, -1 if any error
 // occursed.
-int SinkHandleFactory(const std::string& module_name,
-                      const std::string& module_path,
-                      const Dict& config,
-                      std::unique_ptr<SinkHandle>* module);
+int SinkHandleFactory(const ModuleArguments& module_args,
+                      std::unique_ptr<SinkHandle>* module_handle);
 
 }  // namespace oak
 

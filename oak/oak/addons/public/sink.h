@@ -37,8 +37,7 @@ struct oak_sink_module {
    * @meta some key/value fileds has been saved.
    *
    * Return 0 on success or -1 if an error occurred. */
-  int (*write)(void* context,
-               const struct oak_metadata* metadata);
+  int (*write)(void* context, const struct oak_metadata* metadata);
 
   /* Callback to close the module context. */
   void (*close)(void* context);

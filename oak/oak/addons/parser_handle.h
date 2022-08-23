@@ -5,13 +5,11 @@
 
 #include <string>
 #include <memory>
-#include <unordered_map>
-#include "oak/common/macros.h"
+
 #include "oak/addons/module.h"
+#include "oak/addons/public/parser.h"
 
 namespace oak {
-
-using Dict = std::unordered_map<std::string, std::string>;
 
 // ParserHandle
 
@@ -20,29 +18,29 @@ using Dict = std::unordered_map<std::string, std::string>;
 
 class ParserHandle: public ModuleBase {
  public:
-  ParserHandle();
   virtual ~ParserHandle();
 
-  // Parse stream to extract the fields.
-  virtual int Parse(const struct oak_buffer_ref* up_stream,
-                    const struct oak_buffer_ref* down_stream,
+  ParserHandle(ParserHandle const&) = delete;
+  ParserHandle& operator=(ParserHandle const&) = delete;
+
+  // Parse stream to extracting to filling the fields.
+  virtual int Parse(const struct oak_buffer* up_stream,
+                    const struct oak_buffer* down_stream,
                     struct oak_dict* fields) = 0;
 
-  // Parse stream to indicate whether or not the stream should
+  // Parse stream to indicating whether or not the stream should
   // be controlled.
-  virtual int Mark(const struct oak_buffer_ref* up_stream,
-                   const struct oak_buffer_ref* down_stream) = 0;
+  virtual int Mark(const struct oak_buffer* up_stream,
+                   const struct oak_buffer* down_stream) = 0;
 
- private:
-  OAK_DISALLOW_COPY_AND_ASSIGN(ParserHandle);
+ protected:
+  ParserHandle(int id, const std::string& name, const std::string& path);
 };
 
 // Create a parser handle, return 0 on success, -1 if any error
 // occursed.
-int ParserHandleFactory(const std::string& module_name,
-                        const std::string& module_path,
-                        const Dict& config,
-                        std::unique_ptr<ParserHandle>* module);
+int ParserHandleFactory(const ModuleArguments& module_args,
+                        std::unique_ptr<ParserHandle>* module_handle);
 
 }  // namespace oak
 

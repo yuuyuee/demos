@@ -5,13 +5,11 @@
 
 #include <string>
 #include <memory>
-#include <unordered_map>
-#include "oak/common/macros.h"
+
 #include "oak/addons/module.h"
+#include "oak/addons/public/source.h"
 
 namespace oak {
-
-using Dict = std::unordered_map<std::string, std::string>;
 
 // SourceHandle
 
@@ -20,23 +18,22 @@ using Dict = std::unordered_map<std::string, std::string>;
 
 class SourceHandle: public ModuleBase {
  public:
-  SourceHandle();
   virtual ~SourceHandle();
+
+  SourceHandle(SourceHandle const&) = delete;
+  SourceHandle& operator=(SourceHandle const&) = delete;
 
   // Read the buffer and decoded as the metadata.
   virtual int Read(struct oak_metadata* metadata);
 
- private:
-  OAK_DISALLOW_COPY_AND_ASSIGN(SourceHandle);
+ protected:
+  SourceHandle(int id, const std::string& name, const std::string& path);
 };
 
-// Create a source module, return 0 on success, -1 if any error
+// Create a source handle, return 0 on success, -1 if any error
 // occursed.
-int SourceHandleFactory(const std::string& module_name,
-                        const std::string& module_path,
-                        const Dict& config,
-                        std::unique_ptr<SourceHandle>* module);
-
+int SourceHandleFactory(const ModuleArguments& module_args,
+                        std::unique_ptr<SourceHandle>* module_handle);
 }  // namespace oak
 
 #endif  // OAK_ADDONS_SOURCE_HANDLE_H_

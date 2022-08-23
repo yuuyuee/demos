@@ -6,20 +6,15 @@
 #include <string>
 #include <unordered_map>
 
-#include "oak/addons/public/event.h"
-#include "oak/addons/public/source.h"
-#include "oak/addons/public/parser.h"
-#include "oak/addons/public/sink.h"
-
 namespace oak {
 
 // Module type
 enum ModuleType {
   MODULE_TYPE_UNKNOWN = 0,
-  MODULE_TYPE_SOURCE = OAK_MODULE_SOURCE,
-  MODULE_TYPE_PARSER = OAK_MODULE_PARSER,
-  MODULE_TYPE_SINK = OAK_MODULE_SINK,
-  MODULE_TYPE_EVENT = OAK_MODULE_EVENT
+  MODULE_TYPE_SOURCE = 0x01,
+  MODULE_TYPE_PARSER = 0x02,
+  MODULE_TYPE_SINK = 0x03,
+  MODULE_TYPE_EVENT = 0x04
 };
 
 constexpr const char* ModuleTypeName(ModuleType type) {

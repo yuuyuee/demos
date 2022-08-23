@@ -4,6 +4,7 @@
 #define OAK_ADDONS_METADATA_INTERNAL_H_
 
 #include "oak/addons/public/metadata.h"
+#include "oak/addons/buffer_internal.h"
 #include "oak/addons/dict_internal.h"
 
 #ifdef __cplusplus

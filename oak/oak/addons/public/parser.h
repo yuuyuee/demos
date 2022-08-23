@@ -31,7 +31,7 @@ struct oak_parser_module {
    * Return 0 on success or -1 if an error occurred. */
   int (*init)(void** context, const struct oak_dict* config);
 
-  /* Callback to parsing the stream to extract the fields.
+  /* Callback to pars the stream to extracting to filling the fields.
    *
    * @module module context.
    * @up_stream buffer reference the up stream.

@@ -1,9 +1,6 @@
 // Copyright 2022 The Oak Authors.
 
 #include "oak/addons/module.h"
-
-#include <assert.h>
-#include <dlfcn.h>
 #include "oak/logging/logging.h"
 
 using std::string;

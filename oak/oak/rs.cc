@@ -9,6 +9,7 @@
 #include "oak/addons/public/compiler.h"
 #include "oak/addons/public/platform.h"
 #include "oak/addons/public/version.h"
+#include "oak/addons/public/event.h"
 #include "oak/addons/event_handle.h"
 #include "oak/common/macros.h"
 #include "oak/common/format.h"

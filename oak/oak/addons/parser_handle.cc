@@ -2,11 +2,21 @@
 
 #include "oak/addons/parser_handle.h"
 
+#include <assert.h>
+#include <dlfcn.h>
+#include "oak/addons/metadata_internal.h"
+#include "oak/logging/logging.h"
+
+using std::string;
+using std::unique_ptr;
+
 namespace oak {
 
 // ParserHandle
 
-ParserHandle::ParserHandle() {}
+ParserHandle::ParserHandle(int id, const string& name, const string& path)
+    : ModuleBase(id, name, path) {}
+
 ParserHandle::~ParserHandle() {}
 
 // CppParserHandle
@@ -15,22 +25,132 @@ ParserHandle::~ParserHandle() {}
 
 class CppParserHandle: public ParserHandle {
  public:
-  CppParserHandle();
+  explicit CppParserHandle(int id,
+                          const string& name,
+                          const string& path,
+                          void* dl_handle,
+                          struct oak_parser_module* handle,
+                          void* context);
+
   virtual ~CppParserHandle();
 
-  // Parse stream to extract the fields.
-  virtual int Parse(const struct oak_buffer_ref* up_stream,
-                    const struct oak_buffer_ref* down_stream,
-                    struct oak_dict* fields);
+  CppParserHandle(CppParserHandle const&) = delete;
+  CppParserHandle& operator=(CppParserHandle const&) = delete;
+
+  // Parse stream to extracting to filling the fields.
+  virtual int Parse(const struct oak_buffer* up_stream,
+                    const struct oak_buffer* down_stream,
+                    struct oak_dict* fields) {
+    return handle_->parse(context_, up_stream, down_stream, fields);
+  }
 
   // Parse stream to indicate whether or not the stream should
   // be controlled.
-  virtual int Mark(const struct oak_buffer_ref* up_stream,
-                   const struct oak_buffer_ref* down_stream);
+  virtual int Mark(const struct oak_buffer* up_stream,
+                   const struct oak_buffer* down_stream) {
+    return handle_->mark(context_, up_stream, down_stream);
+  }
 
  private:
-  OAK_DISALLOW_COPY_AND_ASSIGN(CppParserHandle);
+  void* dl_handle_;
+  struct oak_parser_module* handle_;
+  void* context_;
 };
+
+CppParserHandle::CppParserHandle(int id,
+                                 const string& name,
+                                 const string& path,
+                                 void* dl_handle,
+                                 struct oak_parser_module* handle,
+                                 void* context)
+    : ParserHandle(id, name, path),
+      dl_handle_(dl_handle), handle_(handle), context_(context) {
+  assert(!name.empty() && "Invalid module name");
+  assert(dl_handle && "Invalid dl_handle");
+  assert(handle && "Invalid handle");
+  version_ = handle_->version;
+  type_ = MODULE_TYPE_PARSER;
+  lang_type_ = LANG_TYPE_C_CPP;
+}
+
+CppParserHandle::~CppParserHandle() {
+  handle_->close(context_);
+  dlerror();
+  if (dlclose(dl_handle_) != 0) {
+    OAK_WARNING("Close module %s: dlclose failed: %s\n",
+                name_.c_str(), dlerror());
+  }
+}
+
+int CppParserHandleFactory(const ModuleArguments& module_args,
+                           unique_ptr<ParserHandle>* module_handle) {
+  assert(!module_args.module_name.empty() && "Invalid module name");
+  const char* path = module_args.module_path.empty() ?
+      nullptr : module_args.module_path.c_str();
+  dlerror();
+  void* dl_handle = dlopen(path, RTLD_NOW | RTLD_GLOBAL);
+  if (!dl_handle) {
+    OAK_ERROR("Open module %s: dlopen failed: %s\n",
+              module_args.module_name.c_str(), dlerror());
+    return -1;
+  }
+
+  dlerror();
+  void* symbol = dlsym(dl_handle, module_args.module_name.c_str());
+  if (!symbol) {
+    OAK_ERROR("Open module %s: dlsym failed: %s\n",
+              module_args.module_name.c_str(), dlerror());
+    dlclose(dl_handle);
+    return -1;
+  }
+
+  struct oak_parser_module* handle =
+      reinterpret_cast<struct oak_parser_module*>(symbol);
+
+  if (handle->flags != MODULE_TYPE_PARSER) {
+    OAK_ERROR("Open module %s: Unidentify module flags: %d\n",
+              module_args.module_name.c_str(), handle->flags);
+    dlclose(dl_handle);
+    return -1;
+  }
+
+  if ((handle->version >> 16) != OAK_VERSION_MAJOR) {
+    OAK_ERROR("Open module %s: Module version is too old: %d\n",
+              module_args.module_name.c_str(), handle->version);
+    dlclose(dl_handle);
+    return -1;
+  }
+
+  struct oak_dict dict;
+  oak_dict_init2(&dict);
+  for (auto const& it : module_args.config) {
+    if (dict.size >= OAK_DICT_DFL_CAP)
+      break;
+    if (it.first.empty() || it.second.empty())
+      continue;
+    oak_dict_ref(&dict,
+        it.first.c_str(), it.first.size(),
+        it.second.c_str(), it.second.size());
+  }
+
+  void* context = nullptr;
+  int ret = handle->init(&context, &dict);
+  if (ret != 0) {
+    OAK_ERROR("Open module %s: Module initialization failed\n",
+              module_args.module_name.c_str());
+    dlclose(dl_handle);
+    return -1;
+  }
+
+  CppParserHandle* obj =
+      new CppParserHandle(module_args.id,
+                         module_args.module_name,
+                         module_args.module_path,
+                         dl_handle, handle, context);
+  obj->Dump();
+  module_handle->reset(obj);
+  return 0;
+}
 
 // PyParserHandle
 
@@ -38,30 +158,51 @@ class CppParserHandle: public ParserHandle {
 
 class PyParserHandle: public ParserHandle {
  public:
-  PyParserHandle();
   virtual ~PyParserHandle();
 
   // Parse stream to extract the fields.
   virtual int Parse(const struct oak_buffer_ref* up_stream,
                     const struct oak_buffer_ref* down_stream,
-                    struct oak_dict* fields);
+                    struct oak_dict* fields) {
+    // TODO(YUYUE): implemented
+    return -1;
+  }
 
   // Parse stream to indicate whether or not the stream should
   // be controlled.
   virtual int Mark(const struct oak_buffer_ref* up_stream,
-                   const struct oak_buffer_ref* down_stream);
+                   const struct oak_buffer_ref* down_stream) {
+    // TODO(YUYUE): implemented
+    return -1;
+  }
 
- private:
-  OAK_DISALLOW_COPY_AND_ASSIGN(PyParserHandle);
+ protected:
+  PyParserHandle();
 };
+
+PyParserHandle::PyParserHandle(): ParserHandle(-1, "", "") {}
+
+PyParserHandle::~PyParserHandle() {}
+
+int PyParserHandleFactory(const ModuleArguments& module_args,
+                          unique_ptr<ParserHandle>* module_handle) {
+  // TODO(YUYUE): implemented
+  return -1;
+}
 
 // Create a parser handle, return 0 on success, -1 if any error
 // occursed.
-int ParserHandleFactory(const std::string& module_name,
-                        const std::string& module_path,
-                        const Dict& config,
-                        std::unique_ptr<ParserHandle>* module) {
+int ParserHandleFactory(const ModuleArguments& module_args,
+                        unique_ptr<ParserHandle>* module_handle) {
+  assert(!module_args.module_name.empty() && "Invalid module name");
+  if (module_args.module_path.empty() ||
+      module_args.module_path.find(".so") != string::npos) {
+    return CppParserHandleFactory(module_args, module_handle);
+  }
 
+  OAK_ERROR("Open module %s: Unidentified module\n",
+            module_args.module_name.c_str());
+  return -1;
 }
 
 }  // namespace oak

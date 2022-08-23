@@ -7,6 +7,7 @@
 #include <memory>
 
 #include "oak/addons/module.h"
+#include "oak/addons/public/event.h"
 
 namespace oak {
 
