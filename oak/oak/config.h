@@ -34,7 +34,7 @@ const ProcessConfig& GetProcessConfig();
 // ModuleConfig
 
 struct ModuleConfig {
-  int id;               ///< module ID
+  int id{-1};           ///< module ID
   std::string name;     ///< module name
   bool enable{false};   ///< whether or not the module is enable
   std::string path;     ///< module path
