@@ -4,6 +4,12 @@
 #define OAK_ADDONS_MODULE_H_
 
 #include <string>
+#include <unordered_map>
+
+#include "oak/addons/public/event.h"
+#include "oak/addons/public/source.h"
+#include "oak/addons/public/parser.h"
+#include "oak/addons/public/sink.h"
 
 namespace oak {
 
@@ -40,42 +46,62 @@ constexpr const char* LangTypeName(LangType type) {
 // ModuleBase
 class ModuleBase {
  public:
-  ModuleBase();
   virtual ~ModuleBase();
 
+  // Dump the module information.
+  void Dump() const noexcept;
+
   // Module unique ID
-  virtual int id() const noexcept;
+  int id() const noexcept {
+    return id_;
+  }
 
   // Module version
-  virtual int version() const noexcept;
+  int version() const noexcept {
+    return version_;
+  }
 
   // Module name also module entry
-  virtual const std::string& name() const noexcept;
+  const std::string& name() const& noexcept {
+    return name_;
+  }
 
   // Module path
-  virtual const std::string& path() const noexcept;
+  const std::string& path() const& noexcept {
+    return path_;
+  }
 
   // Module type
-  virtual ModuleType type() const noexcept;
+  ModuleType type() const noexcept {
+    return type_;
+  }
 
   // Module language type
-  virtual LangType lang_type() const noexcept;
+  LangType lang_type() const noexcept {
+    return lang_type_;
+  }
+
+ protected:
+  ModuleBase();
+  ModuleBase(int id, const std::string& name, const std::string& path);
+
+ protected:
+  int id_;
+  int version_;
+  std::string name_;
+  std::string path_;
+  ModuleType type_;
+  LangType lang_type_;
 };
 
-// Open C/C++ implemented module.
-void* OpenCppModule(const std::string& entry, const std::string& path);
+using Dict = std::unordered_map<std::string, std::string>;
 
-// Close C/C++ implemented module.
-void CloseCppModule(const std::string& entry, void* handle);
-
-// Open Python implemented module.
-void* OpenPyModule(const std::string& entry, const std::string& path);
-
-// Close Python implemented module.
-void ClosePyModule(const std::string& entry, void* handle);
-
-// Dump module.
-void DumpModule(const ModuleBase& base);
+struct ModuleArguments {
+  int id;
+  std::string module_name;
+  std::string module_path;
+  const Dict config;
+};
 
 }  // namespace oak
 #endif  // OAK_ADDONS_MODULE_H_

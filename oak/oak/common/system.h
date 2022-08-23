@@ -13,12 +13,8 @@
 
 namespace oak {
 
-#ifndef OAK_CACHELINE_SIZE
-# define OAK_CACHELINE_SIZE (64)
-#endif
-
 struct LogicCore {
-  bool alignas(OAK_CACHELINE_SIZE) enable;
+  bool enable;
   std::atomic<bool> lock;
   int logic_core_id;
   cpu_set_t mask;

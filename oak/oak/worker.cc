@@ -35,32 +35,32 @@ void DummyFun() {
 }
 
 void CreateWorker(const Config& config) {
-  for (int i = 0; i < config.source.num_threads; ++i) {
-    LogicCore* logic_core = System::GetNextAvailableLogicCore();
-    if (logic_core == nullptr)
-      ThrowStdOutOfRange("No enough available CPU");
-    oak::System::CreateThread(oak::Format("source-%d", i),
-                              logic_core->mask,
-                              DummyFun);
-  }
+  // for (int i = 0; i < config.source.num_threads; ++i) {
+  //   LogicCore* logic_core = System::GetNextAvailableLogicCore();
+  //   if (logic_core == nullptr)
+  //     ThrowStdOutOfRange("No enough available CPU");
+  //   oak::System::CreateThread(oak::Format("source-%d", i),
+  //                             logic_core->mask,
+  //                             DummyFun);
+  // }
 
-  for (int i = 0; i < config.parser.num_threads; ++i) {
-    LogicCore* logic_core = System::GetNextAvailableLogicCore();
-    if (logic_core == nullptr)
-      ThrowStdOutOfRange("No enough available CPU");
-    oak::System::CreateThread(oak::Format("parser-%d", i),
-                              logic_core->mask,
-                              DummyFun);
-  }
+  // for (int i = 0; i < config.parser.num_threads; ++i) {
+  //   LogicCore* logic_core = System::GetNextAvailableLogicCore();
+  //   if (logic_core == nullptr)
+  //     ThrowStdOutOfRange("No enough available CPU");
+  //   oak::System::CreateThread(oak::Format("parser-%d", i),
+  //                             logic_core->mask,
+  //                             DummyFun);
+  // }
 
-  for (int i = 0; i < config.sink.num_threads; ++i) {
-    LogicCore* logic_core = System::GetNextAvailableLogicCore();
-    if (logic_core == nullptr)
-      ThrowStdOutOfRange("No enough available CPU");
-    oak::System::CreateThread(oak::Format("sink-%d", i),
-                              logic_core->mask,
-                              DummyFun);
-  }
+  // for (int i = 0; i < config.sink.num_threads; ++i) {
+  //   LogicCore* logic_core = System::GetNextAvailableLogicCore();
+  //   if (logic_core == nullptr)
+  //     ThrowStdOutOfRange("No enough available CPU");
+  //   oak::System::CreateThread(oak::Format("sink-%d", i),
+  //                             logic_core->mask,
+  //                             DummyFun);
+  // }
 }
 
 }  // namespace oak

@@ -5,13 +5,10 @@
 
 #include <string>
 #include <memory>
-#include <unordered_map>
-#include "oak/common/macros.h"
+
 #include "oak/addons/module.h"
 
 namespace oak {
-
-using Dict = std::unordered_map<std::string, std::string>;
 
 // EventHandle
 
@@ -20,8 +17,10 @@ using Dict = std::unordered_map<std::string, std::string>;
 
 class EventHandle: public ModuleBase {
  public:
-  EventHandle();
   virtual ~EventHandle();
+
+  EventHandle(EventHandle const&) = delete;
+  EventHandle& operator=(EventHandle const&) = delete;
 
   // Pull out the previous event from event module.
   virtual int Pull(struct incoming_event* event, int size) = 0;
@@ -32,16 +31,14 @@ class EventHandle: public ModuleBase {
   // Send the event to event module.
   virtual int Send(const struct outgoing_event* event) = 0;
 
- private:
-  OAK_DISALLOW_COPY_AND_ASSIGN(EventHandle);
+ protected:
+  EventHandle(int id, const std::string& name, const std::string& path);
 };
 
 // Create a event handle, return 0 on success, -1 if any error
 // occursed.
-int EventModuleFactory(const std::string& module_name,
-                       const std::string& module_path,
-                       const Dict& config,
-                       std::unique_ptr<EventHandle>* module);
+int EventHandleFactory(const ModuleArguments& module_args,
+                       std::unique_ptr<EventHandle>* module_handle);
 }  // namespace oak
 
 #endif  // OAK_ADDONS_EVENT_HANDLE_H_

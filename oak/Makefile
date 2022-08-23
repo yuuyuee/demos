@@ -8,6 +8,10 @@ rs:
 			-Ithird_party/asio-1.22.2/asio/include \
 			oak/rs.cc	\
 			oak/worker.cc \
+			oak/addons/module.cc \
+			oak/addons/event_handler.cc \
+			oak/addons/buffer_internal.cc \
+			oak/event/kafka_event_handler.cc \
 			oak/common/system.cc \
 			oak/common/fs.cc \
 			oak/common/format.cc \
@@ -17,7 +21,7 @@ rs:
 			oak/config.cc \
 			oak/common/error_code.cc \
 			third_party/jsoncpp-1.9.5/jsoncpp.cpp \
-			-lpthread
+			-lpthread -ldl
 	if test -e "dist/bin" -a -d "dist/bin"; then \
 		cp rs dist/bin/; \
 	fi;
@@ -48,6 +52,7 @@ ring_test:
 
 buffer_test:
 	g++ -std=c++11 -Wall -Wextra -g -rdynamic -I. -Ithird_party/gtest -O2 -o$@ \
+			oak/addons/buffer_internal.cc \
 			oak/addons/buffer_test.cc \
 			third_party/gtest/gtest_main.cc third_party/gtest/gmock-gtest-all.cc \
 			-lpthread

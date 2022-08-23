@@ -59,6 +59,10 @@ void ReadModuleConfig(ModuleConfigDict* modules, const Json2::Value& node) {
     for (const auto& key : module_node.getMemberNames()) {
       if (key == "enable") {
         module.enable = module_node[key].asBool();
+      } else if (key == "path") {
+        module.path = module_node[key].asString();
+      } else if (key == "id") {
+        module.id = module_node[key].asInt();
       } else {
         module.config[key] = module_node[key].asString();
       }
@@ -74,6 +78,8 @@ void WriteModuleConfig(const ModuleConfigDict& modules, Json2::Value* node) {
   for (const auto& module : modules) {
     Json2::Value value(Json2::objectValue);
     value["enable"] = module.second.enable;
+    value["path"] = module.second.path;
+    value["id"] = module.second.id;
     for (const auto& kv : module.second.config)
       value[kv.first] = kv.second;
     (*node)[module.second.name] = value;

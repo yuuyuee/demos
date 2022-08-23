@@ -1,7 +1,7 @@
 // Copyright 2022 The Oak Authors.
 
 #include <string.h>
-#include "oak/addons/public/buffer.h"
+#include "oak/addons/buffer_internal.h"
 #include "gtest/gtest.h"
 
 namespace {
@@ -31,6 +31,16 @@ TEST(OAK_BUFFER_TEST, Initialize) {
   EXPECT_EQ(buffer4->size, 0U);
   oak_buffer_free(buffer4);
   free(buffer4);
+}
+
+TEST(OAK_BUFFER_TEST, InitializeNotOwned) {
+  const char* foo = "foo";
+  struct oak_buffer buffer;
+  oak_buffer_init2(&buffer, foo, strlen(foo));
+  EXPECT_EQ(buffer.capacity, strlen(foo));
+  EXPECT_EQ(buffer.size, strlen(foo));
+  EXPECT_EQ(oak_buffer_compare_str(&buffer, foo, strlen(foo)), 0);
+  oak_buffer_free(&buffer);
 }
 
 TEST(OAK_BUFFER_TEST, ClearEmpty) {
@@ -148,43 +158,6 @@ TEST(OAK_BUFFER_TEST, Compare) {
 
   oak_buffer_append_str(&b2, bar, strlen(bar));
   EXPECT_NE(oak_buffer_compare(&b1, &b2), 0);
-
-  oak_buffer_free(&b1);
-  oak_buffer_free(&b2);
-}
-
-TEST(OAK_PIECE_TEST, Empty) {
-  struct oak_buffer b1, b2;
-  oak_buffer_init(&b1, 0);
-  oak_buffer_init(&b2, 0);
-
-  const char* foo = "foo";
-  oak_buffer_assign_str(&b1, foo, strlen(foo));
-  EXPECT_FALSE(oak_piece_empty(oak_as_piece(&b1)));
-  EXPECT_TRUE(oak_piece_empty(oak_as_piece(&b2)));
-
-  oak_buffer_free(&b1);
-  oak_buffer_free(&b2);
-}
-
-TEST(OAK_PIECE_TEST, Compare) {
-  struct oak_buffer b1, b2;
-  oak_buffer_init(&b1, 0);
-  oak_buffer_init(&b2, 0);
-
-  char foo[] = "foo";
-  const char* bar = "bar";
-  oak_buffer_assign_str(&b1, foo, strlen(foo));
-  oak_buffer_assign_str(&b2, bar, strlen(bar));
-
-  struct oak_buffer_ref p1 = oak_as_piece_str(foo, strlen(foo));
-  struct oak_buffer_ref p2 = oak_as_piece_str(bar, strlen(bar));
-  struct oak_buffer_ref p3 = oak_as_piece(&b1);
-  struct oak_buffer_ref p4 = oak_as_piece(&b2);
-  EXPECT_NE(oak_piece_compare(p1, p2), 0);
-  EXPECT_NE(oak_piece_compare(p3, p4), 0);
-  EXPECT_EQ(oak_piece_compare(p1, p3), 0);
-  EXPECT_EQ(oak_piece_compare(p2, p4), 0);
 
   oak_buffer_free(&b1);
   oak_buffer_free(&b2);

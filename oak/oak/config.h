@@ -10,7 +10,6 @@
 namespace oak {
 
 using Dict = std::unordered_map<std::string, std::string>;
-using ModuleConfigDict = std::unordered_map<std::string, oak::ModuleConfig>;
 
 // ProcessConfig
 //
@@ -35,10 +34,14 @@ const ProcessConfig& GetProcessConfig();
 // ModuleConfig
 
 struct ModuleConfig {
+  int id;               ///< module ID
   std::string name;     ///< module name
   bool enable{false};   ///< whether or not the module is enable
+  std::string path;     ///< module path
   Dict config;          ///< module config
 };
+
+using ModuleConfigDict = std::unordered_map<std::string, ModuleConfig>;
 
 // Config
 
@@ -47,6 +50,15 @@ struct SourceConfig {
   int num_threads{-1};
   ModuleConfigDict modules;
 };
+
+#define OAK_PCONF_ID "id"
+#define OAK_PCONF_PROTO_TYPE "protocol_type"
+#define OAK_PCONF_PROTO_NAME "protocol_name"
+#define OAK_PCONF_HTTP_URL "http_url"
+#define OAK_PCONF_METRICS_INFLOW "metrics_inflow"
+#define OAK_PCONF_METRICS_OUTDATA "metrics_outdata"
+#define OAK_PCONF_COMMUNICATION "communication"
+#define OAK_PCONF_METRICS_KEEPFLOW "metrics_keepflow"
 
 struct ParserConfig {
   std::string comment;

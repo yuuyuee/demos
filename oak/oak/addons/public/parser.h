@@ -19,8 +19,8 @@ extern "C" {
  * Parser module abstract interface.*/
 
 struct oak_parser_module {
-  int version;        /* MUST equal to OAK_VERSION */
-  int flags;          /* Module flags */
+  int version;  /* MUST be equal to OAK_VERSION */
+  int flags;    /* Module flags MUST be equal to OAK_MODULE_PARSER */
 
   /* Callback to initialize the module context.
    *
@@ -28,9 +28,8 @@ struct oak_parser_module {
    * @config key/value dict that import from configuration and
    *         may used to initialize.
    *
-   * Return module context, this function always success no matter
-   * what value is returned. */
-  void* (*init)(const struct oak_dict* config);
+   * Return 0 on success or -1 if an error occurred. */
+  int (*init)(void** context, const struct oak_dict* config);
 
   /* Callback to parsing the stream to extract the fields.
    *
@@ -41,8 +40,8 @@ struct oak_parser_module {
    *
    * Return 0 on success or -1 if an error occurred. */
   int (*parse)(void* context,
-               const struct oak_buffer_ref* up_stream,
-               const struct oak_buffer_ref* down_stream,
+               const struct oak_buffer* up_stream,
+               const struct oak_buffer* down_stream,
                struct oak_dict* fields);
 
   /* Callback to parsing the stream to indicate whether or not
@@ -55,8 +54,8 @@ struct oak_parser_module {
    * Return 0 on success or -1 if an error occurred. on success
    * the up/down stream should be saved. */
   int (*mark)(void* context,
-              const struct oak_buffer_ref* up_stream,
-              const struct oak_buffer_ref* down_stream);
+              const struct oak_buffer* up_stream,
+              const struct oak_buffer* down_stream);
 
   /* Callback to close the module context. */
   void (*close)(void* context);

@@ -9,7 +9,7 @@
 #include "oak/addons/public/compiler.h"
 #include "oak/addons/public/platform.h"
 #include "oak/addons/public/version.h"
-#include "oak/addons/module.h"
+#include "oak/addons/event_handle.h"
 #include "oak/common/macros.h"
 #include "oak/common/format.h"
 #include "oak/common/fs.h"
@@ -17,9 +17,7 @@
 #include "oak/common/system.h"
 #include "oak/common/throw_delegate.h"
 #include "oak/logging/logging.h"
-
 #include "oak/config.h"
-#include "oak/addons/proxy.h"
 
 namespace {
 
@@ -53,41 +51,54 @@ bool CreateGuardFile(const std::string& guard_file) {
 
 int GetFirstEnabledEventReceiver(
     oak::ModuleConfigDict const& modules,
-    std::unique_ptr<oak::EventProxy>* event) {
+    std::unique_ptr<oak::EventHandle>* handle) {
   for (auto const& it : modules) {
-    if (it.second.enable)
-      return oak::EventProxy::Create(it.second.name, it.second.config, event);
+    if (it.second.enable) {
+      oak::ModuleArguments args{
+        .id = -1,
+        .module_name = it.second.name,
+        .module_path = it.second.path,
+        .config = it.second.config
+      };
+      return oak::EventHandleFactory(args, handle);
+    }
   }
   return 0;
 }
 
-oak::ModuleConfig GetModuleConfig(const struct incoming_event& event) {
+oak::ModuleConfig GetParserModuleConfig(
+    const std::string& addon_dir,
+    const struct incoming_event& event) {
   oak::ModuleConfig module;
   std::string name = oak::Basename(event.file_name);
   auto pos = name.find('.');
   if (pos != std::string::npos)
     name = name.substr(0, pos);
   module.name = name;
-  module.config["id"] = std::to_string(event.id);
-  module.config["proto_type"] = std::to_string(event.proto_type);
-  module.config["proto_name"] = std::string(event.proto_name);
-  module.config["file_name"] = std::string(event.file_name);
-  module.config["http_url"] = std::string(event.http_url);
-  module.config["m_input_flow"] = std::to_string(event.m_input_flow);
-  module.config["m_output_data"] = std::to_string(event.m_output_data);
-  module.config["is_extract_netflow"] = std::to_string(event.is_extract_netflow);
-  module.config["m_keep_flow"] = std::to_string(event.m_keep_flow);
+  module.path = addon_dir + "/" + event.file_name;
+  module.id = event.id;
+  module.config[OAK_PCONF_PROTO_TYPE] = std::to_string(event.proto_type);
+  module.config[OAK_PCONF_PROTO_NAME] = std::string(event.proto_name);
+  module.config[OAK_PCONF_HTTP_URL] = std::string(event.http_url);
+  module.config[OAK_PCONF_METRICS_INFLOW] = std::to_string(event.m_input_flow);
+  module.config[OAK_PCONF_METRICS_OUTDATA] =
+      std::to_string(event.m_output_data);
+  module.config[OAK_PCONF_COMMUNICATION] =
+      std::to_string(event.is_extract_netflow);
+  module.config[OAK_PCONF_METRICS_KEEPFLOW] = std::to_string(event.m_keep_flow);
   module.enable = true;
+  return module;
 }
 
-void RecoverOccurredEvent(
-    oak::ModuleConfigDict* modules,
+void RetrievalEvent(
+    const std::string& addon_dir, oak::ModuleConfigDict* modules,
     const struct incoming_event* event, int len) {
   for (int i = 0; i < len; ++i) {
-    oak::ModuleConfig module = GetModuleConfig(event[i]);
+    oak::ModuleConfig module = GetParserModuleConfig(addon_dir, event[i]);
     for (auto const& it : module.config)
       (*modules)[module.name].config[it.first] = it.second;
     (*modules)[module.name].enable = module.enable;
+    (*modules)[module.name].path = module.enable;
   }
 }
 
@@ -117,7 +128,7 @@ int main(int argc, char* argv[]) {
 
   // Setup crash handler.
   oak::CreateDirectory(proc_config.log_dir);
-  oak::RegisterFailureMessageHandler(proc_config.crash_file);
+  // oak::RegisterFailureMessageHandler(proc_config.crash_file);
 
   // Locks pid file to checking whther process is running.
   oak::CreateDirectory(oak::DirectoryName(proc_config.guard_file));
@@ -143,52 +154,54 @@ int main(int argc, char* argv[]) {
   // Initialize events receiver.
   // Note: there is allowed to disable the event receiver, but it is
   // not allowed to fail to create event receiver if it is enabled.
-  std::unique_ptr<oak::EventProxy> event;
-  if (GetFirstEnabledEventReceiver(config.modules, &event) != 0) {
+  std::unique_ptr<oak::EventHandle> event_handle;
+  if (GetFirstEnabledEventReceiver(config.modules, &event_handle) != 0) {
     OAK_ERROR("Create event receiver failed\n");
     return -1;
   }
-  if (!event)
+  if (!event_handle)
     OAK_WARNING("Not found configuration of the events receiver.\n");
 
   // Recover events that has occurred.
+  const int occurred_event_size = 10;
   int len = 0;
   struct incoming_event occurred_event[10];
   auto parser_moules = config.parser.modules;
-  while ((len = event->Pull(occurred_event, OAK_ARRAYSIZE(occurred_event))) > 0)
-    RecoverOccurredEvent(&config.parser.modules, occurred_event, len);
+  while ((len = event_handle->Pull(occurred_event, occurred_event_size)) > 0) {
+    RetrievalEvent(proc_config.addons_dir, &parser_moules, occurred_event, len);
+  }
   if (len < 0) {
     OAK_ERROR("Pull out the occurred event failed\n");
     return -1;
   }
 
   // Creates worker thread.
-  for (int i = 0; i < config.source.num_threads; ++i) {
-    const oak::LogicCore* logic_core = oak::System::GetNextAvailLogicCore();
-    if (logic_core == nullptr)
-      oak::ThrowStdOutOfRange("No enough available CPU");
-    std::string name = oak::Format("source-%d", i);
-    oak::System::CreateThread(name, logic_core->mask,
-                              []() { while (true) sleep(2); });
-  }
+  // for (int i = 0; i < config.source.num_threads; ++i) {
+  //   const oak::LogicCore* logic_core = oak::System::GetNextAvailLogicCore();
+  //   if (logic_core == nullptr)
+  //     oak::ThrowStdOutOfRange("No enough available CPU");
+  //   std::string name = oak::Format("source-%d", i);
+  //   oak::System::CreateThread(name, logic_core->mask,
+  //                             []() { while (true) sleep(2); });
+  // }
 
-  for (int i = 0; i < config.parser.num_threads; ++i) {
-    const oak::LogicCore* logic_core = oak::System::GetNextAvailLogicCore();
-    if (logic_core == nullptr)
-      oak::ThrowStdOutOfRange("No enough available CPU");
-    std::string name = oak::Format("parser-%d", i);
-    oak::System::CreateThread(name, logic_core->mask,
-                              []() { while (true) sleep(2); });
-  }
+  // for (int i = 0; i < config.parser.num_threads; ++i) {
+  //   const oak::LogicCore* logic_core = oak::System::GetNextAvailLogicCore();
+  //   if (logic_core == nullptr)
+  //     oak::ThrowStdOutOfRange("No enough available CPU");
+  //   std::string name = oak::Format("parser-%d", i);
+  //   oak::System::CreateThread(name, logic_core->mask,
+  //                             []() { while (true) sleep(2); });
+  // }
 
-  for (int i = 0; i < config.sink.num_threads; ++i) {
-    const oak::LogicCore* logic_core = oak::System::GetNextAvailLogicCore();
-    if (logic_core == nullptr)
-      oak::ThrowStdOutOfRange("No enough available CPU");
-    std::string name = oak::Format("sink-%d", i);
-    oak::System::CreateThread(name, logic_core->mask,
-                              []() { while (true) sleep(2); });
-  }
+  // for (int i = 0; i < config.sink.num_threads; ++i) {
+  //   const oak::LogicCore* logic_core = oak::System::GetNextAvailLogicCore();
+  //   if (logic_core == nullptr)
+  //     oak::ThrowStdOutOfRange("No enough available CPU");
+  //   std::string name = oak::Format("sink-%d", i);
+  //   oak::System::CreateThread(name, logic_core->mask,
+  //                             []() { while (true) sleep(2); });
+  // }
 
   // Disable the failed the parser configuration and save it.
   oak::WriteConfig(config, proc_config.conf_file);

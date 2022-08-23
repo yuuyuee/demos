@@ -75,9 +75,6 @@ struct AddTaskBody {
       } data_control_args;
     };
   } request;
-
-  // response
-  struct {} response;
 };
 
 struct UpdateTaskBody {
@@ -91,9 +88,6 @@ struct UpdateTaskBody {
       char decode_url[OAK_BUFFER_MAX];
     } decode;
   } request;
-
-  // response
-  struct {} response;
 };
 
 struct StopTaskBody {
@@ -101,15 +95,6 @@ struct StopTaskBody {
   struct {
     int task_id[OAK_TASK_MAX];
   } request;
-
-  struct {} response;
-};
-
-struct ClearAllTaskBody {
-  // request
-  struct {} request;
-  // response
-  struct {} response;
 };
 
 union Body {
@@ -117,7 +102,6 @@ union Body {
   int add_task_size;                    ///< number of ADD_TASK body
   UpdateTaskBody update_task;           ///< UPDATE_TASK body
   StopTaskBody stop_task;               ///< STOP_TASK body
-  ClearAllTaskBody clear_all_task;      ///< CLEAR_ALL_TASK body
 };
 
 struct Header {
@@ -180,8 +164,14 @@ struct Metrics {
 }  // namespace oak
 
 extern "C" {
-static void* kafka_event_init(const struct oak_dict* config) {
+static int kafka_event_init(void**, const struct oak_dict* config) {
   // TODO(YUYUE):
+  printf("kafka_event_init\n");
+  for (size_t i = 0; i < config->size; ++i) {
+    printf("\t%s = %s\n",
+        (const char*) config->elems[i].key.ptr,
+        (const char*) config->elems[i].value.ptr);
+  }
   return 0;
 }
 
@@ -194,8 +184,9 @@ static int kafka_event_recv(void* context,
 static int kafka_event_pull(void* context,
                             struct incoming_event* event,
                             int size) {
+  printf("kafka_event_pull\n");
   // TODO(YUYUE):
-  return -1;
+  return 0;
 }
 
 static int kafka_event_send(void* context,
@@ -208,7 +199,7 @@ static void kafka_event_close(void* context) {
   // TODO(YUYUE):
 }
 
-const struct oak_event_module kafka_event_handler = {
+struct oak_event_module kafka_event_handler = {
   .version = OAK_VERSION,
   .flags = OAK_MODULE_EVENT,
   .init = kafka_event_init,
@@ -219,3 +210,5 @@ const struct oak_event_module kafka_event_handler = {
 };
 
 }  // extern "C"
+
+extern "C" struct oak_event_module kafka_event_handler;

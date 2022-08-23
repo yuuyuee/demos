@@ -10,13 +10,13 @@
 extern "C" {
 #endif
 
-/* Sink module flags */
+/* Event module flags */
 #define OAK_MODULE_EVENT 0x04
 
 enum event_type {
   /* below for incomming event */
-  ET_ADD,       /*< this option in 'oak_event_module.pull' indicate */
-                /*  that parser has been enabled. */
+  ET_ADD,     /*< this option in 'oak_event_module.pull' indicate */
+              /*  that parser has been enabled. */
   ET_UPDATE,
   ET_REMOVE,
   ET_CLEAR,
@@ -45,21 +45,21 @@ struct incoming_event {
   char proto_name[OAK_NAME_MAX];  /* protocol name */
   char file_name[OAK_PATH_MAX];   /* parser file name */
   char http_url[OAK_PATH_MAX];    /* parser http URL for download */
-  char _reverse[128];
+  char _reverse1[128];
 
   /* below for protocol parser arguments */
 
   int m_input_flow;   /* metrics: count the size of the input netflow */
   int m_output_data;  /* metrics: count the number of the output records */
 
-  char _reverse[128];
+  char _reverse2[128];
 
   /* below for data control arguments */
 
   int is_extract_netflow; /* enable communication */
   int m_keep_flow;  /* metrics: count the size of the controlled netflow */
 
-  char _reverse[128];
+  char _reverse3[128];
 };
 
 #ifndef OAK_MODULE_MAX
@@ -78,17 +78,17 @@ struct outgoing_event {
     struct {                          /* alarm arguments */
       char module[OAK_MODULE_MAX];    /* alarm module name */
       char subject[OAK_SUBJECT_MAX];  /* alarm subject */
-      char _reverse[128];
+      char _reverse1[128];
     } alarm;
 
     struct {                          /* metrics arguments */
       char module[OAK_MODULE_MAX];    /* metrics module name */
       char subject[OAK_SUBJECT_MAX];  /* metrics subject */
-      char _reverse[128];
+      char _reverse2[128];
     } metrics;
 
     struct {
-      char _reverse[512];
+      char _reverse3[512];
     } ack;
   };
 };
@@ -98,8 +98,8 @@ struct outgoing_event {
  * Event module abstract interface.*/
 
 struct oak_event_module {
-  int version;        /* MUST equal to OAK_VERSION */
-  int flags;          /* Module flags */
+  int version;    /* MUST equal to OAK_VERSION */
+  int flags;      /* Module flags, MUST equal to OAK_MODULE_EVENT */
 
   /* Callback to initialize the module context.
    *
@@ -107,8 +107,8 @@ struct oak_event_module {
    * @config key/value dict that import from configuration and
    *         may used to initialize.
    *
-   * Return module context on success or NULL if an error occurred. */
-  void* (*init)(const struct oak_dict* config);
+   * Return 0 on success or -1 if an error occurred. */
+  int (*init)(void** context, const struct oak_dict* config);
 
   /* Callback to pull all of previous event from module.
    *
