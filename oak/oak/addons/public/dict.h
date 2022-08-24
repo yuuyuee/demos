@@ -4,6 +4,7 @@
 #define OAK_ADDONS_PUBLIC_DICT_H_
 
 #include <stddef.h>
+#include <assert.h>
 #include "oak/addons/public/buffer.h"
 
 #ifdef __cplusplus
@@ -29,6 +30,7 @@ struct oak_dict {
 inline void oak_dict_add(struct oak_dict* dict,
                          const char* key, size_t key_len,
                          const char* value, size_t value_len) {
+  assert(dict->size < OAK_DICT_DFL_CAP);
   oak_buffer_assign_str(&(dict->elems[dict->size].key), key, key_len);
   oak_buffer_assign_str(&(dict->elems[dict->size].value), value, value_len);
   ++dict->size;

@@ -9,9 +9,12 @@ rs:
 			oak/rs.cc	\
 			oak/worker.cc \
 			oak/addons/module.cc \
-			oak/addons/event_handler.cc \
+			oak/addons/event_handle.cc \
+			oak/addons/source_handle.cc \
+			oak/addons/parser_handle.cc \
+			oak/addons/sink_handle.cc \
 			oak/addons/buffer_internal.cc \
-			oak/event/kafka_event_handler.cc \
+			oak/event/kafka_event_module.cc \
 			oak/common/system.cc \
 			oak/common/fs.cc \
 			oak/common/format.cc \

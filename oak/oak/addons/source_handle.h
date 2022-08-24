@@ -24,7 +24,7 @@ class SourceHandle: public ModuleBase {
   SourceHandle& operator=(SourceHandle const&) = delete;
 
   // Read the buffer and decoded as the metadata.
-  virtual int Read(struct oak_metadata* metadata);
+  virtual int Read(struct oak_metadata* metadata) = 0;
 
  protected:
   SourceHandle(int id, const std::string& name, const std::string& path);

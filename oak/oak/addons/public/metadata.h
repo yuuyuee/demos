@@ -12,6 +12,13 @@ extern "C" {
 
 #define OAK_ID_MAX 10
 
+enum oak_metadata_flags {
+  MD_METRICS_INFLOW = 0x01,
+  MD_METRICS_OUTDATA = 0x02,
+  MD_ENABLE_COMM = 0x04,
+  MD_METRICS_KEEPFLOW = 0x08
+};
+
 struct oak_metadata {
   int ids[OAK_ID_MAX];
   int num_ids;
@@ -21,7 +28,6 @@ struct oak_metadata {
   struct oak_dict fields;
   struct oak_dict exts;
   int flags;
-  int padding_;
 };
 
 #ifdef __cplusplus

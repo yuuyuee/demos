@@ -51,15 +51,6 @@ struct SourceConfig {
   ModuleConfigDict modules;
 };
 
-#define OAK_PCONF_ID "id"
-#define OAK_PCONF_PROTO_TYPE "protocol_type"
-#define OAK_PCONF_PROTO_NAME "protocol_name"
-#define OAK_PCONF_HTTP_URL "http_url"
-#define OAK_PCONF_METRICS_INFLOW "metrics_inflow"
-#define OAK_PCONF_METRICS_OUTDATA "metrics_outdata"
-#define OAK_PCONF_COMMUNICATION "communication"
-#define OAK_PCONF_METRICS_KEEPFLOW "metrics_keepflow"
-
 struct ParserConfig {
   std::string comment;
   int num_threads{-1};

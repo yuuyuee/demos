@@ -87,7 +87,7 @@ void FailureSignalHandler(int signo, siginfo_t* info, void*) {
   size_t len = format(title, sizeof(title),
                       "*** %s received at %ld, pid = %d, uid = %d ***\n",
                       StrSignal(signo),
-                      static_cast<long int>(time(0)),  // NOLINT
+                      static_cast<long int>(time(0)),
                       info->si_pid, info->si_uid);
   writer->Write(title, len);
 

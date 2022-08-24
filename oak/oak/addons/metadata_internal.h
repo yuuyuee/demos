@@ -11,7 +11,7 @@
 extern "C" {
 #endif
 
-inline void oak_meta_init(struct oak_metadata* meta) {
+inline void oak_metadata_init(struct oak_metadata* meta) {
   oak_buffer_init(&meta->up_stream, OAK_BUFFER_DFL_CAP);
   oak_buffer_init(&meta->down_stream, OAK_BUFFER_DFL_CAP);
   oak_dict_init(&meta->common);
@@ -20,7 +20,7 @@ inline void oak_meta_init(struct oak_metadata* meta) {
   meta->flags = 0;
 }
 
-inline void oak_meta_free(struct oak_metadata* meta) {
+inline void oak_metadata_free(struct oak_metadata* meta) {
   oak_buffer_free(&meta->up_stream);
   oak_buffer_free(&meta->down_stream);
   oak_dict_free(&meta->common);
@@ -28,7 +28,7 @@ inline void oak_meta_free(struct oak_metadata* meta) {
   oak_dict_free(&meta->exts);
 }
 
-inline void oak_meta_clear(struct oak_metadata* meta) {
+inline void oak_metadata_clear(struct oak_metadata* meta) {
   oak_buffer_clear(&meta->up_stream);
   oak_buffer_clear(&meta->down_stream);
   oak_dict_clear(&meta->common);

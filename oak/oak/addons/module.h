@@ -95,7 +95,7 @@ struct ModuleArguments {
   int id;
   std::string module_name;
   std::string module_path;
-  const Dict config;
+  Dict config;
 };
 
 }  // namespace oak

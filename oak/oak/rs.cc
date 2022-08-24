@@ -16,6 +16,7 @@
 #include "oak/common/fs.h"
 #include "oak/common/debug.h"
 #include "oak/common/system.h"
+#include "oak/common/stringpiece.h"
 #include "oak/common/throw_delegate.h"
 #include "oak/logging/logging.h"
 #include "oak/config.h"
@@ -70,38 +71,48 @@ int GetFirstEnabledEventReceiver(
   return 0;
 }
 
-ModuleConfig EventToParserModuleConfig(
-    const string& addon_dir, const struct incoming_event& event) {
+ModuleConfig EventToParserModuleConfig(const string& addon_dir,
+                                       const struct incoming_event& event) {
+  assert(event.type == ET_PARSER && "Invalid event.type");
   ModuleConfig module;
-  string name = Basename(event.file_name);
-  auto pos = name.find('.');
-  if (pos != std::string::npos)
-    name = name.substr(0, pos);
-  module.name = name;
-  module.path = addon_dir + "/" + event.file_name;
-  module.id = event.id;
-  module.config[OAK_PCONF_PROTO_TYPE] = std::to_string(event.proto_type);
-  module.config[OAK_PCONF_PROTO_NAME] = std::string(event.proto_name);
-  module.config[OAK_PCONF_HTTP_URL] = std::string(event.http_url);
-  module.config[OAK_PCONF_METRICS_INFLOW] = std::to_string(event.m_input_flow);
-  module.config[OAK_PCONF_METRICS_OUTDATA] =
-      std::to_string(event.m_output_data);
-  module.config[OAK_PCONF_COMMUNICATION] =
-      std::to_string(event.is_extract_netflow);
-  module.config[OAK_PCONF_METRICS_KEEPFLOW] = std::to_string(event.m_keep_flow);
+
+  // module.id = std::to_string(event.id)
+  for (size_t i = 0; i < event.args.size; ++i) {
+    const struct oak_dict_entry* kv = &event.args.elems[i];
+    string key(static_cast<const char*>(kv->key.ptr), kv->key.size);
+    string value(static_cast<const char*>(kv->value.ptr), kv->value.size);
+    if (key.empty() || value.empty())
+      continue;
+    if (key == OAK_PARSER_ID) {
+      module.id = std::stoi(value);
+    } else if (key == OAK_FILE_NAME) {
+      string file_name = Basename(value);
+      module.path = addon_dir + "/" + file_name;
+
+      string module_name = file_name;
+      auto pos = module_name.rfind('.');
+      if (pos != string::npos)
+        module_name = module_name.substr(0, pos);
+      module.name = module_name;
+    }
+    module.config[key] = value;
+  }
+
   module.enable = true;
   return module;
 }
 
-void RetrievalEvent(
-    const string& addon_dir, ModuleConfigDict* modules,
-    const struct incoming_event* event, int len) {
+void RetrievalEvent(const string& addon_dir,
+                    ModuleConfigDict* modules,
+                    const struct incoming_event* event,
+                    int len) {
   for (int i = 0; i < len; ++i) {
     ModuleConfig module = EventToParserModuleConfig(addon_dir, event[i]);
     for (auto const& it : module.config)
       (*modules)[module.name].config[it.first] = it.second;
     (*modules)[module.name].enable = module.enable;
-    (*modules)[module.name].path = module.enable;
+    (*modules)[module.name].id = module.id;
+    (*modules)[module.name].path = module.path;
   }
 }
 
