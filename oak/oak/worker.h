@@ -22,7 +22,7 @@
 namespace oak {
 #define OAK_THREAD_MAX 128
 
-enum ThreadStatus {
+enum ThreadState {
   THREAD_INIT,
   THREAD_RUNNING,
   THREAD_STOP
@@ -30,7 +30,7 @@ enum ThreadStatus {
 
 struct SinkContext {
   int id{0};
-  std::atomic<int> status;
+  std::atomic<int> state;
 
   pthread_t self;
   std::vector<const LogicCore*> cores;
@@ -43,7 +43,7 @@ struct SinkContext {
 
 struct ParserContext {
   int id{0};
-  std::atomic<int> status;
+  std::atomic<int> state;
 
   pthread_t self;
   std::vector<const LogicCore*> cores;
@@ -62,7 +62,7 @@ struct ParserContext {
 
 struct SourceContext {
   int id{0};
-  std::atomic<int> status;
+  std::atomic<int> state;
 
   pthread_t self;
   std::vector<const LogicCore*> cores;
@@ -71,8 +71,8 @@ struct SourceContext {
   size_t num_parser{0};
   size_t offset{0};
 
-  std::vector<std::unique_ptr<SourceHandle>> handles;
-  std::vector<ModuleArguments> args;
+  std::unique_ptr<SourceHandle> handle;
+  ModuleArguments args;
 };
 
 }  // namespace oak

@@ -20,7 +20,7 @@ using std::string;
 using oak::Channel;
 
 namespace oak {
-
+namespace {
 string HumanReadableCoreInfo(const vector<const LogicCore*>& cores) {
   string msg;
   for (auto const& it : cores) {
@@ -31,34 +31,29 @@ string HumanReadableCoreInfo(const vector<const LogicCore*>& cores) {
   return msg;
 }
 
+}  // anonymous namespace
+
 void SourceThreadRoutine(SourceContext* context) {
-  assert(context->status.load(std::memory_order_acquire) == THREAD_INIT);
+  assert(context->state.load(std::memory_order_acquire) == THREAD_INIT);
 
   // Initialize thread environment.
-  for (auto const& it : context->args) {
-    unique_ptr<SourceHandle> handle;
-    int ret = SourceHandleFactory(it, &handle);
-    if (ret != 0) {
-      ThrowStdRuntimeError(
-          Format("Open module %s failed.\n", it.module_name.c_str()));
-      continue;
-    }
-    context->handles.emplace_back(handle.release());
+  if (SourceHandleFactory(context->args, &context->handle) != 0) {
+    ThrowStdRuntimeError(
+        Format("Open module %s failed.\n", context->args.module_name.c_str()));
   }
 
-  // Setup thread status.
+  // Setup thread state.
   OAK_INFO("Source thread %d (TID %d - %ld) is running on the core %s\n",
            context->id,
            System::GetThreadId(),
            context->self,
            HumanReadableCoreInfo(context->cores).c_str());
-  context->status.store(THREAD_RUNNING, std::memory_order_release);
+  context->state.store(THREAD_RUNNING, std::memory_order_release);
 
   // Entry thread loop
-  size_t index = 0;
   int error_count = 0;
   unique_ptr<struct oak_metadata> metadata;
-  while (context->status.load(std::memory_order_relaxed) != THREAD_STOP) {
+  while (context->state.load(std::memory_order_relaxed) != THREAD_STOP) {
     if (!metadata) {
       struct oak_metadata* ptr =
           reinterpret_cast<struct oak_metadata*>(malloc(sizeof(*ptr)));
@@ -66,7 +61,7 @@ void SourceThreadRoutine(SourceContext* context) {
       metadata.reset(ptr);
     }
 
-    if (context->handles[index]->Read(metadata.get()) != 0) {
+    if (context->handle->Read(metadata.get()) != 0) {
       if (error_count < 5)
         ++error_count;
       sleep(error_count);
@@ -75,32 +70,49 @@ void SourceThreadRoutine(SourceContext* context) {
     error_count = 0;
 
 
-    for (; index < context->num_parser; ++index) {
-      auto parser = context->parser_ref[index];
+    for (; context->offset < context->num_parser; ++context->offset) {
+      auto parser = context->parser_ref[context->offset];
 
       // Skipping the offlined parser.
-      if (parser->status.load(std::memory_order_acquire) != THREAD_RUNNING)
+      if (parser->state.load(std::memory_order_acquire) != THREAD_RUNNING) {
+        OAK_WARNING("Parser thread %d has offlined\n", parser->id);
         continue;
-
-      if (parser->stream->Push(metadata.get())) {
-        // Push to parser sucessful, release metadata ownership.
-        metadata.release();
       }
+
+      if (!parser->stream->Push(metadata.get())) {
+        OAK_WARNING("Parser thread %d stream channel full\n", parser->id);
+        continue;
+      }
+
+      // Push to parser sucessful, release metadata ownership.
+      metadata.release();
+      break;
     }
 
-    if (index == context->num_parser)
-      index = 0;
+    if (context->offset >= context->num_parser)
+      context->offset = 0;
 
     // No one parser has living, clearing the metadata for next used.
-    if (metadata)
+    if (metadata) {
       oak_metadata_clear(metadata.get());
+    }
   }  // while ()
+
+  context->handle.reset();
 }
 
+struct ParserStatistics {
+  int task_id;
+  size_t input_flow{0};
+  size_t output_data{0};
+  size_t keep_flow{0};
+};
+
 void ParserThreadRoutine(ParserContext* context) {
-  assert(context->status.load(std::memory_order_acquire) == THREAD_INIT);
+  assert(context->state.load(std::memory_order_acquire) == THREAD_INIT);
 
   // Initialize thread environment.
+  std::unordered_map<int, ParserStatistics> metrics;
   context->stream.reset(new Channel(2048));
   context->report.reset(new Channel(128));
 
@@ -114,17 +126,37 @@ void ParserThreadRoutine(ParserContext* context) {
     context->handles[it.first].reset(handle.release());
   }
 
-  // Setup thread status.
+  // Setup thread state.
   OAK_INFO("Sink thread %d (TID %d - %ld) is running on the core %s\n",
            context->id,
            System::GetThreadId(),
            context->self,
            HumanReadableCoreInfo(context->cores).c_str());
-  context->status.store(THREAD_RUNNING, std::memory_order_release);
+  context->state.store(THREAD_RUNNING, std::memory_order_release);
+
+  // Entry thread loop
+  int error_count = 0;
+  unique_ptr<struct oak_metadata> metadata;
+  while (context->state.load(std::memory_order_relaxed) != THREAD_STOP) {
+    struct oak_metadata* ptr = nullptr;
+    if (!context->stream->Pop(&ptr)) {
+      if (error_count < 5)
+        ++error_count;
+      sleep(error_count);
+      continue;
+    }
+
+    // owned the ptr
+    assert(ptr != nullptr);
+    metadata.reset(ptr);
+
+
+
+  }
 }
 
 void SinkThreadRoutine(SinkContext* context) {
-  assert(context->status.load(std::memory_order_acquire) == THREAD_INIT);
+  assert(context->state.load(std::memory_order_acquire) == THREAD_INIT);
 
   // Initialize thread environment.
   context->stream.reset(new Channel(2048));
@@ -140,18 +172,18 @@ void SinkThreadRoutine(SinkContext* context) {
     context->handles.emplace_back(handle.release());
   }
 
-  // Setup thread status.
+  // Setup thread state.
   OAK_INFO("Sink thread %d (TID %d - %ld) is running on the core %s\n",
            context->id,
            System::GetThreadId(),
            context->self,
            HumanReadableCoreInfo(context->cores).c_str());
-  context->status.store(THREAD_RUNNING, std::memory_order_release);
+  context->state.store(THREAD_RUNNING, std::memory_order_release);
 
   // Entry thread loop
   int error_count = 0;
   unique_ptr<struct oak_metadata> metadata;
-  while (context->status.load(std::memory_order_relaxed) != THREAD_STOP) {
+  while (context->state.load(std::memory_order_relaxed) != THREAD_STOP) {
     struct oak_metadata* ptr = nullptr;
     if (!context->stream->Pop(&ptr)) {
       if (error_count < 5)
@@ -171,7 +203,19 @@ void SinkThreadRoutine(SinkContext* context) {
                     context->handles[i]->name().c_str());
       }
     }
+
+    oak_metadata_free(metadata.get());
+    metadata.reset();
   }  // while ()
+
+  // free context
+  for (auto& it : context->handles)
+    it.reset();
+  struct oak_metadata* ptr = nullptr;
+  while (context->stream->Pop(&ptr)) {
+    metadata.reset(ptr);
+    oak_metadata_free(metadata.get());
+  }
 }
 
 

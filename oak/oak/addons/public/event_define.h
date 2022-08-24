@@ -29,10 +29,12 @@ enum event_subtype {
 
 /* parser ID */
 #define OAK_PARSER_ID        "parser_id"
+/* task ID */
+#define OAK_TASK_ID          "task_id"
 /* protocol type */
-#define OAK_PROTO_TYPE       "protocol_type"
+/* #define OAK_PROTO_TYPE       "protocol_type" */
 /* protocol name */
-#define OAK_PROTO_NAME       "protocol_name"
+/* #define OAK_PROTO_NAME       "protocol_name" */
 /* parser file name */
 #define OAK_FILE_NAME        "file_name"
 /* parser http URL for download */
@@ -52,7 +54,6 @@ enum event_subtype {
 struct incoming_event {
   int type;               /* incomming event_type */
   int subtype;            /* event_subtype */
-  int id;                 /* event ID/task ID */
   struct oak_dict args;   /* incomming event arguments */
 };
 

@@ -12,18 +12,23 @@ extern "C" {
 
 #define OAK_ID_MAX 10
 
-enum oak_metadata_flags {
-  MD_METRICS_INFLOW = 0x01,
-  MD_METRICS_OUTDATA = 0x02,
-  MD_ENABLE_COMM = 0x04,
-  MD_METRICS_KEEPFLOW = 0x08
-};
+/* Metadata flags */
+#define MD_METRICS_INFLOW     0x00000001U
+#define MD_METRICS_OUTDATA    0x00000002U
 
+#define MD_ENABLE_COMM        0x00000004U
+#define MD_METRICS_KEEPFLOW   0x00000008U
+
+#define MD_RAW_PACKET         0x00000010U
+
+
+#define OAK_TASK_ID_MAX 10
 struct oak_metadata {
-  int ids[OAK_ID_MAX];
-  int num_ids;
+  int task_id[OAK_TASK_ID_MAX];
+  int num_task_id;
   struct oak_buffer up_stream;
   struct oak_buffer down_stream;
+  struct oak_buffer attachment;
   struct oak_dict common;
   struct oak_dict fields;
   struct oak_dict exts;
