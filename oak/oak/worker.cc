@@ -111,15 +111,6 @@ void SourceThreadRoutine(SourceContext* context) {
 
 namespace {
 
-struct Metrics {
-  uint64_t task_id;   // task ID
-
-  size_t input_flow{0};
-  size_t output_data{0};
-  size_t keep_flow{0};
-
-  static int Factory(const Dict& module_config, Metrics* metrics);
-};
 
 
 }  // anonymous namespace
@@ -147,14 +138,14 @@ void ParserThreadRoutine(ParserContext* context) {
 
     unique_ptr<ParserHandle> handle;
     if (ParserHandleFactory(it.second, &handle) != 0) {
-      // TODO(YUYUE): report open module failed
+      // TODO(YUYUE): report open module failed and try to restore last version
       continue;
     }
     context->handles[it.second.id].reset(handle.release());
   }
 
   if (context->handles.empty())
-    OAK_WARNING("%s: No one module enabled\n", title.c_str());
+    OAK_WARNING("%s: No one module has been enabled\n", title.c_str());
 
   // Setup thread state.
   OAK_INFO("%s: Running on the core %s\n",
@@ -173,7 +164,6 @@ void ParserThreadRoutine(ParserContext* context) {
       continue;
     }
 
-    // owned the ptr
     assert(metadata != nullptr);
     struct oak_dict fields;
     oak_dict_init(&fields);

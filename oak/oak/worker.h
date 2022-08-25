@@ -43,6 +43,16 @@ struct alignas(OAK_CACHELINE_SIZE) SinkContext {
   std::vector<std::unique_ptr<SinkHandle>> handles;
 };
 
+struct Task {
+  size_t task_id{0};
+  int task_type{0};
+  size_t protocol_type{0};
+
+  size_t input_flow{0};
+  size_t output_data{0};
+  size_t keep_flow{0};
+};
+
 struct alignas(OAK_CACHELINE_SIZE) ParserContext {
   int id{0};
   std::atomic<int> state;
@@ -63,6 +73,7 @@ struct alignas(OAK_CACHELINE_SIZE) ParserContext {
 
   std::mutex lock;
   std::unordered_map<uint64_t, std::unique_ptr<ParserHandle>> handles;
+  std::unordered_map<uint64_t, Task> tasks;
 };
 
 struct alignas(OAK_CACHELINE_SIZE) SourceContext {

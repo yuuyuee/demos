@@ -25,7 +25,7 @@ enum event_subtype {
   ET_CLEAR
 };
 
-/* below attributes for protocol parser arguments */
+/* below attributes for protocol parser */
 
 /* protocol type */
 #define OAK_PROTOCOL_TYPE "protocol_type"
@@ -41,6 +41,17 @@ enum event_subtype {
 
 /* application type */
 #define OAK_APP_TYPE "app_type"
+
+/* below attributes for task */
+
+/* task ID */
+#define OAK_TASK_ID "task_id"
+
+/* task type */
+#define OAK_TASK_TYPE "task_type"
+
+/* enable communication */
+#define OAK_ENABLE_COMM "enable_communication"
 
 struct incoming_event {
   int type;               /* incomming event_type */
