@@ -17,14 +17,14 @@ extern "C" {
 struct oak_metadata {
   uint64_t parser_id;
   uint64_t task_id;
+  int task_type;
   struct oak_buffer up_stream;
   struct oak_buffer down_stream;
   struct oak_buffer attachment;
   struct oak_dict common;
   struct oak_dict fields;
   struct oak_dict communication;
-  struct oak_dict exts;
-  int enable_communication;
+  struct oak_dict extens_fields;
 };
 
 #ifdef __cplusplus

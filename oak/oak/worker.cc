@@ -207,7 +207,7 @@ void ParserThreadRoutine(ParserContext* context) {
     }
 
     if (mark_ret == 0) {
-      metadata->enable_communication = 1;
+      //
     } else {
       oak_dict_clear(&metadata->communication);
     }

@@ -18,7 +18,7 @@ inline void oak_metadata_init(struct oak_metadata* meta) {
   oak_dict_init(&meta->common);
   oak_dict_init(&meta->fields);
   oak_dict_init(&meta->communication);
-  oak_dict_init(&meta->exts);
+  oak_dict_init(&meta->extens_fields);
 }
 
 inline void oak_metadata_free(struct oak_metadata* meta) {
@@ -28,7 +28,7 @@ inline void oak_metadata_free(struct oak_metadata* meta) {
   oak_dict_free(&meta->common);
   oak_dict_free(&meta->fields);
   oak_dict_free(&meta->communication);
-  oak_dict_free(&meta->exts);
+  oak_dict_free(&meta->extens_fields);
 }
 
 inline void oak_metadata_clear(struct oak_metadata* meta) {
@@ -38,7 +38,7 @@ inline void oak_metadata_clear(struct oak_metadata* meta) {
   oak_dict_clear(&meta->common);
   oak_dict_clear(&meta->fields);
   oak_dict_clear(&meta->communication);
-  oak_dict_clear(&meta->exts);
+  oak_dict_clear(&meta->extens_fields);
 }
 
 #ifdef __cplusplus
