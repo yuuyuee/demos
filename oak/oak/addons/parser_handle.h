@@ -6,6 +6,7 @@
 #include <string>
 #include <memory>
 
+#include "oak/config.h"
 #include "oak/addons/module.h"
 #include "oak/addons/public/parser.h"
 
@@ -26,6 +27,7 @@ class ParserHandle: public ModuleBase {
   // Parse stream to extracting to filling the fields.
   virtual int Parse(const struct oak_buffer* up_stream,
                     const struct oak_buffer* down_stream,
+                    const struct oak_dict* extracted,
                     struct oak_dict* fields) = 0;
 
   // Parse stream to indicating whether or not the stream should
@@ -34,12 +36,12 @@ class ParserHandle: public ModuleBase {
                    const struct oak_buffer* down_stream) = 0;
 
  protected:
-  ParserHandle(int id, const std::string& name, const std::string& path);
+  ParserHandle(size_t id, const std::string& name, const std::string& path);
 };
 
 // Create a parser handle, return 0 on success, -1 if any error
 // occursed.
-int ParserHandleFactory(const ModuleArguments& module_args,
+int ParserHandleFactory(const ModuleConfig& module_config,
                         std::unique_ptr<ParserHandle>* module_handle);
 
 }  // namespace oak

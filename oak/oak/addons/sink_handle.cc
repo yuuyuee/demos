@@ -14,7 +14,7 @@ namespace oak {
 
 // SinkHandle
 
-SinkHandle::SinkHandle(int id, const string& name, const string& path)
+SinkHandle::SinkHandle(size_t id, const string& name, const string& path)
     : ModuleBase(id, name, path) {}
 
 SinkHandle::~SinkHandle() {}
@@ -25,7 +25,7 @@ SinkHandle::~SinkHandle() {}
 
 class CppSinkHandle: public SinkHandle {
  public:
-  explicit CppSinkHandle(int id,
+  explicit CppSinkHandle(size_t id,
                          const string& name,
                          const string& path,
                          void* dl_handle,
@@ -48,7 +48,7 @@ class CppSinkHandle: public SinkHandle {
   void* context_;
 };
 
-CppSinkHandle::CppSinkHandle(int id,
+CppSinkHandle::CppSinkHandle(size_t id,
                              const string& name,
                              const string& path,
                              void* dl_handle,
@@ -73,24 +73,24 @@ CppSinkHandle::~CppSinkHandle() {
   }
 }
 
-int CppEventHandleFactory(const ModuleArguments& module_args,
+int CppEventHandleFactory(const ModuleConfig& module_config,
                           unique_ptr<SinkHandle>* module_handle) {
-  assert(!module_args.module_name.empty() && "Invalid module name");
-  const char* path = module_args.module_path.empty() ?
-      nullptr : module_args.module_path.c_str();
+  assert(!module_config.name.empty() && "Invalid module name");
+  const char* path = module_config.path.empty() ?
+      nullptr : module_config.path.c_str();
   dlerror();
   void* dl_handle = dlopen(path, RTLD_NOW | RTLD_GLOBAL);
   if (!dl_handle) {
     OAK_ERROR("Open module %s: dlopen failed: %s\n",
-              module_args.module_name.c_str(), dlerror());
+              module_config.name.c_str(), dlerror());
     return -1;
   }
 
   dlerror();
-  void* symbol = dlsym(dl_handle, module_args.module_name.c_str());
+  void* symbol = dlsym(dl_handle, module_config.name.c_str());
   if (!symbol) {
     OAK_ERROR("Open module %s: dlsym failed: %s\n",
-              module_args.module_name.c_str(), dlerror());
+              module_config.name.c_str(), dlerror());
     dlclose(dl_handle);
     return -1;
   }
@@ -100,21 +100,21 @@ int CppEventHandleFactory(const ModuleArguments& module_args,
 
   if (handle->flags != MODULE_TYPE_SINK) {
     OAK_ERROR("Open module %s: Unidentify module flags: %d\n",
-              module_args.module_name.c_str(), handle->flags);
+              module_config.name.c_str(), handle->flags);
     dlclose(dl_handle);
     return -1;
   }
 
   if ((handle->version >> 16) != OAK_VERSION_MAJOR) {
     OAK_ERROR("Open module %s: Module version is too old: %d\n",
-              module_args.module_name.c_str(), handle->version);
+              module_config.name.c_str(), handle->version);
     dlclose(dl_handle);
     return -1;
   }
 
   struct oak_dict dict;
   oak_dict_init2(&dict);
-  for (auto const& it : module_args.config) {
+  for (auto const& it : module_config.config) {
     if (dict.size >= OAK_DICT_DFL_CAP)
       break;
     if (it.first.empty() || it.second.empty())
@@ -128,33 +128,33 @@ int CppEventHandleFactory(const ModuleArguments& module_args,
   int ret = handle->init(&context, &dict);
   if (ret != 0) {
     OAK_ERROR("Open module %s: Module initialization failed\n",
-              module_args.module_name.c_str());
+              module_config.name.c_str());
     dlclose(dl_handle);
     return -1;
   }
 
-  CppSinkHandle* obj =
-      new CppSinkHandle(module_args.id,
-                        module_args.module_name,
-                        module_args.module_path,
+  CppSinkHandle* object =
+      new CppSinkHandle(module_config.id,
+                        module_config.name,
+                        module_config.path,
                         dl_handle, handle, context);
-  obj->Dump();
-  module_handle->reset(obj);
+  object->Dump();
+  module_handle->reset(object);
   return 0;
 }
 
 // Create a sink handle, return 0 on success, -1 if any error
 // occursed.
-int SinkHandleFactory(const ModuleArguments& module_args,
+int SinkHandleFactory(const ModuleConfig& module_config,
                       std::unique_ptr<SinkHandle>* module_handle) {
-  assert(!module_args.module_name.empty() && "Invalid module name");
-  if (module_args.module_path.empty() ||
-      module_args.module_path.find(".so") != string::npos) {
-    return CppEventHandleFactory(module_args, module_handle);
+  assert(!module_config.name.empty() && "Invalid module name");
+  if (module_config.path.empty() ||
+      module_config.path.find(".so") != string::npos) {
+    return CppEventHandleFactory(module_config, module_handle);
   }
 
   OAK_ERROR("Open module %s: Unidentified module\n",
-            module_args.module_name.c_str());
+            module_config.name.c_str());
   return -1;
 }
 

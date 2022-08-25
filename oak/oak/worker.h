@@ -12,6 +12,7 @@
 #include <unordered_map>
 
 #include "oak/config.h"
+#include "oak/common/macros.h"
 #include "oak/common/system.h"
 #include "oak/common/channel.h"
 #include "oak/addons/module.h"
@@ -28,51 +29,56 @@ enum ThreadState {
   THREAD_STOP
 };
 
-struct SinkContext {
+struct alignas(OAK_CACHELINE_SIZE) SinkContext {
   int id{0};
   std::atomic<int> state;
 
   pthread_t self;
   std::vector<const LogicCore*> cores;
+  SinkConfig* config;
 
+  // below as thread maintenance parameters
   std::unique_ptr<Channel> stream;
 
   std::vector<std::unique_ptr<SinkHandle>> handles;
-  std::vector<ModuleArguments> args;
 };
 
-struct ParserContext {
+struct alignas(OAK_CACHELINE_SIZE) ParserContext {
   int id{0};
   std::atomic<int> state;
 
   pthread_t self;
   std::vector<const LogicCore*> cores;
+  ParserConfig* config;
+
+  size_t report_interval{60};
 
   SinkContext* sink_ref[OAK_THREAD_MAX];
   size_t num_sink{0};
   size_t offset{0};
 
+  // below as thread maintenance parameters
   std::unique_ptr<Channel> stream;
   std::unique_ptr<Channel> report;
 
   std::mutex lock;
-  std::unordered_map<int, std::unique_ptr<ParserHandle>> handles;
-  std::unordered_map<int, ModuleArguments> args;
+  std::unordered_map<uint64_t, std::unique_ptr<ParserHandle>> handles;
 };
 
-struct SourceContext {
+struct alignas(OAK_CACHELINE_SIZE) SourceContext {
   int id{0};
   std::atomic<int> state;
 
   pthread_t self;
   std::vector<const LogicCore*> cores;
+  SourceConfig* config;
 
   ParserContext* parser_ref[OAK_THREAD_MAX];
   size_t num_parser{0};
   size_t offset{0};
 
+  // below as thread maintenance parameters
   std::unique_ptr<SourceHandle> handle;
-  ModuleArguments args;
 };
 
 }  // namespace oak

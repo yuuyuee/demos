@@ -58,15 +58,8 @@ bool CreateGuardFile(const string& guard_file) {
 int GetFirstEnabledEventReceiver(
     ModuleConfigDict const& modules, unique_ptr<EventHandle>* handle) {
   for (auto const& it : modules) {
-    if (it.second.enable) {
-      ModuleArguments args{
-        .id = -1,
-        .module_name = it.second.name,
-        .module_path = it.second.path,
-        .config = it.second.config
-      };
-      return EventHandleFactory(args, handle);
-    }
+    if (it.second.enable)
+      return EventHandleFactory(it.second, handle);
   }
   return 0;
 }
@@ -83,7 +76,7 @@ ModuleConfig EventToParserModuleConfig(const string& addon_dir,
     string value(static_cast<const char*>(kv->value.ptr), kv->value.size);
     if (key.empty() || value.empty())
       continue;
-    if (key == OAK_PARSER_ID) {
+    if (key == OAK_PROTOCOL_TYPE) {
       module.id = std::stoi(value);
     } else if (key == OAK_FILE_NAME) {
       string file_name = Basename(value);

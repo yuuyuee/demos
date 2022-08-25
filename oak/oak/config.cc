@@ -62,7 +62,7 @@ void ReadModuleConfig(ModuleConfigDict* modules, const Json2::Value& node) {
       } else if (key == "path") {
         module.path = module_node[key].asString();
       } else if (key == "id") {
-        module.id = module_node[key].asInt();
+        module.id = module_node[key].asUInt64();
       } else {
         module.config[key] = module_node[key].asString();
       }
@@ -111,6 +111,15 @@ void ReadParserConfig(ParserConfig* config, const Json2::Value& node) {
   if (node.isMember("num_threads"))
     config->num_threads = node["num_threads"].asUInt();
 
+  if (node.isMember("report_interval"))
+    config->report_interval = node["report_interval"].asUInt();
+
+  if (node.isMember("stream_channel_size"))
+    config->stream_channel_size = node["stream_channel_size"].asUInt();
+
+  if (node.isMember("report_channel_size"))
+    config->report_channel_size = node["report_channel_size"].asUInt();
+
   if (node.isMember("modules"))
     ReadModuleConfig(&config->modules, node["modules"]);
 }
@@ -118,6 +127,9 @@ void ReadParserConfig(ParserConfig* config, const Json2::Value& node) {
 void WriteParserConfig(const ParserConfig& config, Json2::Value* node) {
   (*node)["comment"] = config.comment;
   (*node)["num_threads"] = config.num_threads;
+  (*node)["report_interval"] = config.report_interval;
+  (*node)["stream_channel_size"] = config.stream_channel_size;
+  (*node)["report_channel_size"] = config.report_channel_size;
   (*node)["modules"] = Json2::Value(Json2::objectValue);
   WriteModuleConfig(config.modules, &((*node)["modules"]));
 }
@@ -129,6 +141,9 @@ void ReadSinkConfig(SinkConfig* config, const Json2::Value& node) {
   if (node.isMember("num_threads"))
     config->num_threads = node["num_threads"].asUInt();
 
+  if (node.isMember("stream_channel_size"))
+    config->stream_channel_size = node["stream_channel_size"].asUInt();
+
   if (node.isMember("modules"))
     ReadModuleConfig(&config->modules, node["modules"]);
 }
@@ -136,6 +151,7 @@ void ReadSinkConfig(SinkConfig* config, const Json2::Value& node) {
 void WriteSinkConfig(const SinkConfig& config, Json2::Value* node) {
   (*node)["comment"] = config.comment;
   (*node)["num_threads"] = config.num_threads;
+  (*node)["stream_channel_size"] = config.stream_channel_size;
   (*node)["modules"] = Json2::Value(Json2::objectValue);
   WriteModuleConfig(config.modules, &((*node)["modules"]));
 }

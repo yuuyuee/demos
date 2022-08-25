@@ -42,6 +42,7 @@ struct oak_parser_module {
   int (*parse)(void* context,
                const struct oak_buffer* up_stream,
                const struct oak_buffer* down_stream,
+               const struct oak_dict* extracted,
                struct oak_dict* fields);
 
   /* Callback to parsing the stream to indicate whether or not

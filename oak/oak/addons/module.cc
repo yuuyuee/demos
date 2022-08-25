@@ -12,13 +12,13 @@ ModuleBase::ModuleBase(int id, const string& name, const string& path) noexcept
       type_(MODULE_TYPE_UNKNOWN),
       lang_type_(LANG_TYPE_UNKNOWN) {}
 
-ModuleBase::ModuleBase() noexcept: ModuleBase(-1, "", "") {}
+ModuleBase::ModuleBase() noexcept: ModuleBase(0, "", "") {}
 
 ModuleBase::~ModuleBase() {}
 
 void ModuleBase::Dump() const noexcept {
   OAK_INFO(
-      "Module ID: %d\n"
+      "Module ID: %ld\n"
       "Module Version: %d\n"
       "Module Entry: %s\n"
       "Module Path: %s\n"

@@ -14,27 +14,31 @@ extern "C" {
 inline void oak_metadata_init(struct oak_metadata* meta) {
   oak_buffer_init(&meta->up_stream, OAK_BUFFER_DFL_CAP);
   oak_buffer_init(&meta->down_stream, OAK_BUFFER_DFL_CAP);
+  oak_buffer_init(&meta->attachment, OAK_BUFFER_DFL_CAP);
   oak_dict_init(&meta->common);
   oak_dict_init(&meta->fields);
+  oak_dict_init(&meta->communication);
   oak_dict_init(&meta->exts);
-  meta->flags = 0;
 }
 
 inline void oak_metadata_free(struct oak_metadata* meta) {
   oak_buffer_free(&meta->up_stream);
   oak_buffer_free(&meta->down_stream);
+  oak_buffer_free(&meta->attachment);
   oak_dict_free(&meta->common);
   oak_dict_free(&meta->fields);
+  oak_dict_free(&meta->communication);
   oak_dict_free(&meta->exts);
 }
 
 inline void oak_metadata_clear(struct oak_metadata* meta) {
   oak_buffer_clear(&meta->up_stream);
   oak_buffer_clear(&meta->down_stream);
+  oak_buffer_clear(&meta->attachment);
   oak_dict_clear(&meta->common);
   oak_dict_clear(&meta->fields);
+  oak_dict_clear(&meta->communication);
   oak_dict_clear(&meta->exts);
-  meta->flags = 0;
 }
 
 #ifdef __cplusplus

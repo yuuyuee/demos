@@ -6,6 +6,7 @@
 #include <string>
 #include <memory>
 
+#include "oak/config.h"
 #include "oak/addons/module.h"
 #include "oak/addons/public/sink.h"
 
@@ -27,12 +28,12 @@ class SinkHandle: public ModuleBase {
   virtual int Write(const struct oak_metadata* metadata) = 0;
 
  protected:
-  SinkHandle(int id, const std::string& name, const std::string& path);
+  SinkHandle(size_t id, const std::string& name, const std::string& path);
 };
 
 // Create a sink handle, return 0 on success, -1 if any error
 // occursed.
-int SinkHandleFactory(const ModuleArguments& module_args,
+int SinkHandleFactory(const ModuleConfig& module_config,
                       std::unique_ptr<SinkHandle>* module_handle);
 
 }  // namespace oak

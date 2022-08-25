@@ -6,6 +6,7 @@
 #include <string>
 #include <memory>
 
+#include "oak/config.h"
 #include "oak/addons/module.h"
 #include "oak/addons/public/event.h"
 
@@ -33,12 +34,12 @@ class EventHandle: public ModuleBase {
   virtual int Send(const struct outgoing_event* event) = 0;
 
  protected:
-  EventHandle(int id, const std::string& name, const std::string& path);
+  EventHandle(size_t id, const std::string& name, const std::string& path);
 };
 
 // Create a event handle, return 0 on success, -1 if any error
 // occursed.
-int EventHandleFactory(const ModuleArguments& module_args,
+int EventHandleFactory(const ModuleConfig& module_config,
                        std::unique_ptr<EventHandle>* module_handle);
 }  // namespace oak
 

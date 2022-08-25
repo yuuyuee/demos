@@ -47,7 +47,7 @@ class ModuleBase {
   void Dump() const noexcept;
 
   // Module unique ID
-  int id() const noexcept {
+  uint64_t id() const noexcept {
     return id_;
   }
 
@@ -81,21 +81,12 @@ class ModuleBase {
   ModuleBase(int id, const std::string& name, const std::string& path) noexcept;
 
  protected:
-  int id_;
+  uint64_t id_;
   int version_;
   std::string name_;
   std::string path_;
   ModuleType type_;
   LangType lang_type_;
-};
-
-using Dict = std::unordered_map<std::string, std::string>;
-
-struct ModuleArguments {
-  int id;
-  std::string module_name;
-  std::string module_path;
-  Dict config;
 };
 
 }  // namespace oak

@@ -27,29 +27,20 @@ enum event_subtype {
 
 /* below attributes for protocol parser arguments */
 
-/* parser ID */
-#define OAK_PARSER_ID        "parser_id"
-/* task ID */
-#define OAK_TASK_ID          "task_id"
 /* protocol type */
-/* #define OAK_PROTO_TYPE       "protocol_type" */
+#define OAK_PROTOCOL_TYPE "protocol_type"
+
 /* protocol name */
-/* #define OAK_PROTO_NAME       "protocol_name" */
+#define OAK_PROTOCOL_NAME "protocol_name"
+
 /* parser file name */
-#define OAK_FILE_NAME        "file_name"
+#define OAK_FILE_NAME "file_name"
+
 /* parser http URL for download */
-#define OAK_HTTP_URL         "http_url"
-/* metrics: Inputted traffic size */
-#define OAK_METRICS_INFLOW   "metrics_inflow"
-/* metrics: number of output records  */
-#define OAK_METRICS_OUTDATA  "metrics_outdata"
+#define OAK_HTTP_URL "http_url"
 
-/* below attributes for data control arguments */
-
-/* enable communication */
-#define OAK_ENABLE_COMM      "enable_comm"
-/* metrics: controlled traffic size */
-#define OAK_METRICS_KEEPFLOW "metrics_keepflow"
+/* application type */
+#define OAK_APP_TYPE "app_type"
 
 struct incoming_event {
   int type;               /* incomming event_type */

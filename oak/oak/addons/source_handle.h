@@ -6,6 +6,7 @@
 #include <string>
 #include <memory>
 
+#include "oak/config.h"
 #include "oak/addons/module.h"
 #include "oak/addons/public/source.h"
 
@@ -27,12 +28,12 @@ class SourceHandle: public ModuleBase {
   virtual int Read(struct oak_metadata* metadata) = 0;
 
  protected:
-  SourceHandle(int id, const std::string& name, const std::string& path);
+  SourceHandle(size_t id, const std::string& name, const std::string& path);
 };
 
 // Create a source handle, return 0 on success, -1 if any error
 // occursed.
-int SourceHandleFactory(const ModuleArguments& module_args,
+int SourceHandleFactory(const ModuleConfig& module_config,
                         std::unique_ptr<SourceHandle>* module_handle);
 }  // namespace oak
 

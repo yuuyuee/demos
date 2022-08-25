@@ -34,7 +34,7 @@ const ProcessConfig& GetProcessConfig();
 // ModuleConfig
 
 struct ModuleConfig {
-  int id{-1};           ///< module ID
+  size_t id{0};           ///< module ID
   std::string name;     ///< module name
   bool enable{false};   ///< whether or not the module is enable
   std::string path;     ///< module path
@@ -54,12 +54,16 @@ struct SourceConfig {
 struct ParserConfig {
   std::string comment;
   int num_threads{-1};
+  int report_interval{60};
+  int stream_channel_size{512};
+  int report_channel_size{1024};
   ModuleConfigDict modules;
 };
 
 struct SinkConfig {
   std::string comment;
   int num_threads{-1};
+  int stream_channel_size{512};
   ModuleConfigDict modules;
 };
 
