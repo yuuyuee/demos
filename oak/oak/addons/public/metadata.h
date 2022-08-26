@@ -10,21 +10,23 @@
 extern "C" {
 #endif
 
-/* task type */
-#define OAK_TASK_TYPE_PARSE   1
-#define OAK_TASK_TYPE_CTRL    2
+#define OAK_META_TAG_MAX 8
+
+struct oak_tag {
+  int64_t task_id;
+  size_t protocol_type;
+  struct oak_dict fields;
+};
 
 struct oak_metadata {
-  uint64_t parser_id;
-  uint64_t task_id;
-  int task_type;
+  struct oak_tag tag[OAK_META_TAG_MAX];
+  int num_tag;
   struct oak_buffer up_stream;
   struct oak_buffer down_stream;
   struct oak_buffer attachment;
   struct oak_dict common;
   struct oak_dict fields;
-  struct oak_dict communication;
-  struct oak_dict extens_fields;
+  struct oak_dict extens;
 };
 
 #ifdef __cplusplus

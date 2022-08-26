@@ -182,32 +182,7 @@ int main(int argc, char* argv[]) {
   }
 
   // Creates worker thread.
-  // for (int i = 0; i < config.source.num_threads; ++i) {
-  //   const LogicCore* logic_core = System::GetNextAvailLogicCore();
-  //   if (logic_core == nullptr)
-  //     ThrowStdOutOfRange("No enough available CPU");
-  //   std::string name = Format("source-%d", i);
-  //   System::CreateThread(name, logic_core->mask,
-  //                             []() { while (true) sleep(2); });
-  // }
 
-  // for (int i = 0; i < config.parser.num_threads; ++i) {
-  //   const LogicCore* logic_core = System::GetNextAvailLogicCore();
-  //   if (logic_core == nullptr)
-  //     ThrowStdOutOfRange("No enough available CPU");
-  //   std::string name = Format("parser-%d", i);
-  //   System::CreateThread(name, logic_core->mask,
-  //                             []() { while (true) sleep(2); });
-  // }
-
-  // for (int i = 0; i < config.sink.num_threads; ++i) {
-  //   const LogicCore* logic_core = System::GetNextAvailLogicCore();
-  //   if (logic_core == nullptr)
-  //     ThrowStdOutOfRange("No enough available CPU");
-  //   string name = Format("sink-%d", i);
-  //   System::CreateThread(name, logic_core->mask,
-  //                             []() { while (true) sleep(2); });
-  // }
 
   // Disable the failed the parser configuration and save it.
   WriteConfig(config, proc_config.conf_file);

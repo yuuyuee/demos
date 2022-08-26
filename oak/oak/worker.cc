@@ -3,9 +3,12 @@
 #include "oak/worker.h"
 
 #include <unistd.h>
-#include <time.h>
+#include <sys/time.h>
 #include <stdlib.h>
+#include <string.h>
+
 #include <string>
+#include <utility>
 
 #include "oak/common/format.h"
 #include "oak/common/throw_delegate.h"
@@ -17,7 +20,9 @@ using std::unique_ptr;
 using std::vector;
 using std::unordered_map;
 using std::atomic;
+using std::mutex;
 using std::string;
+
 using oak::Channel;
 
 namespace oak {
@@ -32,8 +37,6 @@ string HumanReadableCoreInfo(const vector<const LogicCore*>& cores) {
   }
   return msg;
 }
-
-}  // anonymous namespace
 
 void SourceThreadRoutine(SourceContext* context) {
   assert(context->state.load(std::memory_order_acquire) == THREAD_INIT);
@@ -71,6 +74,8 @@ void SourceThreadRoutine(SourceContext* context) {
       if (error_count < 4)
         ++error_count;
       sleep(error_count);
+      // XXX(YUYUE): There may be other better designs.
+      oak_metadata_free(&metadata);
       continue;
     }
     error_count = 0;
@@ -99,21 +104,79 @@ void SourceThreadRoutine(SourceContext* context) {
     if (context->offset >= context->num_parser)
       context->offset = 0;
 
-    // No one parser has living, free metadata and copy
+    // No one parser has living, free metadata copy
     if (copy) {
-      oak_metadata_free(copy);
-      delete copy;
+      unique_ptr<struct oak_metadata> free(copy);
+      oak_metadata_free(free.get());
     }
   }  // while ()
 
   context->handle.reset();
 }
 
-namespace {
+struct ParserMetrics {
+  int64_t task_id{-1};
 
+  size_t input_flow{0};
+  size_t output_data{0};
+};
 
+using ParserMetricsDict = unordered_map<uint64_t, ParserMetrics>;
 
-}  // anonymous namespace
+void ReportMetrics(unique_ptr<Channel>* channel, ParserMetricsDict* metrics) {
+  for (auto const& it : *metrics) {
+    struct outgoing_event* event = new struct outgoing_event;
+    event->type = ET_METRICS;
+    oak_dict_init(&event->args);
+
+    string task_id_str = Format("%ld", it.second.task_id);
+    oak_dict_add(&event->args,
+                 OAK_TASK_ID, sizeof(OAK_TASK_ID),
+                 task_id_str.c_str(), task_id_str.size());
+
+    string input_flow_str = Format("%ld", it.second.input_flow);
+    oak_dict_add(&event->args,
+                 OAK_M_INPUT_FLOW, sizeof(OAK_M_INPUT_FLOW),
+                 input_flow_str.c_str(), input_flow_str.size());
+
+    string output_data_str = Format("%ld", it.second.output_data);
+    oak_dict_add(&event->args,
+                 OAK_M_OUTPUT_DATA, sizeof(OAK_M_OUTPUT_DATA),
+                 output_data_str.c_str(), output_data_str.size());
+
+    channel->get()->Push(event);
+  }
+  metrics->clear();
+}
+
+using AlarmMessage = std::pair<int64_t, string>;
+
+void ReportAlarm(unique_ptr<Channel>* channel, const AlarmMessage& msg) {
+  struct outgoing_event* event = new struct outgoing_event;
+  event->type = ET_ALARM;
+  oak_dict_init(&event->args);
+
+  string task_id_str = Format("%ld", msg.first);
+  oak_dict_add(&event->args,
+               OAK_TASK_ID, sizeof(OAK_TASK_ID),
+               task_id_str.c_str(), task_id_str.size());
+
+  oak_dict_add(&event->args,
+               OAK_M_INPUT_FLOW, sizeof(OAK_M_INPUT_FLOW),
+               msg.second.c_str(), msg.second.size());
+
+  channel->get()->Push(event);
+}
+
+int Parse(ParserHandleDict* handles, struct oak_metadata* metadata,
+          struct oak_tag* tag) {
+  auto it = handles->find(tag->protocol_type);
+  if (it == handles->cend())
+    return -1;
+  return it->second.get()->Parse(
+      &metadata->up_stream, &metadata->down_stream,
+      &metadata->fields, &tag->fields);
+}
 
 void ParserThreadRoutine(ParserContext* context) {
   assert(context->state.load(std::memory_order_acquire) == THREAD_INIT);
@@ -138,7 +201,15 @@ void ParserThreadRoutine(ParserContext* context) {
 
     unique_ptr<ParserHandle> handle;
     if (ParserHandleFactory(it.second, &handle) != 0) {
-      // TODO(YUYUE): report open module failed and try to restore last version
+      // report open module failed and disabling it.
+      int64_t task_id = -1;
+      auto pos = it.second.config.find(OAK_TASK_ID);
+      if (pos != it.second.config.cend())
+        task_id = std::stoll(pos->second);
+      assert(task_id != -1);
+      string logs = Format("Load code (%ld) failed", it.second.id);
+      ReportAlarm(&context->report, std::make_pair(task_id, logs));
+      OAK_INFO("%s: %s\n", title.c_str(), logs.c_str());
       continue;
     }
     context->handles[it.second.id].reset(handle.release());
@@ -146,6 +217,12 @@ void ParserThreadRoutine(ParserContext* context) {
 
   if (context->handles.empty())
     OAK_WARNING("%s: No one module has been enabled\n", title.c_str());
+
+  struct timeval tv = {0, 0};
+  gettimeofday(&tv, nullptr);
+  uint64_t current_timepoint = tv.tv_sec;
+  uint64_t next_timepoint = current_timepoint + context->report_interval;
+  ParserMetricsDict metrics;
 
   // Setup thread state.
   OAK_INFO("%s: Running on the core %s\n",
@@ -165,46 +242,77 @@ void ParserThreadRoutine(ParserContext* context) {
     }
 
     assert(metadata != nullptr);
-    struct oak_dict fields;
-    oak_dict_init(&fields);
 
     // locking to ensure that parser handle can not be update and remove.
-    context->lock.lock();
-    auto pos = context->handles.find(metadata->parser_id);
-    if (pos == context->handles.cend()) {
-      OAK_WARNING("%s: protocol %ld not found anyone parser\n",
-                  title.c_str(), metadata->parser_id);
+    bool succeeded_once = false;
+    for (int i = 0; i < metadata->num_tag; ++i) {
+      struct oak_tag* tag = &(metadata->tag[i]);
+      std::lock_guard<mutex> guard(context->lock);
+      if (Parse(&context->handles, metadata, tag) == 0) {
+        succeeded_once = true;
+        if (tag->task_id >= 0) {
+          if (metrics[tag->protocol_type].task_id == -1)
+            metrics[tag->protocol_type].task_id = tag->task_id;
+          assert(metrics[tag->protocol_type].task_id == tag->task_id);
+          metrics[tag->protocol_type].input_flow += metadata->up_stream.size;
+          metrics[tag->protocol_type].input_flow += metadata->down_stream.size;
+          if (tag->fields.size > 0)
+            metrics[tag->protocol_type].output_data += 1;
+        }
+      } else {
+        oak_dict_clear(&(metadata->tag[i].fields));
+      }
+    }
+
+    if (succeeded_once) {
+      for (; context->offset < context->num_sink; ++context->offset) {
+        auto sink = context->sink_ref[context->offset];
+
+        // Skipping the offlined sink.
+        if (sink->state.load(std::memory_order_acquire) != THREAD_RUNNING) {
+          OAK_WARNING("Sink thread %d has offlined\n", sink->id);
+          continue;
+        }
+
+        if (!sink->stream->Push(metadata)) {
+          OAK_WARNING("Sink thread %d stream channel is fulling\n", sink->id);
+          continue;
+        }
+
+        // Push to sink sucessful, release metadata ownership.
+        metadata = nullptr;
+        break;
+      }
+
+      if (context->offset >= context->num_sink)
+        context->offset = 0;
+    } else {
       unique_ptr<struct oak_metadata> free(metadata);
       oak_metadata_free(free.get());
-      context->lock.unlock();
-      continue;
     }
 
-    ParserHandle* handle = pos->second.get();
-    int parse_ret = handle->Parse(&metadata->up_stream,
-                                  &metadata->down_stream,
-                                  &metadata->fields, &fields);
-    int mark_ret = handle->Mark(&metadata->up_stream,
-                                &metadata->down_stream);
-    context->lock.unlock();
-
-    if (parse_ret == 0 && fields.size > 0) {
-      oak_dict_free(&metadata->fields);
-      metadata->fields = fields;
-    } else {
-      oak_dict_clear(&metadata->fields);
-      oak_dict_free(&fields);
+    tv = {0, 0};
+    gettimeofday(&tv, nullptr);
+    current_timepoint = tv.tv_sec;
+    if (current_timepoint > next_timepoint) {
+      ReportMetrics(&context->report, &metrics);
+      next_timepoint = current_timepoint + context->report_interval;
     }
+  }  // while ()
 
-    if (mark_ret == 0) {
-      //
-    } else {
-      oak_dict_clear(&metadata->communication);
-    }
+  // free context
+  for (auto& it : context->handles)
+    it.second.reset();
 
-    if (parse_ret != 0 && mark_ret != 0) {
+  while (context->stream->Pop(&metadata)) {
+    unique_ptr<struct oak_metadata> free(metadata);
+    oak_metadata_free(free.get());
+  }
 
-    }
+  struct outgoing_event* event = nullptr;
+  while (context->stream->Pop(&event)) {
+    unique_ptr<struct outgoing_event> free(event);
+    oak_dict_free(&(free.get()->args));
   }
 }
 
@@ -281,35 +389,83 @@ void SinkThreadRoutine(SinkContext* context) {
   }
 }
 
+void InitSourceContext(int id, SourceContext* context, const SourceConfig* config) {
+  context->id = id;
+  context->state.store(THREAD_STOP);
+  context->self = 0;
+  context->config = config;
+  memset(context->parser_ref, 0, OAK_THREAD_MAX);
+  context->num_parser = 0;
+  context->offset = 0;
+}
 
+void InitParserontext(int id, ParserContext* context, const ParserConfig* config) {
+  context->id = id;
+  context->state.store(THREAD_STOP);
+  context->self = 0;
+  context->config = config;
+  memset(context->sink_ref, 0, OAK_THREAD_MAX);
+  context->num_sink = 0;
+  context->offset = 0;
+}
 
-void CreateWorker(const Config& config) {
-  // for (int i = 0; i < config.source.num_threads; ++i) {
-  //   LogicCore* logic_core = System::GetNextAvailableLogicCore();
-  //   if (logic_core == nullptr)
-  //     ThrowStdOutOfRange("No enough available CPU");
-  //   oak::System::CreateThread(oak::Format("source-%d", i),
-  //                             logic_core->mask,
-  //                             DummyFun);
-  // }
+void InitSinkContext(int id, SinkContext* context, const SinkConfig* config) {
+  context->id = id;
+  context->state.store(THREAD_STOP);
+  context->self = 0;
+  context->config = config;
+}
 
-  // for (int i = 0; i < config.parser.num_threads; ++i) {
-  //   LogicCore* logic_core = System::GetNextAvailableLogicCore();
-  //   if (logic_core == nullptr)
-  //     ThrowStdOutOfRange("No enough available CPU");
-  //   oak::System::CreateThread(oak::Format("parser-%d", i),
-  //                             logic_core->mask,
-  //                             DummyFun);
-  // }
+void InitRuntimeEnviron(RuntimeEnviron* env, const Config* config) {
+  env->num_parser_context = config->parser.num_threads;
+  if (env->num_parser_context <= 0)
+    env->num_parser_context = 1;
 
-  // for (int i = 0; i < config.sink.num_threads; ++i) {
-  //   LogicCore* logic_core = System::GetNextAvailableLogicCore();
-  //   if (logic_core == nullptr)
-  //     ThrowStdOutOfRange("No enough available CPU");
-  //   oak::System::CreateThread(oak::Format("sink-%d", i),
-  //                             logic_core->mask,
-  //                             DummyFun);
-  // }
+  env->num_source_context = config->source.num_threads;
+  if (env->num_source_context <= 0)
+    env->num_source_context = 1;
+
+  env->num_sink_context = config->sink.num_threads;
+  if (env->num_sink_context <= 0)
+    env->num_sink_context = 1;
+
+  for (int i = 0; i < OAK_THREAD_MAX; ++i) {
+    InitSourceContext(i, &(env->source_context[i]), &config->source);
+    for (int j = 0; j < OAK_THREAD_MAX; ++j) {
+      env->source_context[i].parser_ref[j] = &(env->parser_context[j]);
+      env->source_context[i].num_parser = env->num_parser_context;
+    }
+
+    InitParserontext(i, &(env->parser_context[i]), &config->parser);
+    for (int j = 0; j < OAK_THREAD_MAX; ++j) {
+      env->parser_context[i].sink_ref[j] = &(env->sink_context[j]);
+      env->parser_context[i].num_sink = env->num_sink_context;
+    }
+
+    InitSinkContext(i, &(env->sink_context[i]), &config->sink);
+  }
+}
+
+}  // anonymous namespace
+
+// TODO(YUYUE): design an adaptive CPU allocation scheme
+void CreateWorker(RuntimeEnviron* env, Config* config) {
+  InitRuntimeEnviron(env, config);
+
+  // Create sink worker
+  for (int i = 0; i < env->num_sink_context; ++i) {
+
+  }
+
+  // Create parser worker
+  for (int i = 0; i < env->num_parser_context; ++i) {
+
+  }
+
+  // Create source worker
+  for (int i = 0; i < env->num_source_context; ++i) {
+
+  }
 }
 
 }  // namespace oak

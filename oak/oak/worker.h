@@ -35,7 +35,7 @@ struct alignas(OAK_CACHELINE_SIZE) SinkContext {
 
   pthread_t self;
   std::vector<const LogicCore*> cores;
-  SinkConfig* config;
+  const SinkConfig* config;
 
   // below as thread maintenance parameters
   std::unique_ptr<Channel> stream;
@@ -43,15 +43,8 @@ struct alignas(OAK_CACHELINE_SIZE) SinkContext {
   std::vector<std::unique_ptr<SinkHandle>> handles;
 };
 
-struct Task {
-  size_t task_id{0};
-  int task_type{0};
-  size_t protocol_type{0};
-
-  size_t input_flow{0};
-  size_t output_data{0};
-  size_t keep_flow{0};
-};
+using ParserHandleDict =
+    std::unordered_map<uint64_t, std::unique_ptr<ParserHandle>>;
 
 struct alignas(OAK_CACHELINE_SIZE) ParserContext {
   int id{0};
@@ -59,21 +52,20 @@ struct alignas(OAK_CACHELINE_SIZE) ParserContext {
 
   pthread_t self;
   std::vector<const LogicCore*> cores;
-  ParserConfig* config;
+  const ParserConfig* config;
 
   size_t report_interval{60};
 
   SinkContext* sink_ref[OAK_THREAD_MAX];
-  size_t num_sink{0};
-  size_t offset{0};
+  int num_sink{0};
+  int offset{0};
 
   // below as thread maintenance parameters
   std::unique_ptr<Channel> stream;
   std::unique_ptr<Channel> report;
 
   std::mutex lock;
-  std::unordered_map<uint64_t, std::unique_ptr<ParserHandle>> handles;
-  std::unordered_map<uint64_t, Task> tasks;
+  ParserHandleDict handles;
 };
 
 struct alignas(OAK_CACHELINE_SIZE) SourceContext {
@@ -82,14 +74,25 @@ struct alignas(OAK_CACHELINE_SIZE) SourceContext {
 
   pthread_t self;
   std::vector<const LogicCore*> cores;
-  SourceConfig* config;
+  const SourceConfig* config;
 
   ParserContext* parser_ref[OAK_THREAD_MAX];
-  size_t num_parser{0};
-  size_t offset{0};
+  int num_parser{0};
+  int offset{0};
 
   // below as thread maintenance parameters
   std::unique_ptr<SourceHandle> handle;
+};
+
+struct RuntimeEnviron {
+  SourceContext source_context[OAK_THREAD_MAX];
+  int num_source_context;
+
+  ParserContext parser_context[OAK_THREAD_MAX];
+  int num_parser_context;
+
+  SinkContext sink_context[OAK_THREAD_MAX];
+  int num_sink_context;
 };
 
 }  // namespace oak

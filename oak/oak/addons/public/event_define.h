@@ -47,17 +47,23 @@ enum event_subtype {
 /* task ID */
 #define OAK_TASK_ID "task_id"
 
-/* task type */
-#define OAK_TASK_TYPE "task_type"
-
-/* enable communication */
-#define OAK_ENABLE_COMM "enable_communication"
-
 struct incoming_event {
   int type;               /* incomming event_type */
   int subtype;            /* event_subtype */
   struct oak_dict args;   /* incomming event arguments */
 };
+
+/* task ID, same as above */
+/* #define OAK_TASK_ID "task_id" */
+
+/* metrics: size of the input flow */
+#define OAK_M_INPUT_FLOW "m_input_flow"
+
+/* metrics: number of the output data */
+#define OAK_M_OUTPUT_DATA "m_output_data"
+
+/* alarm message */
+#define OAK_ALARM_MESSAGE "alarm_message"
 
 struct outgoing_event {
   int type;               /* outgoing event_type */
