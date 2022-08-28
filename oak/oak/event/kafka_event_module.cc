@@ -32,7 +32,7 @@ namespace {
 #define CMD_METRICS   "REPORT_" MSG_MODULE_NAME
 
 
-int kafka_event_init(void**, const struct oak_dict* config) {
+int kafka_event_init(void** context, const struct oak_dict* config) {
   // TODO(YUYUE):
   printf("kafka_event_init\n");
   for (size_t i = 0; i < config->size; ++i) {

@@ -4,6 +4,7 @@
 #define OAK_LOGGING_LOGGING_H_
 
 #include <stdlib.h>
+#include <functional>
 #include "oak/common/stringpiece.h"
 #include "oak/logging/log_level.h"
 #include "oak/common/macros.h"
@@ -28,7 +29,8 @@
 namespace oak {
 using Logger = void (*)(StringPiece);
 
-void RegisterLogger(Logger logger);
+void RegisterLogger(std::function<void(StringPiece)>&& logger);
+void SetupLogLevel(LogLevel level);
 
 namespace logging_internal {
 // Strip directory which any leading directory compoents has removed.

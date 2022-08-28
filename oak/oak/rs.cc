@@ -8,6 +8,7 @@
 #include <memory>
 #include <mutex>  // NOLINT
 #include <string>
+#include <utility>
 
 #include "oak/addons/public/compiler.h"
 #include "oak/addons/public/platform.h"
@@ -30,6 +31,8 @@ using std::string;
 using std::unique_ptr;
 using std::mutex;
 using std::lock_guard;
+using std::pair;
+using std::shared_ptr;
 
 using namespace oak;  // NOLINT
 
@@ -45,6 +48,50 @@ int stop_process = 0;
 void StopProcess(int signo) {
   assert(signo == SIGINT || signo == SIGQUIT || signo == SIGTERM);
   stop_process = 1;
+}
+
+LogLevel ToLogLevel(const string& s) {
+  static const pair<const char*, LogLevel> maps[] = {
+    {"debug",   LogLevel::OAK_LOG_LEVEL_DEBUG},
+    {"info",    LogLevel::OAK_LOG_LEVEL_INFO},
+    {"warning", LogLevel::OAK_LOG_LEVEL_WARNING},
+    {"error",   LogLevel::OAK_LOG_LEVEL_ERROR},
+    {"fatal",   LogLevel::OAK_LOG_LEVEL_FATAL}
+  };
+
+  for (size_t i = 0; i < OAK_ARRAYSIZE(maps); ++i) {
+    if (strncasecmp(s.c_str(), maps[i].first, s.size()) == 0)
+      return maps[i].second;
+  }
+  return LogLevel::OAK_LOG_LEVEL_ERROR;
+}
+
+void SetupLogger(const string& log_method, const string& defult_log_file) {
+  string level;
+  string method;
+  string path;
+  auto pos = log_method.find(':');
+  if (pos != string::npos) {
+    level = log_method.substr(0, pos);
+    method = log_method.substr(pos + 1);
+  }
+
+  if (!level.empty())
+    SetupLogLevel(ToLogLevel(level));
+
+  if (!method.empty()) {
+    if (method.size() >= 4 && strncasecmp(method.c_str(), "file", 4) == 0) {
+      pos = method.find(':');
+      if (pos != string::npos)
+        path = method.substr(pos + 1);
+      if (path.empty())
+        path = defult_log_file;
+      File raw = File::MakeAppendableFile(path);
+      shared_ptr<File> file(new File(std::move(raw)));
+      RegisterLogger(
+        [file] (StringPiece s) { file->Write(s.data(), s.size()); });
+    }
+  }
 }
 
 bool CreateGuardFile(const string& guard_file) {
@@ -217,7 +264,7 @@ int main(int argc, char* argv[]) {
 
   // Setup crash handler.
   CreateDirectory(proc_config.log_dir);
-  // RegisterFailureMessageHandler(proc_config.crash_file);
+  RegisterFailureMessageHandler(proc_config.crash_file);
 
   // Locks pid file to checking whther process is running.
   CreateDirectory(DirectoryName(proc_config.guard_file));
@@ -233,11 +280,12 @@ int main(int argc, char* argv[]) {
            GetCurrentDirectory().c_str());
   assert(proc_config.bin_dir == GetCurrentDirectory());
 
+  // Load configuration.
   Config config;
   ReadConfig(&config, proc_config.conf_file);
 
   // Setup logger.
-  // TODO(YUYUE):
+  SetupLogger(config.log_method, proc_config.log_file);
 
   // Initialize events receiver.
   // Note: there is allowed to disable the event receiver, but it is
@@ -267,6 +315,7 @@ int main(int argc, char* argv[]) {
   RuntimeEnviron env;
   InitRuntimeEnviron(&env, config);
   CreateWorker(&env);
+
   struct outgoing_event* out_event;
   while (env.parser_context[0].report->Pop(&out_event)) {
     unique_ptr<struct outgoing_event> free(out_event);
@@ -274,7 +323,6 @@ int main(int argc, char* argv[]) {
     event_handle->Send(free.get());
     oak_dict_free(&(free.get()->args));
   }
-
 
   // Disable the failed the parser configuration and save it.
   WriteConfig(config, proc_config.conf_file);

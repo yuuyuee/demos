@@ -4,7 +4,7 @@
 
 #include <unistd.h>
 #include <stdarg.h>
-#include <atomic>
+#include <utility>
 
 namespace oak {
 namespace logging_internal {
@@ -17,12 +17,16 @@ void DefaultLogger(StringPiece msg) {
   IGNORE_UNUESD(write(STDERR_FILENO, msg.data(), msg.size()));
 }
 
-std::atomic<Logger> kHandler(DefaultLogger);
+std::function<void(StringPiece)> kLogger(DefaultLogger);
+LogLevel kLogLevel = LogLevel::OAK_LOG_LEVEL_ERROR;
 }  // anonymous namespace
 
 void LogImpl(LogLevel level, const char* fname, int line, const char* fmt, ...) {
   constexpr const int kBufferSize = 2048;
   char buffer[kBufferSize];
+
+  if (level < kLogLevel)
+    return;
 
   int plen = snprintf(buffer, kBufferSize, "%s [%s:%d] ",
       LogLevelShortName(level), fname, line);
@@ -38,13 +42,21 @@ void LogImpl(LogLevel level, const char* fname, int line, const char* fmt, ...) 
     len = kBufferSize - plen - 1;
   }
   va_end(ap);
-  Logger handler = logging_internal::kHandler.load(std::memory_order_acquire);
-  if (handler)
-    handler({buffer, static_cast<size_t>(plen + len)});
+
+  if (kLogger) {
+    kLogger({buffer, static_cast<size_t>(plen + len)});
+  } else {
+    DefaultLogger({buffer, static_cast<size_t>(plen + len)});
+  }
 }
 }  // namespace logging_internal
 
-void RegisterLogger(Logger logger) {
-  logging_internal::kHandler.store(logger, std::memory_order_release);
+void RegisterLogger(std::function<void(StringPiece)>&& logger) {
+  logging_internal::kLogger = std::move(logger);
 }
+
+void SetupLogLevel(LogLevel level) {
+  logging_internal::kLogLevel = level;
+}
+
 }  // namespace oak
