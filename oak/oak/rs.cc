@@ -4,6 +4,9 @@
 #include <assert.h>
 #include <stdio.h>
 #include <signal.h>
+
+#include <memory>
+#include <mutex>  // NOLINT
 #include <string>
 
 #include "oak/addons/public/compiler.h"
@@ -11,6 +14,7 @@
 #include "oak/addons/public/version.h"
 #include "oak/addons/public/event.h"
 #include "oak/addons/event_handle.h"
+#include "oak/addons/dict_internal.h"
 #include "oak/common/macros.h"
 #include "oak/common/format.h"
 #include "oak/common/fs.h"
@@ -20,9 +24,12 @@
 #include "oak/common/throw_delegate.h"
 #include "oak/logging/logging.h"
 #include "oak/config.h"
+#include "oak/worker.h"
 
 using std::string;
 using std::unique_ptr;
+using std::mutex;
+using std::lock_guard;
 
 using namespace oak;  // NOLINT
 
@@ -109,6 +116,81 @@ void RetrievalEvent(const string& addon_dir,
   }
 }
 
+void HandleInputEvent(EventHandle* handle,
+                      ParserContext* context,
+                      int n,
+                      Config* config,
+                      const ProcessConfig& proc_config) {
+  struct incoming_event event;
+  oak_dict_init(&event.args);
+  if (handle->Recv(&event) == 0 && event.type == ET_PARSER) {
+    switch (event.subtype) {
+    case ET_P_ADD:
+    case ET_P_UPDATE: {
+      ModuleConfig module_config =
+          EventToParserModuleConfig(proc_config.addons_dir, event);
+      bool success = true;
+      for (int i = 0; i < n; ++i) {
+        lock_guard<mutex> guard(context[i].lock);
+        if (UpdateParser(&(context[i]), module_config) != 0) {
+          success = false;
+          break;
+        }
+      }
+      if (success) {
+        config->parser.modules[module_config.name] = module_config;
+        WriteConfig(*config, proc_config.conf_file);
+      }
+      break;
+    }
+    case ET_P_REMOVE: {
+      ModuleConfig module_config =
+          EventToParserModuleConfig(proc_config.addons_dir, event);
+      for (int i = 0; i < n; ++i) {
+        lock_guard<mutex> guard(context[i].lock);
+        context[i].handles.erase(module_config.id);
+      }
+      for (auto& it : config->parser.modules)
+        it.second.enable = false;
+      auto pos = config->parser.modules.find(module_config.name);
+      if (pos != config->parser.modules.cend()) {
+        config->parser.modules[module_config.name].enable = false;
+        WriteConfig(*config, proc_config.conf_file);
+      }
+      break;
+    }
+    case ET_P_CLEAR: {
+      for (int i = 0; i < n; ++i) {
+        lock_guard<mutex> guard(context[i].lock);
+        context[i].handles.clear();
+      }
+
+      for (auto& it : config->parser.modules)
+        it.second.enable = false;
+      WriteConfig(*config, proc_config.conf_file);
+      break;
+    }
+    default:
+      OAK_ERROR("Unknown incoming event subtype: %d\n", event.subtype);
+      break;
+    }
+  }
+  oak_dict_free(&event.args);
+}
+
+void HandleOutputEvent(EventHandle* handle,
+                       ParserContext* context,
+                       int n) {
+  struct outgoing_event* event;
+  for (int i = 0; i < n; ++i) {
+    while (context[i].report->Pop(&event)) {
+      unique_ptr<struct outgoing_event> free(event);
+      handle->Send(free.get());
+      oak_dict_free(&(free.get()->args));
+    }
+  }
+}
+
 }  // anonymous namespace
 
 int main(int argc, char* argv[]) {
@@ -182,17 +264,31 @@ int main(int argc, char* argv[]) {
   }
 
   // Creates worker thread.
+  RuntimeEnviron env;
+  InitRuntimeEnviron(&env, config);
+  CreateWorker(&env);
+  struct outgoing_event* out_event;
+  while (env.parser_context[0].report->Pop(&out_event)) {
+    unique_ptr<struct outgoing_event> free(out_event);
+    assert(free.get()->type == ET_ALARM);
+    event_handle->Send(free.get());
+    oak_dict_free(&(free.get()->args));
+  }
 
 
   // Disable the failed the parser configuration and save it.
   WriteConfig(config, proc_config.conf_file);
 
   // Setup master thread are guaranteed to be resident in current CPU.
-  // int core = System::GetCurrentCpu();
-  // const LogicCore* logic_core = System::GetNextAvailLogicCore(core);
-  // assert(logic_core != nullptr && "Logic error");
-  // System::SetThreadAffinity(pthread_self(), logic_core->mask);
-  // System::ThreadYield();
+  cpu_set_t mask;
+  CPU_ZERO(&mask);
+  const LogicCore* core;
+  while ((core = System::GetNextAvailLogicCore()) != nullptr)
+    CPU_OR(&mask, &mask, &core->mask);
+  if (CPU_COUNT(&mask) > 0) {
+    System::SetThreadAffinity(pthread_self(), mask);
+    System::ThreadYield();
+  }
 
   // Waiting for task event of the outside.
   signal(SIGQUIT, StopProcess);
@@ -200,6 +296,16 @@ int main(int argc, char* argv[]) {
   signal(SIGTERM, StopProcess);
 
   while (stop_process == 0) {
+    HandleInputEvent(event_handle.get(),
+                     env.parser_context,
+                     env.num_parser_context,
+                     &config,
+                     proc_config);
+
+    HandleOutputEvent(event_handle.get(),
+                      env.parser_context,
+                      env.num_parser_context);
+
     sleep(2);
   }
 

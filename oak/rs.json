@@ -11,31 +11,23 @@
 
   "source": {
     "comment": "",
-    "num_threads": 2,
+    "num_threads": 1,
 
     "modules": {
-      "kafka": {
-        "enable": true,
-        "bootstrap": "worker.source.get_meta.kafka.bootstrap"
-      }
     }
   },
 
   "parser": {
     "comment": "",
-    "num_threads": 2,
+    "num_threads": 1,
     "modules": {}
   },
 
   "sink": {
     "comment": "",
-    "num_threads": 2,
+    "num_threads": 1,
 
     "modules": {
-      "streampipe": {
-        "enable": true,
-        "address": "work.sink.set_meta.kafka.bootstrap"
-      }
     }
   }
 }

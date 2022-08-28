@@ -69,7 +69,7 @@ namespace {
 #define OAK_MAX_LOGIC_CORES (128)
 
 // Global CPU layout
-LogicCore logic_core[OAK_MAX_LOGIC_CORES];
+LogicCore g_logic_core[OAK_MAX_LOGIC_CORES];
 
 void InitLogicCore(LogicCore* logic_core, int size) {
   for (int i = 0; i < size; ++i) {
@@ -87,20 +87,20 @@ void InitLogicCore(LogicCore* logic_core, int size) {
 
 // Initialize current CPU layout.
 int InitCpuLayout() {
-  InitLogicCore(logic_core, OAK_MAX_LOGIC_CORES);
+  InitLogicCore(g_logic_core, OAK_MAX_LOGIC_CORES);
 
   for (int i = 0; i < OAK_MAX_LOGIC_CORES; ++i) {
     std::string path = Format(OAK_SYS_CPU_DIR "cpu%d" OAK_SYS_CORE_ID, i);
     if (!IsExists(path))
       continue;
-    logic_core[i].enable = true;
-    CPU_SET(i, &(logic_core[i].mask));
+    g_logic_core[i].enable = true;
+    CPU_SET(i, &(g_logic_core[i].mask));
 
     for (int j = 0; j < OAK_MAX_NUMA_NODES; ++j) {
       path = Format(OAK_SYS_CPU_DIR "cpu%d/node%d", i, j);
       if (!IsExists(path))
         continue;
-      logic_core[i].socket_id = j;
+      g_logic_core[i].socket_id = j;
       break;
     }
   }
@@ -114,20 +114,20 @@ const LogicCore* System::GetNextAvailLogicCore(int core_hint) {
   (void) done;
 
   for (int i = 0; i < OAK_MAX_LOGIC_CORES; ++i) {
-    LogicCore* logic_core = &(logic_core[i]);
-    if (!logic_core->enable)
+    LogicCore* core = &(g_logic_core[i]);
+    if (!core->enable)
       continue;
 
-    if (core_hint >= 0 && logic_core->logic_core_id < core_hint)
+    if (core_hint >= 0 && core->logic_core_id < core_hint)
       continue;
 
     bool locked = false;
-    if (!logic_core->lock.compare_exchange_strong(
+    if (!core->lock.compare_exchange_strong(
         locked, true,
         std::memory_order_acq_rel, std::memory_order_relaxed)) {
       continue;
     }
-    return logic_core;
+    return core;
   }
   return nullptr;
 }
@@ -136,7 +136,7 @@ const LogicCore* System::GetCurrentLogicCore() {
   int index = GetCurrentCpu();
   if (index >= OAK_MAX_LOGIC_CORES)
     ThrowStdRuntimeError(Format("Current CPU core %d out of range\n", index));
-  return &(logic_core[index]);
+  return &(g_logic_core[index]);
 }
 
 namespace {
@@ -193,7 +193,7 @@ pthread_t System::CreateThread(const std::string& name,
   cpu_set_t local_favor;
   CPU_ZERO(&local_favor);
   if (favor)
-    memcpy(&local_favor, &favor, sizeof(favor));
+    memcpy(&local_favor, &favor, sizeof(*favor));
   RoutineArgs* args = new RoutineArgs(name, local_favor, std::move(fn));
   err = pthread_create(&pid, &attr, StartRoutine,
       const_cast<void*>(static_cast<const void*>(args)));

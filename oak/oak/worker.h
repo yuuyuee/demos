@@ -21,7 +21,7 @@
 #include "oak/addons/sink_handle.h"
 
 namespace oak {
-#define OAK_THREAD_MAX 128
+#define OAK_THREAD_MAX 32
 
 enum ThreadState {
   THREAD_INIT,
@@ -95,6 +95,9 @@ struct RuntimeEnviron {
   int num_sink_context;
 };
 
+void InitRuntimeEnviron(RuntimeEnviron* env, const Config& config);
+void CreateWorker(RuntimeEnviron* env);
+int UpdateParser(ParserContext* context, const ModuleConfig& module_config);
 }  // namespace oak
 
 #endif  // OAK_WORKER_H_

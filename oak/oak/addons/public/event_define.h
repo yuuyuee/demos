@@ -19,10 +19,10 @@ enum event_type {
 };
 
 enum event_subtype {
-  ET_CMD_ADD = 0,
-  ET_UPDATE,
-  ET_REMOVE,
-  ET_CLEAR
+  ET_P_ADD = 0,
+  ET_P_UPDATE,
+  ET_P_REMOVE,
+  ET_P_CLEAR
 };
 
 /* below attributes for protocol parser */

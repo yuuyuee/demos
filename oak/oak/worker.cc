@@ -3,12 +3,14 @@
 #include "oak/worker.h"
 
 #include <unistd.h>
+#include <time.h>
 #include <sys/time.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include <string>
 #include <utility>
+#include <functional>
 
 #include "oak/common/format.h"
 #include "oak/common/throw_delegate.h"
@@ -193,7 +195,7 @@ void ParserThreadRoutine(ParserContext* context) {
   int report_channel_size = context->config->report_channel_size;
   if (report_channel_size <= 0)
     report_channel_size = 1024;
-  context->stream.reset(new Channel(stream_channel_size));
+  context->report.reset(new Channel(report_channel_size));
 
   for (auto const& it : context->config->modules) {
     if (!it.second.enable)
@@ -207,9 +209,11 @@ void ParserThreadRoutine(ParserContext* context) {
       if (pos != it.second.config.cend())
         task_id = std::stoll(pos->second);
       assert(task_id != -1);
-      string logs = Format("Load code (%ld) failed", it.second.id);
-      ReportAlarm(&context->report, std::make_pair(task_id, logs));
-      OAK_INFO("%s: %s\n", title.c_str(), logs.c_str());
+      if (context->id == 0) {
+        string logs = Format("Load code (%ld) failed", it.second.id);
+        ReportAlarm(&context->report, std::make_pair(task_id, logs));
+        OAK_INFO("%s: %s\n", title.c_str(), logs.c_str());
+      }
       continue;
     }
     context->handles[it.second.id].reset(handle.release());
@@ -394,7 +398,8 @@ void InitSourceContext(int id, SourceContext* context, const SourceConfig* confi
   context->state.store(THREAD_STOP);
   context->self = 0;
   context->config = config;
-  memset(context->parser_ref, 0, OAK_THREAD_MAX);
+  for (int i = 0; i < OAK_THREAD_MAX; ++i)
+    context->parser_ref[i] = nullptr;
   context->num_parser = 0;
   context->offset = 0;
 }
@@ -404,7 +409,8 @@ void InitParserontext(int id, ParserContext* context, const ParserConfig* config
   context->state.store(THREAD_STOP);
   context->self = 0;
   context->config = config;
-  memset(context->sink_ref, 0, OAK_THREAD_MAX);
+  for (int i = 0; i < OAK_THREAD_MAX; ++i)
+    context->sink_ref[i] = nullptr;
   context->num_sink = 0;
   context->offset = 0;
 }
@@ -416,56 +422,119 @@ void InitSinkContext(int id, SinkContext* context, const SinkConfig* config) {
   context->config = config;
 }
 
-void InitRuntimeEnviron(RuntimeEnviron* env, const Config* config) {
-  env->num_parser_context = config->parser.num_threads;
-  if (env->num_parser_context <= 0)
-    env->num_parser_context = 1;
+}  // anonymous namespace
 
-  env->num_source_context = config->source.num_threads;
+void InitRuntimeEnviron(RuntimeEnviron* env, const Config& config) {
+  env->num_source_context = config.source.num_threads;
   if (env->num_source_context <= 0)
     env->num_source_context = 1;
+  if (env->num_source_context > OAK_THREAD_MAX)
+    env->num_source_context = OAK_THREAD_MAX;
 
-  env->num_sink_context = config->sink.num_threads;
+  env->num_parser_context = config.parser.num_threads;
+  if (env->num_parser_context <= 0)
+    env->num_parser_context = 1;
+  if (env->num_parser_context > OAK_THREAD_MAX)
+    env->num_parser_context = OAK_THREAD_MAX;
+
+  env->num_sink_context = config.sink.num_threads;
   if (env->num_sink_context <= 0)
     env->num_sink_context = 1;
+  if (env->num_sink_context > OAK_THREAD_MAX)
+    env->num_sink_context = OAK_THREAD_MAX;
 
   for (int i = 0; i < OAK_THREAD_MAX; ++i) {
-    InitSourceContext(i, &(env->source_context[i]), &config->source);
+    InitSourceContext(i, &(env->source_context[i]), &config.source);
     for (int j = 0; j < OAK_THREAD_MAX; ++j) {
       env->source_context[i].parser_ref[j] = &(env->parser_context[j]);
       env->source_context[i].num_parser = env->num_parser_context;
     }
 
-    InitParserontext(i, &(env->parser_context[i]), &config->parser);
+    InitParserontext(i, &(env->parser_context[i]), &config.parser);
     for (int j = 0; j < OAK_THREAD_MAX; ++j) {
       env->parser_context[i].sink_ref[j] = &(env->sink_context[j]);
       env->parser_context[i].num_sink = env->num_sink_context;
     }
 
-    InitSinkContext(i, &(env->sink_context[i]), &config->sink);
+    InitSinkContext(i, &(env->sink_context[i]), &config.sink);
   }
 }
 
-}  // anonymous namespace
-
 // TODO(YUYUE): design an adaptive CPU allocation scheme
-void CreateWorker(RuntimeEnviron* env, Config* config) {
-  InitRuntimeEnviron(env, config);
-
+void CreateWorker(RuntimeEnviron* env) {
   // Create sink worker
   for (int i = 0; i < env->num_sink_context; ++i) {
-
+    const LogicCore* core = System::GetNextAvailLogicCore();
+    SinkContext* context = &(env->sink_context[i]);
+    if (core == nullptr)
+      ThrowStdOutOfRange("No one CPU cal be allocated.");
+    context->cores.push_back(core);
+    context->state.store(THREAD_INIT, std::memory_order_release);
+    string name = Format("Sink-%d", context->id);
+    context->self = System::CreateThread(
+        name, &core->mask,
+        std::bind(SinkThreadRoutine, context));
+    while (context->state.load(std::memory_order_acquire) != THREAD_RUNNING) {
+      struct timespec ts = {0, 20 * 1000 * 1000};
+      nanosleep(&ts, nullptr);
+    }
   }
 
   // Create parser worker
   for (int i = 0; i < env->num_parser_context; ++i) {
-
+    const LogicCore* core = System::GetNextAvailLogicCore();
+    ParserContext* context = &(env->parser_context[i]);
+    if (core == nullptr)
+      ThrowStdOutOfRange("No one CPU cal be allocated.");
+    context->cores.push_back(core);
+    context->state.store(THREAD_INIT, std::memory_order_release);
+    string name = Format("Parser-%d", context->id);
+    context->self = System::CreateThread(
+        name, &core->mask,
+        std::bind(ParserThreadRoutine, context));
+    while (context->state.load(std::memory_order_acquire) != THREAD_RUNNING) {
+      struct timespec ts = {0, 20 * 1000 * 1000};
+      nanosleep(&ts, nullptr);
+    }
   }
 
   // Create source worker
   for (int i = 0; i < env->num_source_context; ++i) {
-
+    const LogicCore* core = System::GetNextAvailLogicCore();
+    SourceContext* context = &(env->source_context[i]);
+    if (core == nullptr)
+      ThrowStdOutOfRange("No one CPU cal be allocated.");
+    context->cores.push_back(core);
+    context->state.store(THREAD_INIT, std::memory_order_release);
+    string name = Format("Source-%d", context->id);
+    context->self = System::CreateThread(
+        name, &core->mask,
+        std::bind(SourceThreadRoutine, context));
+    while (context->state.load(std::memory_order_acquire) != THREAD_RUNNING) {
+      struct timespec ts = {0, 20 * 1000 * 1000};
+      nanosleep(&ts, nullptr);
+    }
   }
+}
+
+int UpdateParser(ParserContext* context, const ModuleConfig& module_config) {
+  unique_ptr<ParserHandle> handle;
+  if (ParserHandleFactory(module_config, &handle) != 0) {
+    // report open module failed and disabling it.
+    int64_t task_id = -1;
+    auto pos = module_config.config.find(OAK_TASK_ID);
+    if (pos != module_config.config.cend())
+      task_id = std::stoll(pos->second);
+    assert(task_id != -1);
+    if (context->id == 0) {
+      string logs = Format("Load code (%ld) failed", module_config.id);
+      ReportAlarm(&context->report, std::make_pair(task_id, logs));
+      OAK_INFO("%s\n", logs.c_str());
+    }
+    return -1;
+  }
+  context->handles[module_config.id].reset(handle.release());
+  return 0;
 }
 
 }  // namespace oak

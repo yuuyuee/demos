@@ -173,6 +173,7 @@ class PyParserHandle: public ParserHandle {
     // TODO(YUYUE): implemented
     (void) up_stream;
     (void) down_stream;
+    (void) extracted;
     (void) fields;
     return -1;
   }
