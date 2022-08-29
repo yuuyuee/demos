@@ -29,8 +29,11 @@ void Consumer(const std::string& bootstrap, const std::string& topic) {
   struct oak_dict config;
   oak_dict_init(&config);
   oak_dict_add(&config,
-              "bootstrap.servers", sizeof("bootstrap.servers"),
+              "kafka.bootstrap.servers", sizeof("kafka.bootstrap.servers"),
               bootstrap.c_str(), bootstrap.size());
+  oak_dict_add(&config,
+              "kafka.group.id", sizeof("kafka.group.id"),
+              topic.c_str(), topic.size());
   oak::KafkaConsumer consumer(config);
   oak_dict_free(&config);
 

@@ -27,7 +27,6 @@
 #define OAK_FATAL(...)    OAK_LOG(FATAL, __VA_ARGS__)
 
 namespace oak {
-using Logger = void (*)(StringPiece);
 
 void RegisterLogger(std::function<void(StringPiece)>&& logger);
 void SetupLogLevel(LogLevel level);
