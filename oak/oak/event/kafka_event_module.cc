@@ -35,7 +35,6 @@ namespace {
 #define CMD_ALARM_END "ALARM_" MSG_MODULE_NAME "_END"
 #define CMD_METRICS   "REPORT_" MSG_MODULE_NAME
 
-
 int kafka_event_init(void** context, const struct oak_dict* config) {
 
   return 0;

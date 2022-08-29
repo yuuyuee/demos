@@ -17,7 +17,7 @@ void Producer(const std::string& bootstrap, const std::string& topic) {
 
   std::string line;
   while (std::getline(std::cin, line)) {
-    producer.Pruduce(topic, nullptr, &line);
+    producer.Pruduce(topic, topic, line);
   }
 }
 
@@ -54,6 +54,8 @@ int main(int argc, char* argv[]) {
     std::cout << "Usage: %s [-p|-c] bootstrap topic" << std::endl;
     return -1;
   }
+
+  oak::SetupLogLevel(oak::LogLevel::OAK_LOG_LEVEL_DEBUG);
 
   std::string flags = argv[1];
   std::string bootstrap = argv[2];

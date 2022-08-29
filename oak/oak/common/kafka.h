@@ -10,6 +10,7 @@
 
 #include "oak/addons/dict_internal.h"
 #include "oak/common/stringpiece.h"
+#include "oak/logging/logging.h"
 
 namespace oak {
 

@@ -295,8 +295,11 @@ int main(int argc, char* argv[]) {
     OAK_ERROR("Create event receiver failed\n");
     return -1;
   }
-  if (!event_handle)
-    OAK_WARNING("Not found configuration of the events receiver.\n");
+
+  if (!event_handle) {
+    OAK_ERROR("Not found configuration of events receiver.\n");
+    return -1;
+  }
 
   // Recover events that has occurred.
   const int occurred_event_size = 10;

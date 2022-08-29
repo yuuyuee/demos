@@ -47,8 +47,9 @@ void KafkaEventLogger(const RdKafka::Event& event) {
   case RdKafka::Event::Severity::EVENT_SEVERITY_CRITICAL:
   case RdKafka::Event::Severity::EVENT_SEVERITY_ALERT:
   case RdKafka::Event::Severity::EVENT_SEVERITY_EMERG: {
-    OAK_FATAL("Kafka event log: %s: %s\n",
-              event.fac().c_str(), event.str().c_str());
+    ThrowStdRuntimeError(
+        Format("Kafka event log: %s: %s\n",
+               event.fac().c_str(), event.str().c_str()));
     break;
   }
 
@@ -66,9 +67,10 @@ class KafkaEventCallback: public RdKafka::EventCb {
 void KafkaEventCallback::event_cb(RdKafka::Event& event) {
   switch (event.type()) {
   case RdKafka::Event::EVENT_ERROR: {
-    OAK_ERROR("Kafka event error (%s): %s\n",
-              RdKafka::err2str(event.err()).c_str(),
-              event.str().c_str());
+    ThrowStdRuntimeError(
+        Format("Kafka event error (%s): %s\n",
+               RdKafka::err2str(event.err()).c_str(),
+               event.str().c_str()));
     break;
   }
 
@@ -131,7 +133,7 @@ void SetProperty(RdKafka::Conf* conf, const struct oak_dict& config) {
       if (!key.empty() && !value.empty()) {
         if (conf->set(key.data(), value.data(), errstr) !=
             RdKafka::Conf::CONF_OK) {
-          OAK_ERROR("Kafk set property (%s: %s): %s\n",
+          OAK_ERROR("Kafka set property (%s: %s): %s\n",
                     key.data(), value.data(), errstr.c_str());
         }
       }
@@ -167,13 +169,13 @@ KafkaConsumer::Impl::Impl(const struct oak_dict& config)
   string errstr;
 
   if (conf->set("event_cb", &event_cb_, errstr) != RdKafka::Conf::CONF_OK)
-    OAK_ERROR("Kafk set property (event_cb): %s\n", errstr.c_str());
+    OAK_ERROR("Kafka set property (event_cb): %s\n", errstr.c_str());
 
   RdKafka::KafkaConsumer* consumer =
       RdKafka::KafkaConsumer::create(conf.get(), errstr);
   if (!consumer) {
     ThrowStdRuntimeError(
-        Format("Kafk create consumer failed: %s\n", errstr.c_str()));
+        Format("Kafka create consumer failed: %s\n", errstr.c_str()));
   }
 
   consumer_.reset(consumer);
@@ -203,12 +205,6 @@ void KafkaConsumer::Impl::Consume(MessageHandler&& handler, int timeout_ms) {
   switch (message->err()) {
   case RdKafka::ERR__TIMED_OUT:
   case RdKafka::ERR__PARTITION_EOF: {   // last message
-    break;
-  }
-
-  case RdKafka::ERR__UNKNOWN_TOPIC:
-  case RdKafka::ERR__UNKNOWN_PARTITION: {
-    OAK_ERROR("Kafka consume failed: %s\n", message->errstr().c_str());
     break;
   }
 
