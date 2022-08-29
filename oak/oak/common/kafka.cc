@@ -66,16 +66,9 @@ class KafkaEventCallback: public RdKafka::EventCb {
 void KafkaEventCallback::event_cb(RdKafka::Event& event) {
   switch (event.type()) {
   case RdKafka::Event::EVENT_ERROR: {
-    if (event.fatal()) {
-      ThrowStdRuntimeError(
-          Format("Kafka event error (%s): %s",
-                 RdKafka::err2str(event.err()).c_str(),
-                 event.str().c_str()));
-    } else {
-      OAK_ERROR("Kafka event error (%s): %s\n",
-                RdKafka::err2str(event.err()).c_str(),
-                event.str().c_str());
-    }
+    OAK_ERROR("Kafka event error (%s): %s\n",
+              RdKafka::err2str(event.err()).c_str(),
+              event.str().c_str());
     break;
   }
 
@@ -257,8 +250,8 @@ class KafkaProducer::Impl {
   ~Impl();
 
   void Pruduce(const string& topic,
-               const string* key,
-               const string* value);
+               const string& key,
+               const string& value);
 
  private:
   Impl(Impl const&) = delete;
@@ -299,26 +292,18 @@ KafkaProducer::Impl::~Impl() {
 }
 
 void KafkaProducer::Impl::Pruduce(const string& topic,
-                                  const string* key,
-                                  const string* value) {
-  if (!value) {
-    producer_->poll(0);
-    return;
-  }
-
+                                  const string& key,
+                                  const string& value) {
 retry:
   RdKafka::ErrorCode err =
       producer_->produce(topic,
                          RdKafka::Topic::PARTITION_UA,
                          RdKafka::Producer::RK_MSG_COPY,
-                         !value->empty() ?
-                            const_cast<char*>(value->c_str()) : nullptr,
-                         value->size(),
-                         !key->empty() ?
-                            const_cast<char*>(key->c_str()) : nullptr,
-                         key->size(),
+                         const_cast<char*>(value.c_str()),
+                         value.size(),
+                         const_cast<char*>(key.c_str()),
+                         key.size(),
                          0,
-                         nullptr,
                          nullptr);
   if (err != RdKafka::ERR_NO_ERROR) {
     OAK_ERROR("Kafka produce to topic %s failed: %s\n",
@@ -337,8 +322,8 @@ KafkaProducer::KafkaProducer(const struct oak_dict& config)
 KafkaProducer::~KafkaProducer() {}
 
 void KafkaProducer::Pruduce(const string& topic,
-                            const string* key,
-                            const string* value) {
+                            const string& key,
+                            const string& value) {
   impl_->Pruduce(topic, key, value);
 }
 

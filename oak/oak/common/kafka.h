@@ -39,8 +39,8 @@ class KafkaProducer {
   ~KafkaProducer();
 
   void Pruduce(const std::string& topic,
-               const std::string* key,
-               const std::string* value);
+               const std::string& key,
+               const std::string& value);
 
  private:
   KafkaProducer(KafkaProducer const&) = delete;
