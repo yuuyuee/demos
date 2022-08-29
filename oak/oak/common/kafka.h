@@ -5,21 +5,25 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 #include <functional>
-#include <unordered_map>
+
+#include "oak/addons/dict_internal.h"
+#include "oak/common/stringpiece.h"
 
 namespace oak {
 
-using Dict = std::unordered_map<std::string, std::string>;
+using MessageHandler =
+    std::function<void(const StringPiece, const StringPiece)>;
 
 class KafkaConsumer {
  public:
-  using MessageHandler = std::function<void(const char*, size_t)>;
-
-  explicit KafkaConsumer(const Dict& config);
+  explicit KafkaConsumer(const struct oak_dict& config);
   ~KafkaConsumer();
 
-  void Consume(int timeout_ms);
+  void Subscribe(const std::vector<std::string>& topics);
+
+  void Consume(MessageHandler&& handler, int timeout_ms);
 
  private:
   KafkaConsumer(KafkaConsumer const&) = delete;
@@ -31,11 +35,12 @@ class KafkaConsumer {
 
 class KafkaProducer {
  public:
-  explicit KafkaProducer(const Dict& config);
+  explicit KafkaProducer(const struct oak_dict& config);
   ~KafkaProducer();
 
-  // buffer will free(3) when it is done.
-  void Pruduce(const std::string& buffer);
+  void Pruduce(const std::string& topic,
+               const std::string* key,
+               const std::string* value);
 
  private:
   KafkaProducer(KafkaProducer const&) = delete;

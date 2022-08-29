@@ -4,6 +4,8 @@
 #include <string>
 
 #include "oak/addons/public/event.h"
+#include "oak/common/kafka.h"
+#include "oak/common/stringpiece.h"
 
 namespace oak {
 namespace {
@@ -14,6 +16,8 @@ namespace {
 #define TOPIC_CONFIG_ACK  "NFAP_ACKCFG_TASK_" SELF_NAME
 #define TOPIC_METRICS     "NFAP_REPORT_METRICS_" SELF_NAME
 #define TOPIC_REPORT      "NFAP_REPORT_ALARM_" SELF_NAME
+
+#define TOPIC_METADATA    "NFAP_METADATA_PR"
 
 #define MSG_DEFAULT_VERSION 1
 #define MSG_MODULE_NAME     "CUSTOMIZE_RS"
@@ -33,13 +37,7 @@ namespace {
 
 
 int kafka_event_init(void** context, const struct oak_dict* config) {
-  // TODO(YUYUE):
-  printf("kafka_event_init\n");
-  for (size_t i = 0; i < config->size; ++i) {
-    printf("\t%s = %s\n",
-        (const char*) config->elems[i].key.ptr,
-        (const char*) config->elems[i].value.ptr);
-  }
+
   return 0;
 }
 

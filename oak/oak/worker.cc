@@ -116,17 +116,8 @@ void SourceThreadRoutine(SourceContext* context) {
   context->handle.reset();
 }
 
-struct ParserMetrics {
-  int64_t task_id{-1};
-
-  size_t input_flow{0};
-  size_t output_data{0};
-};
-
-using ParserMetricsDict = unordered_map<uint64_t, ParserMetrics>;
-
-void ReportMetrics(unique_ptr<Channel>* channel, ParserMetricsDict* metrics) {
-  for (auto const& it : *metrics) {
+void ReportMetrics(unique_ptr<Channel>* channel, ProtocolTagDict* tags) {
+  for (auto& it : *tags) {
     struct outgoing_event* event = new struct outgoing_event;
     event->type = ET_METRICS;
     oak_dict_init(&event->args);
@@ -147,8 +138,9 @@ void ReportMetrics(unique_ptr<Channel>* channel, ParserMetricsDict* metrics) {
                  output_data_str.c_str(), output_data_str.size());
 
     channel->get()->Push(event);
+    it.second.input_flow = 0;
+    it.second.output_data = 0;
   }
-  metrics->clear();
 }
 
 using AlarmMessage = std::pair<int64_t, string>;
@@ -168,16 +160,6 @@ void ReportAlarm(unique_ptr<Channel>* channel, const AlarmMessage& msg) {
                msg.second.c_str(), msg.second.size());
 
   channel->get()->Push(event);
-}
-
-int Parse(ParserHandleDict* handles, struct oak_metadata* metadata,
-          struct oak_tag* tag) {
-  auto it = handles->find(tag->protocol_type);
-  if (it == handles->cend())
-    return -1;
-  return it->second.get()->Parse(
-      &metadata->up_stream, &metadata->down_stream,
-      &metadata->fields, &tag->fields);
 }
 
 void ParserThreadRoutine(ParserContext* context) {
@@ -201,21 +183,27 @@ void ParserThreadRoutine(ParserContext* context) {
     if (!it.second.enable)
       continue;
 
+    ProtocolTag tag;
+    auto pos = it.second.config.find(OAK_TASK_ID);
+    if (pos != it.second.config.cend())
+      tag.task_id = std::stoll(pos->second);
+    assert(tag.task_id != -1);
+
+    pos = it.second.config.find(OAK_APP_TYPE);
+    if (pos != it.second.config.cend())
+      tag.app_type = std::stoll(pos->second);
+
     unique_ptr<ParserHandle> handle;
     if (ParserHandleFactory(it.second, &handle) != 0) {
       // report open module failed and disabling it.
-      int64_t task_id = -1;
-      auto pos = it.second.config.find(OAK_TASK_ID);
-      if (pos != it.second.config.cend())
-        task_id = std::stoll(pos->second);
-      assert(task_id != -1);
       if (context->id == 0) {
         string logs = Format("Load code (%ld) failed", it.second.id);
-        ReportAlarm(&context->report, std::make_pair(task_id, logs));
+        ReportAlarm(&context->report, std::make_pair(tag.task_id, logs));
         OAK_INFO("%s: %s\n", title.c_str(), logs.c_str());
       }
       continue;
     }
+    context->tags[it.second.id] = tag;
     context->handles[it.second.id].reset(handle.release());
   }
 
@@ -226,7 +214,6 @@ void ParserThreadRoutine(ParserContext* context) {
   gettimeofday(&tv, nullptr);
   uint64_t current_timepoint = tv.tv_sec;
   uint64_t next_timepoint = current_timepoint + context->report_interval;
-  ParserMetricsDict metrics;
 
   // Setup thread state.
   OAK_INFO("%s: Running on the core %s\n",
@@ -238,6 +225,14 @@ void ParserThreadRoutine(ParserContext* context) {
   struct oak_metadata* metadata;
 
   while (context->state.load(std::memory_order_relaxed) != THREAD_STOP) {
+    tv = {0, 0};
+    gettimeofday(&tv, nullptr);
+    current_timepoint = tv.tv_sec;
+    if (current_timepoint > next_timepoint) {
+      ReportMetrics(&context->report, &context->tags);
+      next_timepoint = current_timepoint + context->report_interval;
+    }
+
     if (context->handles.empty() || !context->stream->Pop(&metadata)) {
       if (error_count < 4)
         ++error_count;
@@ -248,60 +243,68 @@ void ParserThreadRoutine(ParserContext* context) {
     assert(metadata != nullptr);
 
     // locking to ensure that parser handle can not be update and remove.
-    bool succeeded_once = false;
-    for (int i = 0; i < metadata->num_tag; ++i) {
-      struct oak_tag* tag = &(metadata->tag[i]);
+    int res = 0;
+    struct oak_dict fields;
+    oak_dict_init(&fields);
+    decltype(context->handles.cend()) it;
+    {
       std::lock_guard<mutex> guard(context->lock);
-      if (Parse(&context->handles, metadata, tag) == 0) {
-        succeeded_once = true;
-        if (tag->task_id >= 0) {
-          if (metrics[tag->protocol_type].task_id == -1)
-            metrics[tag->protocol_type].task_id = tag->task_id;
-          assert(metrics[tag->protocol_type].task_id == tag->task_id);
-          metrics[tag->protocol_type].input_flow += metadata->up_stream.size;
-          metrics[tag->protocol_type].input_flow += metadata->down_stream.size;
-          if (tag->fields.size > 0)
-            metrics[tag->protocol_type].output_data += 1;
-        }
-      } else {
-        oak_dict_clear(&(metadata->tag[i].fields));
+
+      it = context->handles.find(metadata->protocol_type);
+      if (it == context->handles.cend()) {
+        OAK_INFO("%s: protocol type %ld not found parser\n",
+                 title.c_str(), metadata->protocol_type);
+        oak_metadata_free(metadata);
+        oak_dict_free(&fields);
+        continue;
+      }
+
+      res = it->second.get()->Parse(
+          &metadata->up_stream, &metadata->down_stream,
+          &metadata->fields, &fields);
+
+      if (res == 0 && context->tags.find(it->first) != context->tags.cend()) {
+        context->tags[it->first].input_flow += metadata->up_stream.size;
+        context->tags[it->first].input_flow += metadata->down_stream.size;
+        if (metadata->fields.size > 0)
+          context->tags[it->first].output_data += 1;
       }
     }
 
-    if (succeeded_once) {
-      for (; context->offset < context->num_sink; ++context->offset) {
-        auto sink = context->sink_ref[context->offset];
+    oak_dict_free(&metadata->fields);
+    metadata->fields = fields;
+    if (res != 0 || metadata->fields.size == 0) {
+      unique_ptr<struct oak_metadata> free(metadata);
+      oak_metadata_free(free.get());
+      continue;
+    }
 
-        // Skipping the offlined sink.
-        if (sink->state.load(std::memory_order_acquire) != THREAD_RUNNING) {
-          OAK_WARNING("Sink thread %d has offlined\n", sink->id);
-          continue;
-        }
+    for (; context->offset < context->num_sink; ++context->offset) {
+      auto sink = context->sink_ref[context->offset];
 
-        if (!sink->stream->Push(metadata)) {
-          OAK_WARNING("Sink thread %d stream channel is fulling\n", sink->id);
-          continue;
-        }
-
-        // Push to sink sucessful, release metadata ownership.
-        metadata = nullptr;
-        break;
+      // Skipping the offlined sink.
+      if (sink->state.load(std::memory_order_acquire) != THREAD_RUNNING) {
+        OAK_WARNING("Sink thread %d has offlined\n", sink->id);
+        continue;
       }
 
-      if (context->offset >= context->num_sink)
-        context->offset = 0;
-    } else {
+      if (!sink->stream->Push(metadata)) {
+        OAK_WARNING("Sink thread %d stream channel is fulling\n", sink->id);
+        continue;
+      }
+
+      // Push to sink sucessful, release metadata ownership.
+      metadata = nullptr;
+      break;
+    }
+
+    if (metadata) {
       unique_ptr<struct oak_metadata> free(metadata);
       oak_metadata_free(free.get());
     }
 
-    tv = {0, 0};
-    gettimeofday(&tv, nullptr);
-    current_timepoint = tv.tv_sec;
-    if (current_timepoint > next_timepoint) {
-      ReportMetrics(&context->report, &metrics);
-      next_timepoint = current_timepoint + context->report_interval;
-    }
+    if (context->offset >= context->num_sink)
+      context->offset = 0;
   }  // while ()
 
   // free context
@@ -518,21 +521,28 @@ void CreateWorker(RuntimeEnviron* env) {
 }
 
 int UpdateParser(ParserContext* context, const ModuleConfig& module_config) {
+  ProtocolTag tag;
+  auto pos = module_config.config.find(OAK_TASK_ID);
+  if (pos != module_config.config.cend())
+    tag.task_id = std::stoll(pos->second);
+  assert(tag.task_id != -1);
+
+  pos = module_config.config.find(OAK_APP_TYPE);
+  if (pos != module_config.config.cend())
+    tag.app_type = std::stoll(pos->second);
+
   unique_ptr<ParserHandle> handle;
   if (ParserHandleFactory(module_config, &handle) != 0) {
     // report open module failed and disabling it.
-    int64_t task_id = -1;
-    auto pos = module_config.config.find(OAK_TASK_ID);
-    if (pos != module_config.config.cend())
-      task_id = std::stoll(pos->second);
-    assert(task_id != -1);
     if (context->id == 0) {
       string logs = Format("Load code (%ld) failed", module_config.id);
-      ReportAlarm(&context->report, std::make_pair(task_id, logs));
+      ReportAlarm(&context->report, std::make_pair(tag.task_id, logs));
       OAK_INFO("%s\n", logs.c_str());
     }
     return -1;
   }
+
+  context->tags[module_config.id] = tag;
   context->handles[module_config.id].reset(handle.release());
   return 0;
 }

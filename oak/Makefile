@@ -66,7 +66,19 @@ codec_test:
 			third_party/gtest/gtest_main.cc third_party/gtest/gmock-gtest-all.cc \
 			-lpthread
 
-clean:
-	-rm -f rs stringpiece_test any_test circle_test buffer_test codec_test channel_test
+kafka_example:
+	g++ -std=c++11 -Wall -Wextra -g -rdynamic -I. -Ithird_party/gtest -O2 -o$@ \
+			oak/common/kafka.cc \
+			oak/common/kafka_example.cc \
+			oak/common/format.cc \
+			oak/common/throw_delegate.cc \
+			oak/addons/buffer_internal.cc \
+			oak/logging/logging.cc \
+			-lpthread -lrdkafka -lrdkafka++
 
-.PHONY: rs stringpiece_test any_test circle_test buffer_test codec_test channel_test
+clean:
+	-rm -f rs stringpiece_test any_test circle_test buffer_test codec_test channel_test \
+				kafka_example
+
+.PHONY: rs stringpiece_test any_test circle_test buffer_test codec_test channel_test \
+				kafka_example

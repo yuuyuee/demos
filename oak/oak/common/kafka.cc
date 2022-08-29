@@ -1,79 +1,345 @@
 // Copyright 2022 The Oak Authors.
 
 #include "oak/common/kafka.h"
+#include <string.h>
+#include <utility>
+
 #include <librdkafka/rdkafkacpp.h>
 
+#include "oak/logging/logging.h"
+#include "oak/common/format.h"
+#include "oak/common/throw_delegate.h"
+
 using std::string;
+using std::vector;
+using std::unique_ptr;
 
 namespace oak {
+
+namespace {
+void KafkaEventLogger(const RdKafka::Event& event) {
+  switch (event.severity()) {
+  case RdKafka::Event::Severity::EVENT_SEVERITY_DEBUG: {
+    OAK_DEBUG("Kafka event log: %s: %s\n",
+              event.fac().c_str(), event.str().c_str());
+    break;
+  }
+
+  case RdKafka::Event::Severity::EVENT_SEVERITY_INFO:
+  case RdKafka::Event::Severity::EVENT_SEVERITY_NOTICE: {
+    OAK_INFO("Kafka event log: %s: %s\n",
+              event.fac().c_str(), event.str().c_str());
+    break;
+  }
+
+  case RdKafka::Event::Severity::EVENT_SEVERITY_WARNING: {
+    OAK_WARNING("Kafka event log: %s: %s\n",
+                event.fac().c_str(), event.str().c_str());
+    break;
+  }
+
+  case RdKafka::Event::Severity::EVENT_SEVERITY_ERROR: {
+    OAK_ERROR("Kafka event log: %s: %s\n",
+              event.fac().c_str(), event.str().c_str());
+    break;
+  }
+
+  case RdKafka::Event::Severity::EVENT_SEVERITY_CRITICAL:
+  case RdKafka::Event::Severity::EVENT_SEVERITY_ALERT:
+  case RdKafka::Event::Severity::EVENT_SEVERITY_EMERG: {
+    OAK_FATAL("Kafka event log: %s: %s\n",
+              event.fac().c_str(), event.str().c_str());
+    break;
+  }
+
+  default:
+    assert(false && "unreachable code");
+  }
+}
+
+class KafkaEventCallback: public RdKafka::EventCb {
+ public:
+  virtual ~KafkaEventCallback() {}
+  virtual void event_cb(RdKafka::Event& event);
+};
+
+void KafkaEventCallback::event_cb(RdKafka::Event& event) {
+  switch (event.type()) {
+  case RdKafka::Event::EVENT_ERROR: {
+    if (event.fatal()) {
+      ThrowStdRuntimeError(
+          Format("Kafka event error (%s): %s",
+                 RdKafka::err2str(event.err()).c_str(),
+                 event.str().c_str()));
+    } else {
+      OAK_ERROR("Kafka event error (%s): %s\n",
+                RdKafka::err2str(event.err()).c_str(),
+                event.str().c_str());
+    }
+    break;
+  }
+
+  case RdKafka::Event::EVENT_STATS: {
+    OAK_INFO("Kafka event stats: %s\n", event.str().c_str());
+    break;
+  }
+
+  case RdKafka::Event::EVENT_LOG: {
+    KafkaEventLogger(event);
+    break;
+  }
+
+  case RdKafka::Event::EVENT_THROTTLE: {
+    OAK_INFO("Kafka event throttle: %d ms by %s (%%%d)\n",
+             event.throttle_time(),
+             event.broker_name().c_str(),
+             event.broker_id());
+    break;
+  }
+
+  default: {
+    OAK_INFO("Kafka event %d (%s): %s\n",
+             event.type(),
+             RdKafka::err2str(event.err()).c_str(),
+             event.str().c_str());
+    break;
+  }
+  }
+}
+
+class KafkaDeliveryReportCallback: public RdKafka::DeliveryReportCb {
+ public:
+  virtual ~KafkaDeliveryReportCallback() {}
+
+  virtual void dr_cb(RdKafka::Message& message);
+};
+
+void KafkaDeliveryReportCallback::dr_cb(RdKafka::Message& message) {
+  if (message.err()) {
+    OAK_ERROR("Kafka message delivery failed: %s\n",
+              message.errstr().c_str());
+  } else {
+    OAK_DEBUG("Kafka message delivery to topic %s [%d]\n",
+              message.topic_name().c_str(), message.partition());
+  }
+}
+
+void SetProperty(RdKafka::Conf* conf, const struct oak_dict& config) {
+  string errstr;
+
+  const char* prefix = "kafka.";
+  for (size_t i = 0; i < config.size; ++i) {
+    StringPiece key(static_cast<const char*>(config.elems[i].key.ptr),
+                    config.elems[i].key.size);
+    StringPiece value(static_cast<const char*>(config.elems[i].value.ptr),
+                      config.elems[i].value.size);
+    if (key.starts_with(prefix)) {
+      key.remove_prefix(strlen(prefix));
+      if (!key.empty() && !value.empty()) {
+        if (conf->set(key.data(), value.data(), errstr) !=
+            RdKafka::Conf::CONF_OK) {
+          OAK_ERROR("Kafk set property (%s: %s): %s\n",
+                    key.data(), value.data(), errstr.c_str());
+        }
+      }
+    }
+  }
+}
+
+}  // anonymous namespace
 
 // KafkaConsumer
 
 class KafkaConsumer::Impl {
  public:
-  explicit Impl(const Dict& config);
+  explicit Impl(const struct oak_dict& config);
   ~Impl();
 
-  void Consume(int timeout_ms);
+  void Subscribe(const std::vector<std::string>& topics);
+  void Consume(MessageHandler&& handler, int timeout_ms);
 
  private:
   Impl(Impl const&) = delete;
   Impl& operator=(Impl const&) = delete;
+
+  KafkaEventCallback event_cb_;
+  unique_ptr<RdKafka::KafkaConsumer> consumer_;
 };
 
-KafkaConsumer::Impl::Impl(const Dict& config) {
+KafkaConsumer::Impl::Impl(const struct oak_dict& config)
+    : event_cb_(), consumer_() {
+  unique_ptr<RdKafka::Conf> conf;
+  conf.reset(RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL));
+  SetProperty(conf.get(), config);
+  string errstr;
 
+  if (conf->set("event_cb", &event_cb_, errstr) != RdKafka::Conf::CONF_OK)
+    OAK_ERROR("Kafk set property (event_cb): %s\n", errstr.c_str());
+
+  RdKafka::KafkaConsumer* consumer =
+      RdKafka::KafkaConsumer::create(conf.get(), errstr);
+  if (!consumer) {
+    ThrowStdRuntimeError(
+        Format("Kafk create consumer failed: %s\n", errstr.c_str()));
+  }
+
+  consumer_.reset(consumer);
 }
 
 KafkaConsumer::Impl::~Impl() {
-
+  consumer_->close();
+  consumer_.reset();
+  RdKafka::wait_destroyed(500);
 }
 
-void KafkaConsumer::Impl::Consume(int timeout_ms) {
-
+void KafkaConsumer::Impl::Subscribe(const std::vector<std::string>& topics) {
+  RdKafka::ErrorCode err = consumer_->subscribe(topics);
+  if (err) {
+    ThrowStdRuntimeError(
+        Format("Kafk subscribe topics failed: %s\n",
+               RdKafka::err2str(err).c_str()));
+  }
 }
 
-KafkaConsumer::KafkaConsumer(const Dict& config)
+void KafkaConsumer::Impl::Consume(MessageHandler&& handler, int timeout_ms) {
+  RdKafka::Message *ptr = consumer_->consume(timeout_ms);
+  if (!ptr)
+    return;
+
+  unique_ptr<RdKafka::Message> message(ptr);
+  switch (message->err()) {
+  case RdKafka::ERR__TIMED_OUT:
+  case RdKafka::ERR__PARTITION_EOF: {   // last message
+    break;
+  }
+
+  case RdKafka::ERR__UNKNOWN_TOPIC:
+  case RdKafka::ERR__UNKNOWN_PARTITION: {
+    OAK_ERROR("Kafka consume failed: %s\n", message->errstr().c_str());
+    break;
+  }
+
+  case RdKafka::ERR_NO_ERROR: {
+    if (handler) {
+      StringPiece key(*(message->key()));
+      StringPiece value(static_cast<const char*>(message->payload()),
+                        message->len());
+      handler(key, value);
+    }
+    break;
+  }
+
+  default: {
+    OAK_ERROR("Kafka consume failed: %s\n", message->errstr().c_str());
+    break;
+  }
+  }
+}
+
+KafkaConsumer::KafkaConsumer(const struct oak_dict& config)
     : impl_(new Impl(config)) {}
+
 KafkaConsumer::~KafkaConsumer() {}
 
-void KafkaConsumer::Consume(int timeout_ms) {
-  return impl_->Consume(timeout_ms);
+void KafkaConsumer::Subscribe(const std::vector<std::string>& topics) {
+  impl_->Subscribe(topics);
+}
+
+void KafkaConsumer::Consume(MessageHandler&& handler, int timeout_ms) {
+  impl_->Consume(std::move(handler), timeout_ms);
 }
 
 // KafkaProducer
 
 class KafkaProducer::Impl {
  public:
-  explicit Impl(const Dict& config);
+  explicit Impl(const struct oak_dict& config);
   ~Impl();
 
-  // buffer will free(3) when it is done.
-  void Pruduce(const string& buffer);
+  void Pruduce(const string& topic,
+               const string* key,
+               const string* value);
 
  private:
   Impl(Impl const&) = delete;
   Impl& operator=(Impl const&) = delete;
+
+  KafkaEventCallback event_cb_;
+  KafkaDeliveryReportCallback delivery_cb_;
+  unique_ptr<RdKafka::Producer> producer_;
 };
 
-KafkaProducer::Impl::Impl(const Dict& config) {
+KafkaProducer::Impl::Impl(const struct oak_dict& config)
+    : event_cb_(), delivery_cb_(), producer_() {
+  unique_ptr<RdKafka::Conf> conf;
+  conf.reset(RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL));
+  SetProperty(conf.get(), config);
+  string errstr;
+  if (conf->set("event_cb", &event_cb_, errstr) != RdKafka::Conf::CONF_OK)
+    OAK_ERROR("Kafka set property (event_cb): %s\n", errstr.c_str());
 
+  if (conf->set("dr_cb", &delivery_cb_, errstr) != RdKafka::Conf::CONF_OK)
+    OAK_ERROR("Kafka set property (dr_cb: %s\n", errstr.c_str());
+
+  RdKafka::Producer* producer =
+      RdKafka::Producer::create(conf.get(), errstr);
+  if (!producer) {
+    ThrowStdRuntimeError(
+        Format("Kafka create producer failed: %s\n", errstr.c_str()));
+  }
+  producer_.reset(producer);
 }
 
 KafkaProducer::Impl::~Impl() {
-
+  producer_->flush(500);
+  if (producer_->outq_len() > 0)
+    OAK_WARNING("Kafka %d messages not delivered\n", producer_->outq_len());
+  producer_.reset();
+  RdKafka::wait_destroyed(500);
 }
 
-void KafkaProducer::Impl::Pruduce(const string& buffer) {
+void KafkaProducer::Impl::Pruduce(const string& topic,
+                                  const string* key,
+                                  const string* value) {
+  if (!value) {
+    producer_->poll(0);
+    return;
+  }
 
+retry:
+  RdKafka::ErrorCode err =
+      producer_->produce(topic,
+                         RdKafka::Topic::PARTITION_UA,
+                         RdKafka::Producer::RK_MSG_COPY,
+                         !value->empty() ?
+                            const_cast<char*>(value->c_str()) : nullptr,
+                         value->size(),
+                         !key->empty() ?
+                            const_cast<char*>(key->c_str()) : nullptr,
+                         key->size(),
+                         0,
+                         nullptr,
+                         nullptr);
+  if (err != RdKafka::ERR_NO_ERROR) {
+    OAK_ERROR("Kafka produce to topic %s failed: %s\n",
+              topic.c_str(), RdKafka::err2str(err).c_str());
+    if (err == RdKafka::ERR__QUEUE_FULL) {
+      producer_->poll(1000);
+      goto retry;
+    }
+  }
+  producer_->poll(0);
 }
 
-KafkaProducer::KafkaProducer(const Dict& config)
+KafkaProducer::KafkaProducer(const struct oak_dict& config)
     : impl_(new Impl(config)) {}
+
 KafkaProducer::~KafkaProducer() {}
 
-void KafkaProducer::Pruduce(const string& buffer) {
-  return impl_->Pruduce(buffer);
+void KafkaProducer::Pruduce(const string& topic,
+                            const string* key,
+                            const string* value) {
+  impl_->Pruduce(topic, key, value);
 }
 
 }  // namespace oak

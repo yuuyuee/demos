@@ -5,7 +5,9 @@
   "modules": {
     "kafka_event_module": {
       "enable": true,
-      "bootstrap": "master.get_task.kafka.bootstrap"
+      "kafka.bootstrap.servers": "master.get_task.kafka.bootstrap",
+      "kafka.group.id": "",
+      "kafka.debug": ""
     }
   },
 

@@ -193,27 +193,27 @@ void HandleInputEvent(EventHandle* handle,
     case ET_P_REMOVE: {
       ModuleConfig module_config =
           EventToParserModuleConfig(proc_config.addons_dir, event);
+
       for (int i = 0; i < n; ++i) {
         lock_guard<mutex> guard(context[i].lock);
         context[i].handles.erase(module_config.id);
+        context[i].tags.erase(module_config.id);
       }
-      for (auto& it : config->parser.modules)
-        it.second.enable = false;
-      auto pos = config->parser.modules.find(module_config.name);
-      if (pos != config->parser.modules.cend()) {
-        config->parser.modules[module_config.name].enable = false;
-        WriteConfig(*config, proc_config.conf_file);
-      }
+
+      config->parser.modules[module_config.name].enable = false;
+      WriteConfig(*config, proc_config.conf_file);
       break;
     }
     case ET_P_CLEAR: {
       for (int i = 0; i < n; ++i) {
         lock_guard<mutex> guard(context[i].lock);
         context[i].handles.clear();
+        context[i].tags.clear();
       }
 
       for (auto& it : config->parser.modules)
         it.second.enable = false;
+
       WriteConfig(*config, proc_config.conf_file);
       break;
     }

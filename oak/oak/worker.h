@@ -46,6 +46,16 @@ struct alignas(OAK_CACHELINE_SIZE) SinkContext {
 using ParserHandleDict =
     std::unordered_map<uint64_t, std::unique_ptr<ParserHandle>>;
 
+struct ProtocolTag {
+  int64_t task_id{-1};
+  uint64_t app_type{0};
+
+  size_t input_flow{0};
+  size_t output_data{0};
+};
+
+using ProtocolTagDict = std::unordered_map<uint64_t, ProtocolTag>;
+
 struct alignas(OAK_CACHELINE_SIZE) ParserContext {
   int id{0};
   std::atomic<int> state;
@@ -66,6 +76,7 @@ struct alignas(OAK_CACHELINE_SIZE) ParserContext {
 
   std::mutex lock;
   ParserHandleDict handles;
+  ProtocolTagDict tags;
 };
 
 struct alignas(OAK_CACHELINE_SIZE) SourceContext {

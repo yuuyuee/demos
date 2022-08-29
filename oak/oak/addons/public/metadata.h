@@ -12,15 +12,8 @@ extern "C" {
 
 #define OAK_META_TAG_MAX 8
 
-struct oak_tag {
-  int64_t task_id;
-  size_t protocol_type;
-  struct oak_dict fields;
-};
-
 struct oak_metadata {
-  struct oak_tag tag[OAK_META_TAG_MAX];
-  int num_tag;
+  uint64_t protocol_type;
   struct oak_buffer up_stream;
   struct oak_buffer down_stream;
   struct oak_buffer attachment;
