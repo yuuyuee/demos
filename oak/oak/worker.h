@@ -34,7 +34,7 @@ struct alignas(OAK_CACHELINE_SIZE) SinkContext {
   std::atomic<int> state;
 
   pthread_t self;
-  std::vector<const LogicCore*> cores;
+  std::vector<LogicCore> cores;
   const SinkConfig* config;
 
   // below as thread maintenance parameters
@@ -61,7 +61,7 @@ struct alignas(OAK_CACHELINE_SIZE) ParserContext {
   std::atomic<int> state;
 
   pthread_t self;
-  std::vector<const LogicCore*> cores;
+  std::vector<LogicCore> cores;
   const ParserConfig* config;
 
   size_t report_interval{60};
@@ -84,7 +84,7 @@ struct alignas(OAK_CACHELINE_SIZE) SourceContext {
   std::atomic<int> state;
 
   pthread_t self;
-  std::vector<const LogicCore*> cores;
+  std::vector<LogicCore> cores;
   const SourceConfig* config;
 
   ParserContext* parser_ref[OAK_THREAD_MAX];

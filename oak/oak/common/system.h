@@ -8,14 +8,11 @@
 
 #include <string>
 #include <functional>
-#include <atomic>
 #include <utility>
 
 namespace oak {
 
 struct LogicCore {
-  bool enable;
-  std::atomic<bool> lock;
   int logic_core_id;
   cpu_set_t mask;
   int socket_id;

@@ -69,15 +69,20 @@ namespace {
 #define OAK_MAX_LOGIC_CORES (128)
 
 // Global CPU layout
-LogicCore g_logic_core[OAK_MAX_LOGIC_CORES];
+struct LogicCoreWrapper {
+  bool enable;
+  std::atomic<bool> lock;
+  struct LogicCore core;
+};
+LogicCoreWrapper g_logic_core[OAK_MAX_LOGIC_CORES];
 
-void InitLogicCore(LogicCore* logic_core, int size) {
+void InitLogicCore(LogicCoreWrapper* logic_core, int size) {
   for (int i = 0; i < size; ++i) {
     logic_core[i].enable = false;
     logic_core[i].lock.store(false, std::memory_order_relaxed);
-    logic_core[i].logic_core_id = i;
-    CPU_ZERO(&(logic_core[i].mask));
-    logic_core[i].socket_id = 0;
+    logic_core[i].core.logic_core_id = i;
+    CPU_ZERO(&(logic_core[i].core.mask));
+    logic_core[i].core.socket_id = 0;
   }
 }
 
@@ -94,13 +99,13 @@ int InitCpuLayout() {
     if (!IsExists(path))
       continue;
     g_logic_core[i].enable = true;
-    CPU_SET(i, &(g_logic_core[i].mask));
+    CPU_SET(i, &(g_logic_core[i].core.mask));
 
     for (int j = 0; j < OAK_MAX_NUMA_NODES; ++j) {
       path = Format(OAK_SYS_CPU_DIR "cpu%d/node%d", i, j);
       if (!IsExists(path))
         continue;
-      g_logic_core[i].socket_id = j;
+      g_logic_core[i].core.socket_id = j;
       break;
     }
   }
@@ -114,20 +119,20 @@ const LogicCore* System::GetNextAvailLogicCore(int core_hint) {
   (void) done;
 
   for (int i = 0; i < OAK_MAX_LOGIC_CORES; ++i) {
-    LogicCore* core = &(g_logic_core[i]);
-    if (!core->enable)
+    LogicCoreWrapper* lcore_wrapper = &(g_logic_core[i]);
+    if (!lcore_wrapper->enable)
       continue;
 
-    if (core_hint >= 0 && core->logic_core_id < core_hint)
+    if (core_hint >= 0 && lcore_wrapper->core.logic_core_id < core_hint)
       continue;
 
     bool locked = false;
-    if (!core->lock.compare_exchange_strong(
+    if (!lcore_wrapper->lock.compare_exchange_strong(
         locked, true,
         std::memory_order_acq_rel, std::memory_order_relaxed)) {
       continue;
     }
-    return core;
+    return &lcore_wrapper->core;
   }
   return nullptr;
 }
@@ -136,7 +141,7 @@ const LogicCore* System::GetCurrentLogicCore() {
   int index = GetCurrentCpu();
   if (index >= OAK_MAX_LOGIC_CORES)
     ThrowStdRuntimeError(Format("Current CPU core %d out of range\n", index));
-  return &(g_logic_core[index]);
+  return &(g_logic_core[index].core);
 }
 
 namespace {

@@ -30,12 +30,12 @@ using oak::Channel;
 namespace oak {
 namespace {
 
-string HumanReadableCoreInfo(const vector<const LogicCore*>& cores) {
+string HumanReadableCoreInfo(const vector<LogicCore>& cores) {
   string msg;
   for (auto const& it : cores) {
     if (!msg.empty())
       msg.append(", ");
-    msg.append(Format("%d [%d]", it->logic_core_id, it->socket_id));
+    msg.append(Format("%d [%d]", it.logic_core_id, it.socket_id));
   }
   return msg;
 }
@@ -471,7 +471,7 @@ void CreateWorker(RuntimeEnviron* env) {
     SinkContext* context = &(env->sink_context[i]);
     if (core == nullptr)
       ThrowStdOutOfRange("No one CPU cal be allocated.");
-    context->cores.push_back(core);
+    context->cores.push_back(*core);
     context->state.store(THREAD_INIT, std::memory_order_release);
     string name = Format("Sink-%d", context->id);
     context->self = System::CreateThread(
@@ -489,7 +489,7 @@ void CreateWorker(RuntimeEnviron* env) {
     ParserContext* context = &(env->parser_context[i]);
     if (core == nullptr)
       ThrowStdOutOfRange("No one CPU cal be allocated.");
-    context->cores.push_back(core);
+    context->cores.push_back(*core);
     context->state.store(THREAD_INIT, std::memory_order_release);
     string name = Format("Parser-%d", context->id);
     context->self = System::CreateThread(
@@ -502,16 +502,25 @@ void CreateWorker(RuntimeEnviron* env) {
   }
 
   // Create source worker
+  cpu_set_t mask;
+  CPU_ZERO(&mask);
+  vector<LogicCore> cores;
   for (int i = 0; i < env->num_source_context; ++i) {
     const LogicCore* core = System::GetNextAvailLogicCore();
-    SourceContext* context = &(env->source_context[i]);
     if (core == nullptr)
       ThrowStdOutOfRange("No one CPU cal be allocated.");
-    context->cores.push_back(core);
+    CPU_OR(&mask, &mask, &core->mask);
+    cores.push_back(*core);
+  }
+
+  for (int i = 0; i < env->num_source_context; ++i) {
+    SourceContext* context = &(env->source_context[i]);
+    cores[i].mask = mask;
+    context->cores = cores;
     context->state.store(THREAD_INIT, std::memory_order_release);
     string name = Format("Source-%d", context->id);
     context->self = System::CreateThread(
-        name, &core->mask,
+        name, &mask,
         std::bind(SourceThreadRoutine, context));
     while (context->state.load(std::memory_order_acquire) != THREAD_RUNNING) {
       struct timespec ts = {0, 20 * 1000 * 1000};
