@@ -2,7 +2,9 @@
 
 #include <iostream>
 #include <string>
+#include <thread>
 #include "oak/common/kafka.h"
+#include "oak/logging/logging.h"
 
 namespace {
 
@@ -41,11 +43,20 @@ void Consumer(const std::string& bootstrap, const std::string& topic) {
   topics.push_back(topic);
   consumer.Subscribe(topics);
 
-  while (true) {
-    consumer.Consume(Handler, 5000);
-  }
-}
+  auto fn = [&consumer] () {
+    while (true)
+      consumer.Consume(Handler, 5000);
+  };
 
+  std::thread t1(fn);
+  std::thread t2(fn);
+  std::thread t3(fn);
+  std::thread t4(fn);
+  t1.join();
+  t2.join();
+  t3.join();
+  t4.join();
+}
 
 }  // anonymous namespace
 

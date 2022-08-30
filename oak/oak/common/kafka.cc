@@ -8,7 +8,6 @@
 
 #include "oak/logging/logging.h"
 #include "oak/common/format.h"
-#include "oak/common/throw_delegate.h"
 
 using std::string;
 using std::vector;
@@ -47,9 +46,8 @@ void KafkaEventLogger(const RdKafka::Event& event) {
   case RdKafka::Event::Severity::EVENT_SEVERITY_CRITICAL:
   case RdKafka::Event::Severity::EVENT_SEVERITY_ALERT:
   case RdKafka::Event::Severity::EVENT_SEVERITY_EMERG: {
-    ThrowStdRuntimeError(
-        Format("Kafka event log: %s: %s\n",
-               event.fac().c_str(), event.str().c_str()));
+    OAK_FATAL("Kafka event log: %s: %s\n",
+              event.fac().c_str(), event.str().c_str());
     break;
   }
 
@@ -67,10 +65,9 @@ class KafkaEventCallback: public RdKafka::EventCb {
 void KafkaEventCallback::event_cb(RdKafka::Event& event) {
   switch (event.type()) {
   case RdKafka::Event::EVENT_ERROR: {
-    ThrowStdRuntimeError(
-        Format("Kafka event error (%s): %s\n",
-               RdKafka::err2str(event.err()).c_str(),
-               event.str().c_str()));
+    OAK_FATAL("Kafka event error (%s): %s\n",
+              RdKafka::err2str(event.err()).c_str(),
+              event.str().c_str());
     break;
   }
 
@@ -113,9 +110,6 @@ void KafkaDeliveryReportCallback::dr_cb(RdKafka::Message& message) {
   if (message.err()) {
     OAK_ERROR("Kafka message delivery failed: %s\n",
               message.errstr().c_str());
-  } else {
-    OAK_DEBUG("Kafka message delivery to topic %s [%d]\n",
-              message.topic_name().c_str(), message.partition());
   }
 }
 
@@ -173,10 +167,8 @@ KafkaConsumer::Impl::Impl(const struct oak_dict& config)
 
   RdKafka::KafkaConsumer* consumer =
       RdKafka::KafkaConsumer::create(conf.get(), errstr);
-  if (!consumer) {
-    ThrowStdRuntimeError(
-        Format("Kafka create consumer failed: %s\n", errstr.c_str()));
-  }
+  if (!consumer)
+    OAK_FATAL("Kafka create consumer failed: %s\n", errstr.c_str());
 
   consumer_.reset(consumer);
 }
@@ -190,9 +182,8 @@ KafkaConsumer::Impl::~Impl() {
 void KafkaConsumer::Impl::Subscribe(const std::vector<std::string>& topics) {
   RdKafka::ErrorCode err = consumer_->subscribe(topics);
   if (err) {
-    ThrowStdRuntimeError(
-        Format("Kafk subscribe topics failed: %s\n",
-               RdKafka::err2str(err).c_str()));
+    OAK_FATAL("Kafk subscribe topics failed: %s\n",
+              RdKafka::err2str(err).c_str());
   }
 }
 
@@ -272,10 +263,8 @@ KafkaProducer::Impl::Impl(const struct oak_dict& config)
 
   RdKafka::Producer* producer =
       RdKafka::Producer::create(conf.get(), errstr);
-  if (!producer) {
-    ThrowStdRuntimeError(
-        Format("Kafka create producer failed: %s\n", errstr.c_str()));
-  }
+  if (!producer)
+    OAK_FATAL("Kafka create producer failed: %s\n", errstr.c_str());
   producer_.reset(producer);
 }
 
