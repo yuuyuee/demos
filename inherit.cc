@@ -1,4 +1,5 @@
 #include <iostream>
+#include <memory>
 
 class Other {
  public:
@@ -42,9 +43,10 @@ class Derived: public Base {
 };
 
 int main() {
-  Base* p = new Derived;
-  p->f0();
-  p->f1();
-  delete p;
+  std::unique_ptr<Base> base;
+  std::unique_ptr<Derived> derived(new Derived);
+  base.reset(derived.release());
+  base->f0();
+  base->f1();
   return 0;
 }
