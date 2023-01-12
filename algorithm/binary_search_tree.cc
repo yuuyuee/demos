@@ -9,7 +9,8 @@ struct Node {
   Node* left;
   Node* right;
 
-  constexpr Node(int v): value(v), parent(nullptr), left(nullptr), right(nullptr) {}
+  constexpr explicit Node(int v)
+      : value(v), parent(nullptr), left(nullptr), right(nullptr) {}
 };
 
 template <typename OStream>
@@ -107,9 +108,9 @@ void Insert(Node** tree, int v) {
       node = node->right;
   }
 
-  if (Empty(p))
+  if (Empty(p)) {
     *tree = new_node;
-  else if (new_node->value < p->value) {
+  } else if (new_node->value < p->value) {
     p->left = new_node;
     new_node->parent = p;
   } else {
@@ -121,7 +122,7 @@ void Insert(Node** tree, int v) {
 void Transplant(Node** tree, Node* u, Node* v) {
   assert(!Empty(*tree));
 
-  if (u->parent == nullptr) { // root
+  if (u->parent == nullptr) {  // root
     *tree = v;
   } else if (u == u->parent->left) {
     u->parent->left = v;

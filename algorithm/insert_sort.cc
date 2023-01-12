@@ -1,3 +1,4 @@
+// insert_sort.cc
 
 #include <iostream>
 #include <functional>
@@ -24,14 +25,14 @@ void InsertSort(Tp (&a)[N]) {
 
 int main() {
   int a[] = {1, 8, 4, 9, 0, 2, 4};
-  Print("Before", a);
+  Print("B ", a);
   InsertSort(a);
-  Print("After", a);
+  Print("A ", a);
 
 
   int a1[] = {1, 8, 4, 9, 0, 2, 4};
-  Print("Before", a1);
+  Print("B ", a1);
   InsertSort<int, 7, std::less<int>>(a1);
-  Print("After", a1);
+  Print("A ", a1);
   return 0;
 }
