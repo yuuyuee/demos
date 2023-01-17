@@ -51,7 +51,7 @@ int main() {
 
   int a1[] = {1, 8, 4, 9, 0, 2, 4};
   Print("B ", a1);
-  MergeSort(a1, 7, std::less<int>());
+  MergeSort(a1, 7, std::less_equal<int>());
   Print("A ", a1);
   return 0;
 }
