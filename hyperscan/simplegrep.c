@@ -61,6 +61,11 @@
 
 #include <hs/hs.h>
 
+struct Context {
+    const char* pattern;
+    const char* stream;
+};
+
 /**
  * This is the function that will be called for each match that occurs. @a ctx
  * is to allow you to have some application-specific state that you will get
@@ -69,7 +74,8 @@
  */
 static int eventHandler(unsigned int id, unsigned long long from,
                         unsigned long long to, unsigned int flags, void *ctx) {
-    printf("Match for pattern \"%s\" at offset %llu\n", (char *)ctx, to);
+    const struct Context* context = (const struct Context*) ctx;
+    printf("Match for pattern \"%s\" at offset %llu ==> %c ...\n", context->pattern, to, context->stream[to]);
     return 0;
 }
 
@@ -211,9 +217,10 @@ int main(int argc, char *argv[]) {
     }
 
     printf("Scanning %u bytes with Hyperscan\n", length);
-
-    if (hs_scan(database, inputData, length, 0, scratch, eventHandler,
-                pattern) != HS_SUCCESS) {
+    struct Context ctx;
+    ctx.pattern = pattern;
+    ctx.stream = inputData;
+    if (hs_scan(database, inputData, length, 0, scratch, eventHandler, &ctx) != HS_SUCCESS) {
         fprintf(stderr, "ERROR: Unable to scan input buffer. Exiting.\n");
         hs_free_scratch(scratch);
         free(inputData);
