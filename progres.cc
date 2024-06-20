@@ -15,7 +15,7 @@ void Progress(const char* title, int rate) {
 int main() {
   for (int i = 0; i < 1000; i += 120) {
     Progress("Progress", i / 10);
-    usleep(200 * 1000);
+    usleep(1000 * 1000);
   }
   Progress("Progress", 100);
   return 0;
