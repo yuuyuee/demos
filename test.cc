@@ -5,6 +5,7 @@
 #include <string.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <math.h>
 
 #include <unordered_map>
 #include <map>
@@ -59,6 +60,15 @@ int main() {
     errno = 0;
 
     COUT(strspn("APP_TYPE", "+-1234567890"));
+    uint64_t k = 123456, p = 14, m = pow(2, p), w = 64;
+    double A = 0.6180339887;
+    uint64_t a_ = A * pow(2, w);
+    COUT(a_);
+    uint64_t v = k * a_;
+    COUT(v);
+    uint64_t v1 = v >> (w - p);
+    v1 &= m - 1;
+    COUT(v1);
 
     return 0;
 }
